@@ -117,14 +117,31 @@ export function ChampionDashboard() {
           </p>
         ) : (
           <div className="space-y-4 pt-2">
-            {active.map((b) => (
-              <BountyCard
-                key={b.id}
-                bounty={b}
-                mode="active"
-                onViewDetails={() => setDetails(b)}
-              />
-            ))}
+            {active.map((b) => {
+              const status = signupByBounty.get(b.id);
+              return (
+                <div key={b.id} className="space-y-2">
+                  <BountyCard
+                    bounty={b}
+                    mode="active"
+                    onViewDetails={() => setDetails(b)}
+                  />
+                  {b.status === "running" && status === "pending" && (
+                    <Button
+                      onClick={() => setCheckInBounty(b)}
+                      className="brutal-primary brutal-hover w-full font-display"
+                    >
+                      SHOW CHECK-IN CODE
+                    </Button>
+                  )}
+                  {(status === "checked_in" || status === "added") && b.status === "running" && (
+                    <p className="border-2 border-primary bg-primary/10 p-2 text-center font-mono text-xs uppercase text-primary">
+                      ✓ checked in — reward pending event close
+                    </p>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
