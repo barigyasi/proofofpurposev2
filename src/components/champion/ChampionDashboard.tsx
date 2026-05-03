@@ -171,6 +171,15 @@ export function ChampionDashboard() {
       </div>
 
       <RedeemQRDialog open={qrOpen} onOpenChange={setQrOpen} />
+      {checkInBounty && account && (
+        <CheckInQRDialog
+          open={!!checkInBounty}
+          onOpenChange={(o) => !o && setCheckInBounty(null)}
+          bountyId={checkInBounty.id}
+          bountyName={checkInBounty.name}
+          walletAddress={account.address}
+        />
+      )}
       <BountyDetailsDialog
         bounty={details}
         onOpenChange={(o) => !o && setDetails(null)}
