@@ -79,7 +79,7 @@ export function useBountyAdmin() {
 
       // Decode bountyId from BountyCreated logs
       let onChainId: number | null = null;
-      for (const log of receipt.logs as Array<{ data: `0x${string}`; topics: [`0x${string}`, ...`0x${string}`[]] }>) {
+      for (const log of receipt.logs as unknown as Array<{ data: `0x${string}`; topics: [`0x${string}`, ...`0x${string}`[]] }>) {
         try {
           const decoded = decodeEventLog({
             abi: [BOUNTY_CREATED_EVENT],
