@@ -15,11 +15,32 @@ export default function AdminBountyScan() {
   const { session, roles, isLoading } = useSessionRoles();
   const { data: bounties } = useBounties();
   const { checkInParticipant, busy } = useBountyAdmin();
+  const qc = useQueryClient();
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const [scanning, setScanning] = useState(false);
   const [last, setLast] = useState<string | null>(null);
+  const [confirmed, setConfirmed] = useState<{ wallet: string; at: number } | null>(null);
 
   const bounty = bounties?.find((b) => b.id === id);
+
+  const { data: signups, refetch: refetchSignups } = useQuery({
+    queryKey: ["bounty-signups", id],
+    enabled: !!id,
+    refetchInterval: 5000,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("bounty_signups")
+        .select("id,wallet_address,status,checked_in_at")
+        .eq("bounty_id", id!)
+        .order("created_at", { ascending: true });
+      return data ?? [];
+    },
+  });
+
+  const checkedInCount = (signups ?? []).filter(
+    (s) => s.status === "checked_in" || s.status === "added",
+  ).length;
+  const totalCount = signups?.length ?? 0;
 
   useEffect(() => {
     if (isLoading) return;
