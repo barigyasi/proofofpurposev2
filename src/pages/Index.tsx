@@ -1,16 +1,22 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
-// IMPORTANT: Fully REPLACE this with your own code
-const PlaceholderIndex = () => {
-  // PLACEHOLDER: Replace this entire return statement with the user's app.
-  // The inline background color is intentionally not part of the design system.
+const Index = () => {
   return (
-    <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#fcfbf8' }}>
-      <img data-lovable-blank-page-placeholder="REMOVE_THIS" src="/placeholder.svg" alt="Your app will live here!" />
-    </div>
+    <main className="mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center gap-6 px-6 text-center">
+      <p className="text-sm uppercase tracking-widest text-primary">popmgm.org</p>
+      <h1 className="text-5xl font-bold sm:text-6xl">Proof of Purpose</h1>
+      <p className="max-w-xl text-lg text-muted-foreground">
+        Wallet-primary, on-chain youth impact on Base. Donors fund. Champions earn PURPOSE.
+        Vendors redeem. Every step is public.
+      </p>
+      <div className="flex gap-3">
+        <Button asChild size="lg">
+          <Link to="/login">Connect Wallet</Link>
+        </Button>
+      </div>
+    </main>
   );
 };
-
-const Index = PlaceholderIndex;
 
 export default Index;
