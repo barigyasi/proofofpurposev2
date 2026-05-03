@@ -63,6 +63,7 @@ const App = () => (
               <Route path="/bulletin" element={<Bulletin />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/admin/bounties" element={<AdminBounties />} />
+              <Route path="/admin/bounties/:id/scan" element={<AdminBountyScan />} />
               <Route path="/admin/applicants" element={<AdminApplicants />} />
               <Route path="/admin/catalysts" element={<AdminCatalysts />} />
               <Route path="/admin/vendors" element={<AdminVendors />} />
