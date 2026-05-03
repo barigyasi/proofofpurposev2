@@ -193,6 +193,7 @@ export default function AdminApplicants() {
                   ) : a.requested_role === "champion" ? (
                     <div className="grid gap-3 sm:grid-cols-2">
                       <Field label="Champion" value={(d as ChampionApp).champion_name} />
+                      <Field label="Champion email" value={(d as ChampionApp).champion_email ?? "—"} />
                       <Field label="Date of birth" value={(d as ChampionApp).date_of_birth} />
                       <Field label="School" value={(d as ChampionApp).school} />
                       <Field label="Guardian" value={`${(d as ChampionApp).guardian_name} (${(d as ChampionApp).guardian_relationship})`} />
