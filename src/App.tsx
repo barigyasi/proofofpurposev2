@@ -22,6 +22,8 @@ import CatalystDashboard from "./pages/CatalystDashboard.tsx";
 import VendorDashboard from "./pages/VendorDashboard.tsx";
 import ApplyCatalyst from "./pages/ApplyCatalyst.tsx";
 import ApplyVendor from "./pages/ApplyVendor.tsx";
+import ApplyChampion from "./pages/ApplyChampion.tsx";
+import AdminChampions from "./pages/AdminChampions.tsx";
 import Vendors from "./pages/Vendors.tsx";
 import Donate from "./pages/Donate.tsx";
 import About from "./pages/About.tsx";
@@ -49,6 +51,8 @@ const App = () => (
               <Route path="/vendor" element={<VendorDashboard />} />
               <Route path="/apply/catalyst" element={<ApplyCatalyst />} />
               <Route path="/apply/vendor" element={<ApplyVendor />} />
+              <Route path="/apply/champion" element={<ApplyChampion />} />
+              <Route path="/admin/champions" element={<AdminChampions />} />
               <Route path="/vendors" element={<Vendors />} />
               <Route path="/donate" element={<Donate />} />
               <Route path="/about" element={<About />} />

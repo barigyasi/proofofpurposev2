@@ -26,7 +26,7 @@ const CHOICES = [
     body: "Apply as a vendor — let champions spend tokens on goods + services.",
   },
   {
-    to: "/dashboard?as=champion",
+    to: "/apply/champion",
     icon: Trophy,
     tag: "champion",
     title: "EARN $PURPOSE",
