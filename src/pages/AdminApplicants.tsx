@@ -19,6 +19,7 @@ type Applicant = {
 
 type ChampionApp = {
   champion_name: string;
+  champion_email: string | null;
   date_of_birth: string;
   school: string;
   guardian_name: string;
