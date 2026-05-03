@@ -17,6 +17,10 @@ const Index = () => {
         </h1>
       </section>
 
+      <section className="mt-8">
+        <TreasuryStat />
+      </section>
+
       <section className="mt-12 grid gap-6 md:grid-cols-3">
         <div className="brutal p-6">
           <p className="font-mono text-xs uppercase text-muted-foreground">01 / DONORS</p>
