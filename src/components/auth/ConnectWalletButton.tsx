@@ -92,12 +92,18 @@ export function ConnectWalletButton() {
 
   async function fullDisconnect() {
     try {
-      await supabase.auth.signOut().catch(() => {});
-      if (wallet) await disconnect(wallet).catch(() => {});
-      setAuthedWallet(null);
+      await supabase.auth.signOut();
     } catch (e) {
-      console.error(e);
+      console.warn("signOut", e);
     }
+    if (wallet) {
+      try {
+        await disconnect(wallet);
+      } catch (e) {
+        console.warn("wallet disconnect", e);
+      }
+    }
+    setAuthedWallet(null);
   }
 
   if (!account) {
