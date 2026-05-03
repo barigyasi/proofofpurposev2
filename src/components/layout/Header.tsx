@@ -29,6 +29,19 @@ export function Header() {
   const [session, setSession] = useState<Session | null>(null);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const { roles } = useSessionRoles();
+  const { viewAs, setViewAs } = useRoleView();
+  const isAdmin = roles.includes("admin");
+  const isPreview = isAdmin && viewAs !== "admin";
+
+  function handleViewChange(v: ViewAs) {
+    setViewAs(v);
+    if (v === "admin") navigate("/admin");
+    else if (v === "champion") navigate("/dashboard?as=champion");
+    else if (v === "vendor") navigate("/vendor");
+    else if (v === "catalyst") navigate("/catalyst");
+    else if (v === "donor") navigate("/donate");
+  }
 
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
