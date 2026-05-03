@@ -1,12 +1,15 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
-import { Moon, Sun, Menu, X } from "lucide-react";
+import { Moon, Sun, Menu, X, Eye } from "lucide-react";
 import { useActiveWallet, useDisconnect } from "thirdweb/react";
 import type { Session } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { useSessionRoles } from "@/hooks/useSessionRoles";
+import { useRoleView, type ViewAs } from "@/context/RoleViewContext";
 
 const NAV = [
   { to: "/vendors", label: "Vendors" },
