@@ -73,7 +73,14 @@ export default function AdminBountyScan() {
             }
             if (last === data.walletAddress) return;
             setLast(data.walletAddress);
-            await checkInParticipant(id, data.walletAddress);
+            try {
+              await checkInParticipant(id, data.walletAddress);
+              setConfirmed({ wallet: data.walletAddress, at: Date.now() });
+              await refetchSignups();
+              await qc.invalidateQueries({ queryKey: ["bounty-signups"] });
+            } catch {
+              setLast(null); // allow retry
+            }
           } catch {
             toast.error("Bad QR");
           }
