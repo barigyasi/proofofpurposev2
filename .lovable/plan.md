@@ -1,46 +1,89 @@
-# Super Admin Role-View Switcher
+## Bounty lifecycle: signup → start → check-in → complete
 
-Let admins preview the app exactly the way each role sees it, without losing their admin powers, via a dropdown in the header.
+Restructure the bounty flow so that on-chain `addParticipant` only fires when a champion physically checks in at the event via QR scan, and `completeBounty` mints rewards to everyone who checked in.
 
-## How it works
-
-- A new `RoleViewContext` stores a `viewAs` value (`admin | champion | vendor | catalyst | donor`), persisted in `sessionStorage`.
-- The header shows a "VIEWING AS ▾" dropdown **only when the signed-in user has the `admin` role**.
-- When an admin picks a view (e.g. "Champion"), every role-gated page treats them as that role and routes them to the matching dashboard.
-- Switching back to "Admin" restores the normal admin experience.
-- Non-admins never see the switcher and behavior is unchanged for them.
-
-## UI
+### New lifecycle states (`bounties.status`)
 
 ```text
-[ PROOF OF PURPOSE ]   Vendors  Dashboard  Governance ...   [VIEWING AS: CHAMPION ▾]  [LOGOUT] [☀]
+open       → champions can sign up (DB only)
+running    → admin started the event; check-in QR is live
+completed  → admin ended the event; on-chain rewards minted
 ```
 
-Dropdown options: Admin · Champion · Vendor · Catalyst · Donor.
-A small gold pill ("PREVIEW MODE") shows under the header whenever `viewAs !== "admin"` so it's obvious the admin is impersonating a view.
+`bounty_signups.status`:
+```text
+pending    → signed up, not yet checked in
+checked_in → scanned QR + addParticipant tx confirmed on-chain
+no_show    → event ended without check-in
+```
 
-## Pages affected
+### Schema changes (migration)
 
-Each page already gates on `roles.includes(...)`. We replace those checks with a single `useEffectiveRoles()` hook that, for admins, returns roles based on `viewAs`:
+- `bounties`: add `min_participants int default 1`, `started_at timestamptz`, `completed_at timestamptz`, `check_in_token text` (random opaque token used in QR), `check_in_token_expires_at timestamptz`
+- `bounty_signups`: rename column meaning — keep `added_tx_hash`/`added_at` for the on-chain tx, add `checked_in_at timestamptz`. Status enum widens to include `checked_in`, `no_show`.
 
-- `viewAs="admin"` → real roles (admin keeps full access)
-- `viewAs="champion"` → `["champion"]`
-- `viewAs="vendor"` → `["vendor"]`
-- `viewAs="catalyst"` → `["catalyst"]`
-- `viewAs="donor"` → `[]` (donors have no role row; they just browse + donate)
+### Admin UI (`AdminBounties.tsx`)
 
-Pages updated to use `useEffectiveRoles()` instead of `useSessionRoles()` for routing/visibility decisions:
-`Dashboard`, `CatalystDashboard`, `VendorDashboard`, `Onboarding`, `Admin*` pages (they still require the *real* admin role to access — preview mode does not unlock admin pages for non-admins, but admins viewing as champion will be redirected from `/admin/*` to `/dashboard` so the preview feels real).
+For each open bounty:
+- Show pending signup count vs `min_participants`
+- "START EVENT" button — enabled only when count ≥ min. Generates `check_in_token`, sets status `running` and `started_at`. Shows a big QR linking to `/checkin/<bountyId>?t=<token>` for projection at the event entrance.
+- For `running` bounties: live list of who has checked in (addParticipant confirmed) vs still pending. Manual "ADD ON-CHAIN" still available as fallback.
+- "END EVENT" button — calls `completeBounty(onChainId)`, marks bounty `completed`, marks remaining pending signups `no_show`. Mints PURPOSE to checked-in participants (the contract handles distribution on completeBounty).
 
-## Technical changes
+### Champion UI
 
-1. **`src/context/RoleViewContext.tsx`** (new) — provider + `useRoleView()` hook, sessionStorage-backed.
-2. **`src/hooks/useEffectiveRoles.ts`** (new) — wraps `useSessionRoles`; if real roles include `admin` and `viewAs !== "admin"`, returns the synthetic role array. Also exposes `isAdminPreview` and `realRoles`.
-3. **`src/App.tsx`** — wrap routes with `<RoleViewProvider>`.
-4. **`src/components/layout/Header.tsx`** — add a shadcn `Select` (or simple `<DropdownMenu>`) shown only when `realRoles.includes("admin")`. Changing the value navigates to the appropriate home (`/admin`, `/dashboard?as=champion`, `/vendor`, `/catalyst`, `/donate`). Show a "PREVIEW MODE" banner when `isAdminPreview`.
-5. **Replace `useSessionRoles` with `useEffectiveRoles`** in: `Dashboard.tsx`, `CatalystDashboard.tsx`, `VendorDashboard.tsx`, `Onboarding.tsx`. Admin pages keep `useSessionRoles` for their hard gate but also read `viewAs` to redirect to `/dashboard` when an admin is previewing a non-admin role.
-6. Champion preview path: `Dashboard.tsx` already supports `?as=champion`. In preview mode it will skip the "pending application" gate and render `<ChampionDashboard />` directly so the admin sees real UI.
+- Available bounties: only `open` ones they haven't signed up for.
+- Active bounties (signed up, status `running`): big "SHOW MY CHECK-IN CODE" button that opens a personal QR encoding `{bountyId, walletAddress, signupId}`. The admin scans this at the event.
+- After check-in: card shows "✓ CHECKED IN — reward pending event close".
+- After completion: shows reward amount earned.
 
-## Out of scope
+### Check-in flow (two compatible paths)
 
-- No changes to RLS or any backend logic. Preview is purely a client-side UI affordance — the admin's actual permissions are unchanged on the server.
+**Path A — admin scans champion's personal QR (preferred):**
+1. Admin opens `/admin/bounties/<id>/scan` (camera scanner)
+2. Scans champion's QR → posts `{signupId, walletAddress}` to edge function `bounty-checkin`
+3. Edge function verifies admin role, verifies signup exists + status `pending` + bounty `running`, then calls `addParticipant` on-chain using `BOUNTY_ADMIN_PRIVATE_KEY`, updates row → status `checked_in`, `added_tx_hash`, `checked_in_at`.
+
+**Path B — champion scans event QR:**
+1. Event QR encodes `/checkin/<bountyId>?t=<token>`
+2. Page reads token, looks up signup by `auth.uid()`, posts to same edge function with token instead of admin auth.
+3. Edge function validates token + expiry, then same on-chain add.
+
+Both paths funnel through one edge function so the on-chain write is centralized and gas is sponsored by the admin key.
+
+### Edge function: `bounty-checkin`
+
+Inputs: `{ bountyId: uuid, walletAddress: string, token?: string }`
+- Auth: either admin role (via JWT) OR valid `check_in_token` matching the bounty
+- Verify bounty status = `running` and not expired
+- Verify signup exists and status = `pending`
+- Call `addParticipant(onChainId, walletAddress)` using admin private key on Base
+- Update `bounty_signups` row → `checked_in`, store tx hash + timestamp
+
+### Files
+
+**New:**
+- `supabase/functions/bounty-checkin/index.ts` — gated on-chain check-in
+- `src/pages/CheckIn.tsx` — champion-side QR landing page
+- `src/pages/AdminBountyScan.tsx` — admin camera scanner
+- `src/components/champion/MyCheckInQR.tsx` — personal QR for active bounty
+
+**Modified:**
+- migration: add columns to `bounties` and `bounty_signups`
+- `useBountyAdmin.ts` — add `startEvent`, `endEvent`; update `completeBounty` to mark signups
+- `AdminBounties.tsx` — new lifecycle controls, signup counts, link to scanner
+- `ChampionDashboard.tsx` — surface check-in QR for `running` bounties; remove direct on-chain logic
+- `useBounties.ts` — include new fields; expose signup count
+
+### Dependencies
+
+- QR generation already present (`RedeemQRDialog` uses it)
+- QR scanning: add `html5-qrcode` or `@yudiel/react-qr-scanner` for camera input
+
+### Out of scope (this pass)
+
+- Geofencing the check-in (location verification)
+- Multi-day events / repeat check-ins
+- Bulk CSV import of attendance
+
+Approve and I'll implement the migration, edge function, and UI changes together.

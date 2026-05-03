@@ -16,6 +16,9 @@ export type Database = {
     Tables: {
       bounties: {
         Row: {
+          check_in_token: string | null
+          check_in_token_expires_at: string | null
+          completed_at: string | null
           created_at: string
           created_by: string | null
           description: string | null
@@ -23,14 +26,19 @@ export type Database = {
           id: string
           image_url: string | null
           location: string | null
+          min_participants: number
           on_chain_id: number | null
           on_chain_tx_hash: string | null
           reward_amount: number
+          started_at: string | null
           status: string
           title: string
           updated_at: string
         }
         Insert: {
+          check_in_token?: string | null
+          check_in_token_expires_at?: string | null
+          completed_at?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -38,14 +46,19 @@ export type Database = {
           id?: string
           image_url?: string | null
           location?: string | null
+          min_participants?: number
           on_chain_id?: number | null
           on_chain_tx_hash?: string | null
           reward_amount: number
+          started_at?: string | null
           status?: string
           title: string
           updated_at?: string
         }
         Update: {
+          check_in_token?: string | null
+          check_in_token_expires_at?: string | null
+          completed_at?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -53,9 +66,11 @@ export type Database = {
           id?: string
           image_url?: string | null
           location?: string | null
+          min_participants?: number
           on_chain_id?: number | null
           on_chain_tx_hash?: string | null
           reward_amount?: number
+          started_at?: string | null
           status?: string
           title?: string
           updated_at?: string
@@ -171,6 +186,7 @@ export type Database = {
           added_by: string | null
           added_tx_hash: string | null
           bounty_id: string
+          checked_in_at: string | null
           created_at: string
           id: string
           on_chain_bounty_id: number | null
@@ -184,6 +200,7 @@ export type Database = {
           added_by?: string | null
           added_tx_hash?: string | null
           bounty_id: string
+          checked_in_at?: string | null
           created_at?: string
           id?: string
           on_chain_bounty_id?: number | null
@@ -197,6 +214,7 @@ export type Database = {
           added_by?: string | null
           added_tx_hash?: string | null
           bounty_id?: string
+          checked_in_at?: string | null
           created_at?: string
           id?: string
           on_chain_bounty_id?: number | null
