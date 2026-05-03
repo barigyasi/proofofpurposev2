@@ -1,15 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useActiveAccount } from "thirdweb/react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { ConnectWalletButton } from "@/components/auth/ConnectWalletButton";
 
 export default function Login() {
-  const account = useActiveAccount();
   const navigate = useNavigate();
   const [session, setSession] = useState<Session | null>(null);
   const [redirecting, setRedirecting] = useState(false);
+  const [adminMode, setAdminMode] = useState(false);
 
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
@@ -17,7 +16,6 @@ export default function Login() {
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  // Once the supabase session lands, route to /dashboard (which fans out by role)
   useEffect(() => {
     if (!session || redirecting) return;
     setRedirecting(true);
@@ -35,33 +33,23 @@ export default function Login() {
           <span className="text-primary">IN.</span>
         </h1>
         <p className="mt-4 max-w-md text-sm text-muted-foreground">
-          Connect a wallet to access champion, vendor, donor, or admin dashboards.
-          Email + Google + Apple + passkey all work — we wrap them in a smart
-          account on Base. Gas is on us.
+          {adminMode
+            ? "Connect your admin wallet (MetaMask / Coinbase / WalletConnect) to access mission control."
+            : "Sign in with email, Google, Apple, or passkey. No setup, no fees."}
         </p>
       </div>
 
       <div className="mt-8">
-        <ConnectWalletButton />
+        <ConnectWalletButton mode={adminMode ? "admin" : "default"} />
       </div>
 
-      <div className="mt-10 grid gap-4 sm:grid-cols-2">
-        <div className="brutal p-4">
-          <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-            wallet
-          </p>
-          <p className="mt-2 break-all font-mono text-xs">
-            {account?.address ?? "—"}
-          </p>
-        </div>
-        <div className="brutal p-4">
-          <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-            session
-          </p>
-          <p className="mt-2 font-mono text-xs">
-            {session ? "✓ active" : "— none"}
-          </p>
-        </div>
+      <div className="mt-10 text-center">
+        <button
+          onClick={() => setAdminMode((v) => !v)}
+          className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
+        >
+          {adminMode ? "← back to standard sign-in" : "admin sign-in →"}
+        </button>
       </div>
     </main>
   );

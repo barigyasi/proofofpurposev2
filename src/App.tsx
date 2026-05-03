@@ -9,6 +9,7 @@ import { Header } from "@/components/layout/Header";
 import Index from "./pages/Index.tsx";
 import Login from "./pages/Login.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
+import Onboarding from "./pages/Onboarding.tsx";
 import Admin from "./pages/Admin.tsx";
 import AdminBounties from "./pages/AdminBounties.tsx";
 import AdminApplicants from "./pages/AdminApplicants.tsx";
@@ -43,6 +44,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/catalyst" element={<CatalystDashboard />} />
               <Route path="/vendor" element={<VendorDashboard />} />
               <Route path="/apply/catalyst" element={<ApplyCatalyst />} />

@@ -18,13 +18,18 @@ export const accountAbstraction = {
   sponsorGas: true,
 } as const;
 
+// Default sign-in for champions / catalysts / donors / vendors.
+// Wrapped in smart account → sponsored gas, no wallet UI ever shown.
 export const wallets = [
   inAppWallet({
-    auth: {
-      options: ["email", "google", "apple", "passkey"],
-    },
+    auth: { options: ["email", "google", "apple", "passkey"] },
     smartAccount: accountAbstraction,
   }),
+];
+
+// Admin sign-in: external EOA wallets only (no smart-account wrapper) so the
+// connected address matches BountyManager.owner() / approvedAdmins.
+export const adminWallets = [
   createWallet("io.metamask"),
   createWallet("com.coinbase.wallet"),
   createWallet("walletConnect"),
