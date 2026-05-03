@@ -110,7 +110,7 @@ export default function CatalystDashboard() {
 
       {!gov?.vote_contract_address && (
         <p className="brutal mt-6 p-4 font-mono text-xs">
-          // DAO vote contract not yet configured. Drafts will queue until a super admin posts them on-chain.
+          // DAO vote contract not yet configured. Drafts will queue until they're posted on-chain.
         </p>
       )}
 
