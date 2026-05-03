@@ -126,7 +126,7 @@ export function Header() {
             </Button>
           ) : (
             <Button asChild className="hidden font-display brutal-primary brutal-hover sm:inline-flex">
-              <Link to="/login">SIGN IN</Link>
+              <Link to="/login">ENTER</Link>
             </Button>
           )}
           <Button
@@ -201,7 +201,7 @@ export function Header() {
                 onClick={() => setOpen(false)}
                 className="bg-primary px-4 py-3 font-display text-base text-primary-foreground"
               >
-                SIGN IN
+                ENTER
               </Link>
             )}
           </nav>

@@ -79,7 +79,7 @@ export function ConnectWalletButton({ mode = "default", label }: Props) {
       toast.success("Signed in");
     } catch (e: unknown) {
       console.error("auth failed", e);
-      toast.error(e instanceof Error ? e.message : "Sign-in failed. Please try again.");
+      toast.error(e instanceof Error ? e.message : "Entry failed. Please try again.");
     } finally {
       setAuthing(false);
     }
@@ -109,13 +109,13 @@ export function ConnectWalletButton({ mode = "default", label }: Props) {
         chain={baseChain}
         wallets={isAdmin ? adminWallets : wallets}
         connectButton={{
-          label: label ?? (isAdmin ? "ADMIN SIGN-IN →" : "SIGN IN →"),
+          label: label ?? (isAdmin ? "ADMIN ENTER →" : "ENTER →"),
           className:
             "!font-display !text-lg !px-8 !py-5 !rounded-none !border-2 !border-foreground !bg-primary !text-primary-foreground",
         }}
         connectModal={{
           size: "compact",
-          title: isAdmin ? "Admin sign-in" : "Sign in to Proof of Purpose",
+          title: isAdmin ? "Admin entry" : "Enter Proof of Purpose",
           showThirdwebBranding: false,
         }}
       />
@@ -140,15 +140,15 @@ export function ConnectWalletButton({ mode = "default", label }: Props) {
         </div>
         <div>
           {authing ? (
-            <span className="font-display text-sm text-primary">SIGNING…</span>
+            <span className="font-display text-sm text-primary">VERIFYING…</span>
           ) : isAuthed ? (
-            <span className="font-display text-sm text-primary">✓ SIGNED IN</span>
+            <span className="font-display text-sm text-primary">✓ READY</span>
           ) : (
             <button
               onClick={authenticate}
               className="brutal-primary brutal-hover px-4 py-2 font-display text-sm"
             >
-              RETRY SIGN-IN
+              RETRY ENTRY
             </button>
           )}
         </div>

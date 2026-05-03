@@ -26,7 +26,7 @@ export default function Login() {
     <main className="mx-auto max-w-2xl px-4 py-12 sm:px-6 sm:py-20">
       <div className="border-b-2 border-foreground pb-6">
         <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
-          // sign in
+          // enter
         </p>
         <h1 className="mt-3 font-display text-5xl sm:text-7xl">
           PLUG<br />
@@ -35,7 +35,7 @@ export default function Login() {
         <p className="mt-4 max-w-md text-sm text-muted-foreground">
           {adminMode
             ? "Connect your admin wallet (MetaMask / Coinbase / WalletConnect) to access mission control."
-            : "Sign in with email, Google, Apple, or passkey. No setup, no fees."}
+            : "Enter with email, Google, Apple, or passkey. New here? Your account is created automatically. No setup, no fees."}
         </p>
       </div>
 
@@ -48,7 +48,7 @@ export default function Login() {
           onClick={() => setAdminMode((v) => !v)}
           className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
         >
-          {adminMode ? "← back to standard sign-in" : "admin sign-in →"}
+          {adminMode ? "← back to standard entry" : "admin entry →"}
         </button>
       </div>
     </main>

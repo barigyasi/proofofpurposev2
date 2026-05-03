@@ -39,7 +39,7 @@ export default function ApplyCatalyst() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        toast.error("Sign in first");
+        toast.error("Enter first");
         return;
       }
       let logo_url: string | null = null;

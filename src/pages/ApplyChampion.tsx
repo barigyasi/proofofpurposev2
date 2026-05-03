@@ -58,7 +58,7 @@ export default function ApplyChampion() {
   }
 
   async function submit() {
-    if (!account) return toast.error("Sign in first");
+    if (!account) return toast.error("Enter first");
     const parsed = schema.safeParse(form);
     if (!parsed.success) {
       const first = Object.values(parsed.error.flatten().fieldErrors)[0]?.[0];
