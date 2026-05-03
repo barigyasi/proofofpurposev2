@@ -90,11 +90,36 @@ export default function AdminBounties() {
                   </p>
                 </div>
               </div>
+              {(() => {
+                const pending = signups.filter((s) => s.bounty_id === b.id);
+                return pending.length > 0 && (
+                  <div className="mt-4 border-t-2 border-foreground pt-3">
+                    <p className="font-mono text-[10px] uppercase tracking-widest text-primary">
+                      // pending signups ({pending.length})
+                    </p>
+                    <div className="mt-2 space-y-2">
+                      {pending.map((s) => (
+                        <div key={s.id} className="flex flex-wrap items-center justify-between gap-2 bg-muted/30 p-2">
+                          <code className="font-mono text-[11px]">{s.wallet_address}</code>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={busy || b.onChainId === null}
+                            onClick={() => addParticipant(b.onChainId as number, s.wallet_address, b.id)}
+                          >
+                            ADD ON-CHAIN
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
               <div className="mt-4 flex flex-wrap items-center gap-2 border-t-2 border-foreground pt-3">
                 {b.onChainId !== null && (
                   <>
                     <Input
-                      placeholder="0x… add participant"
+                      placeholder="0x… add participant manually"
                       value={addAddr[b.onChainId] ?? ""}
                       onChange={(e) =>
                         setAddAddr({ ...addAddr, [b.onChainId as number]: e.target.value })
@@ -104,7 +129,7 @@ export default function AdminBounties() {
                     <Button
                       variant="outline"
                       disabled={busy || !addAddr[b.onChainId]}
-                      onClick={() => addParticipant(b.onChainId as number, addAddr[b.onChainId as number])}
+                      onClick={() => addParticipant(b.onChainId as number, addAddr[b.onChainId as number], b.id)}
                     >
                       ADD
                     </Button>
