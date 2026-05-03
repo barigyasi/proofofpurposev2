@@ -79,7 +79,7 @@ export function ConnectWalletButton({ mode = "default", label }: Props) {
       toast.success("Signed in");
     } catch (e: unknown) {
       console.error("auth failed", e);
-      toast.error(e instanceof Error ? e.message : "Sign-in failed. Please try again.");
+      toast.error(e instanceof Error ? e.message : "Entry failed. Please try again.");
     } finally {
       setAuthing(false);
     }
