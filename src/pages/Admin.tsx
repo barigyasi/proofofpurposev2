@@ -18,6 +18,7 @@ export default function Admin() {
   const { session, roles, isLoading } = useSessionRoles();
 
   useEffect(() => {
+    if (isLoading) return;
     if (!session) {
       navigate("/login", { replace: true });
       return;
@@ -25,7 +26,7 @@ export default function Admin() {
     if (!roles.includes("admin")) {
       navigate("/dashboard", { replace: true });
     }
-  }, [session, roles, navigate]);
+  }, [isLoading, session, roles, navigate]);
 
   if (isLoading || !session || !roles.includes("admin")) return null;
 
