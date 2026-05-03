@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import { useEffectiveRoles } from "@/hooks/useEffectiveRoles";
 import { useGovernanceConfig } from "@/hooks/useGovernance";
 import { supabase } from "@/integrations/supabase/client";
+import { useCatalystApplication } from "@/hooks/useApplicationStatus";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,6 +28,7 @@ export default function CatalystDashboard() {
   const account = useActiveAccount();
   const navigate = useNavigate();
   const { session, roles, isLoading } = useEffectiveRoles();
+  const { status: appStatus, orgName } = useCatalystApplication(session?.user.id);
   const { data: gov } = useGovernanceConfig();
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [name, setName] = useState("");
@@ -35,12 +37,20 @@ export default function CatalystDashboard() {
   const [maxP, setMaxP] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const isApproved = roles.includes("catalyst");
+  const isPending = !isApproved && appStatus === "pending";
+
   useEffect(() => {
     if (isLoading) return;
-    if (!session) navigate("/login", { replace: true });
-    else if (!roles.includes("catalyst"))
-      navigate("/dashboard", { replace: true });
-  }, [isLoading, session, roles, navigate]);
+    if (!session) {
+      navigate("/login", { replace: true });
+      return;
+    }
+    if (appStatus === "loading") return;
+    if (!isApproved && appStatus === "none") {
+      navigate("/apply/catalyst", { replace: true });
+    }
+  }, [isLoading, session, isApproved, appStatus, navigate]);
 
   async function load() {
     const { data: { user } } = await supabase.auth.getUser();
