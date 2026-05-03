@@ -70,6 +70,7 @@ const App = () => (
               <Route path="/admin/audit" element={<AdminAudit />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </RoleViewProvider>
           </BrowserRouter>
         </TooltipProvider>
       </ThemeProvider>
