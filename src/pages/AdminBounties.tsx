@@ -1,14 +1,22 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useActiveAccount } from "thirdweb/react";
 import { useSessionRoles } from "@/hooks/useSessionRoles";
 import { useBounties } from "@/hooks/useBounties";
 import { useBountyAdmin } from "@/hooks/useBountyAdmin";
 import { CreateBountyDialog } from "@/components/bounties/CreateBountyDialog";
-import { formatPurpose } from "@/hooks/usePurposeBalance";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+
+type Signup = {
+  id: string;
+  bounty_id: string;
+  on_chain_bounty_id: number | null;
+  wallet_address: string;
+  status: string;
+  created_at: string;
+};
 
 export default function AdminBounties() {
   const navigate = useNavigate();
