@@ -170,6 +170,8 @@ export function ChampionDashboard() {
         )}
       </div>
 
+      <MembershipsStrip wallet={account?.address} />
+
       <RedeemQRDialog open={qrOpen} onOpenChange={setQrOpen} />
       {checkInBounty && account && (
         <CheckInQRDialog
