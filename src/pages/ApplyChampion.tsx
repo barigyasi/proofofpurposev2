@@ -28,6 +28,7 @@ export default function ApplyChampion() {
   const [existing, setExisting] = useState<{ status: string } | null>(null);
   const [form, setForm] = useState({
     championName: "",
+    championEmail: "",
     dateOfBirth: "",
     school: "",
     guardianName: "",
