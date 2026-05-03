@@ -1,20 +1,59 @@
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 
 const Index = () => {
   return (
-    <main className="mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center gap-6 px-6 text-center">
-      <p className="text-sm uppercase tracking-widest text-primary">popmgm.org</p>
-      <h1 className="text-5xl font-bold sm:text-6xl">Proof of Purpose</h1>
-      <p className="max-w-xl text-lg text-muted-foreground">
-        Wallet-primary, on-chain youth impact on Base. Donors fund. Champions earn PURPOSE.
-        Vendors redeem. Every step is public.
-      </p>
-      <div className="flex gap-3">
-        <Button asChild size="lg">
-          <Link to="/login">Connect Wallet</Link>
-        </Button>
-      </div>
+    <main className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24">
+      <section className="border-y-2 border-foreground py-10 sm:py-16">
+        <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
+          // popmgm.org · base mainnet
+        </p>
+        <h1 className="mt-6 font-display text-[14vw] leading-[0.85] sm:text-[110px] lg:text-[160px]">
+          PROOF
+          <br />
+          <span className="text-primary">OF</span>
+          <br />
+          PURPOSE
+        </h1>
+      </section>
+
+      <section className="mt-12 grid gap-6 md:grid-cols-3">
+        <div className="brutal p-6">
+          <p className="font-mono text-xs uppercase text-muted-foreground">01 / DONORS</p>
+          <h3 className="mt-3 font-display text-3xl">FUND<br />THE MISSION</h3>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Every dollar lands on-chain. No middlemen. Receipts forever.
+          </p>
+        </div>
+        <div className="brutal p-6">
+          <p className="font-mono text-xs uppercase text-muted-foreground">02 / CHAMPIONS</p>
+          <h3 className="mt-3 font-display text-3xl">EARN<br />$PURPOSE</h3>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Complete bounties. Stack tokens. Spend at approved vendors.
+          </p>
+        </div>
+        <div className="brutal p-6">
+          <p className="font-mono text-xs uppercase text-muted-foreground">03 / VENDORS</p>
+          <h3 className="mt-3 font-display text-3xl">REDEEM<br />FOR USDC</h3>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Scan, burn, paid. Public ledger of every redemption.
+          </p>
+        </div>
+      </section>
+
+      <section className="mt-12 flex flex-wrap items-center gap-4">
+        <Link
+          to="/login"
+          className="brutal-primary brutal-hover inline-flex items-center px-8 py-5 font-display text-xl"
+        >
+          CONNECT WALLET →
+        </Link>
+        <Link
+          to="/donate"
+          className="brutal brutal-hover inline-flex items-center px-8 py-5 font-display text-xl"
+        >
+          DONATE
+        </Link>
+      </section>
     </main>
   );
 };
