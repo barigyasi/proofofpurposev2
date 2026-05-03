@@ -19,7 +19,7 @@ export function toPurposeWei(amount: string): bigint {
 }
 
 const BOUNTY_CREATED_EVENT = parseAbiItem(
-  "event BountyCreated(uint256 indexed bountyId, uint256 rewardAmount)"
+  "event BountyCreated(uint256 bountyId, uint256 rewardAmount)"
 );
 
 export function useBountyAdmin() {
