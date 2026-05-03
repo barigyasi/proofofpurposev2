@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { useVendorApplication } from "@/hooks/useApplicationStatus";
 
 type Scanned = { wallet: string; expires_at: number; signature: string };
 
@@ -18,17 +19,27 @@ export default function VendorDashboard() {
   const account = useActiveAccount();
   const navigate = useNavigate();
   const { session, roles, isLoading } = useEffectiveRoles();
+  const { status: appStatus, businessName } = useVendorApplication(account?.address);
   const [scanned, setScanned] = useState<Scanned | null>(null);
   const [amount, setAmount] = useState("");
   const [busy, setBusy] = useState(false);
   const [scanning, setScanning] = useState(false);
 
+  const isApproved = roles.includes("vendor");
+  const isPending = !isApproved && appStatus === "pending";
+
   useEffect(() => {
     if (isLoading) return;
-    if (!session) navigate("/login", { replace: true });
-    else if (!roles.includes("vendor"))
-      navigate("/dashboard", { replace: true });
-  }, [isLoading, session, roles, navigate]);
+    if (!session) {
+      navigate("/login", { replace: true });
+      return;
+    }
+    if (appStatus === "loading") return;
+    if (!isApproved && appStatus === "none") {
+      // No application and no role → send to apply
+      navigate("/apply/vendor", { replace: true });
+    }
+  }, [isLoading, session, isApproved, appStatus, navigate]);
 
   if (isLoading || !session) return null;
 
