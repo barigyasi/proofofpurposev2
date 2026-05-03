@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useActiveAccount } from "thirdweb/react";
 import { getContract, prepareContractCall, sendTransaction, waitForReceipt } from "thirdweb";
 import { toast } from "sonner";
-import { useSessionRoles } from "@/hooks/useSessionRoles";
+import { useEffectiveRoles } from "@/hooks/useEffectiveRoles";
 import { thirdwebClient, baseChain } from "@/lib/thirdweb";
 import { CONTRACTS, PURPOSE_DECIMALS } from "@/config/contracts";
 import { QRScanner } from "@/components/vendor/QRScanner";
@@ -17,7 +17,7 @@ type Scanned = { wallet: string; expires_at: number; signature: string };
 export default function VendorDashboard() {
   const account = useActiveAccount();
   const navigate = useNavigate();
-  const { session, roles, isLoading } = useSessionRoles();
+  const { session, roles, isLoading } = useEffectiveRoles();
   const [scanned, setScanned] = useState<Scanned | null>(null);
   const [amount, setAmount] = useState("");
   const [busy, setBusy] = useState(false);
@@ -26,7 +26,7 @@ export default function VendorDashboard() {
   useEffect(() => {
     if (isLoading) return;
     if (!session) navigate("/login", { replace: true });
-    else if (!roles.includes("vendor") && !roles.includes("admin"))
+    else if (!roles.includes("vendor"))
       navigate("/dashboard", { replace: true });
   }, [isLoading, session, roles, navigate]);
 

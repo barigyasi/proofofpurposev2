@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Heart, Building2, Store, Trophy } from "lucide-react";
-import { useSessionRoles } from "@/hooks/useSessionRoles";
+import { useEffectiveRoles } from "@/hooks/useEffectiveRoles";
 
 const CHOICES = [
   {
@@ -36,7 +36,7 @@ const CHOICES = [
 
 export default function Onboarding() {
   const navigate = useNavigate();
-  const { session, roles, isLoading } = useSessionRoles();
+  const { session, roles, isLoading } = useEffectiveRoles();
   const [acknowledged, setAcknowledged] = useState(false);
 
   // If they already have any meaningful role, send them to the right home

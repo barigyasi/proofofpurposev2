@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useActiveAccount } from "thirdweb/react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
-import { useSessionRoles } from "@/hooks/useSessionRoles";
+import { useEffectiveRoles } from "@/hooks/useEffectiveRoles";
 import { useGovernanceConfig } from "@/hooks/useGovernance";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -26,7 +26,7 @@ type Draft = {
 export default function CatalystDashboard() {
   const account = useActiveAccount();
   const navigate = useNavigate();
-  const { session, roles, isLoading } = useSessionRoles();
+  const { session, roles, isLoading } = useEffectiveRoles();
   const { data: gov } = useGovernanceConfig();
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [name, setName] = useState("");
@@ -38,7 +38,7 @@ export default function CatalystDashboard() {
   useEffect(() => {
     if (isLoading) return;
     if (!session) navigate("/login", { replace: true });
-    else if (!roles.includes("catalyst") && !roles.includes("admin"))
+    else if (!roles.includes("catalyst"))
       navigate("/dashboard", { replace: true });
   }, [isLoading, session, roles, navigate]);
 

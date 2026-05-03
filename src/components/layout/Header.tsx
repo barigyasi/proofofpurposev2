@@ -1,12 +1,15 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
-import { Moon, Sun, Menu, X } from "lucide-react";
+import { Moon, Sun, Menu, X, Eye } from "lucide-react";
 import { useActiveWallet, useDisconnect } from "thirdweb/react";
 import type { Session } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { useSessionRoles } from "@/hooks/useSessionRoles";
+import { useRoleView, type ViewAs } from "@/context/RoleViewContext";
 
 const NAV = [
   { to: "/vendors", label: "Vendors" },
@@ -26,6 +29,19 @@ export function Header() {
   const [session, setSession] = useState<Session | null>(null);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const { roles } = useSessionRoles();
+  const { viewAs, setViewAs } = useRoleView();
+  const isAdmin = roles.includes("admin");
+  const isPreview = isAdmin && viewAs !== "admin";
+
+  function handleViewChange(v: ViewAs) {
+    setViewAs(v);
+    if (v === "admin") navigate("/admin");
+    else if (v === "champion") navigate("/dashboard?as=champion");
+    else if (v === "vendor") navigate("/vendor");
+    else if (v === "catalyst") navigate("/catalyst");
+    else if (v === "donor") navigate("/donate");
+  }
 
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
@@ -85,6 +101,21 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-2">
+          {isAdmin && (
+            <Select value={viewAs} onValueChange={(v) => handleViewChange(v as ViewAs)}>
+              <SelectTrigger className="hidden h-9 w-[170px] border-2 border-foreground font-mono text-[11px] uppercase tracking-widest sm:inline-flex">
+                <Eye className="mr-1 h-3 w-3" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="admin">View: Admin</SelectItem>
+                <SelectItem value="champion">View: Champion</SelectItem>
+                <SelectItem value="vendor">View: Vendor</SelectItem>
+                <SelectItem value="catalyst">View: Catalyst</SelectItem>
+                <SelectItem value="donor">View: Donor</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
           {session ? (
             <Button
               onClick={logout}
@@ -119,6 +150,13 @@ export function Header() {
         </div>
       </div>
 
+      {isPreview && (
+        <div className="border-t-2 border-primary bg-primary/10 px-4 py-2 text-center font-mono text-[11px] uppercase tracking-widest text-primary sm:px-6">
+          // preview mode · viewing as {viewAs} ·{" "}
+          <button onClick={() => handleViewChange("admin")} className="underline">exit</button>
+        </div>
+      )}
+
       {open && (
         <div className="border-t-2 border-foreground md:hidden">
           <nav className="flex flex-col">
@@ -132,6 +170,23 @@ export function Header() {
                 {n.label}
               </Link>
             ))}
+            {isAdmin && (
+              <div className="border-b border-foreground p-3">
+                <Select value={viewAs} onValueChange={(v) => { handleViewChange(v as ViewAs); setOpen(false); }}>
+                  <SelectTrigger className="h-10 w-full border-2 border-foreground font-mono text-xs uppercase">
+                    <Eye className="mr-1 h-3 w-3" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">View: Admin</SelectItem>
+                    <SelectItem value="champion">View: Champion</SelectItem>
+                    <SelectItem value="vendor">View: Vendor</SelectItem>
+                    <SelectItem value="catalyst">View: Catalyst</SelectItem>
+                    <SelectItem value="donor">View: Donor</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             {session ? (
               <button
                 onClick={logout}

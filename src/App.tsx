@@ -30,6 +30,7 @@ import About from "./pages/About.tsx";
 import Governance from "./pages/Governance.tsx";
 import Bulletin from "./pages/Bulletin.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import { RoleViewProvider } from "@/context/RoleViewContext";
 
 const queryClient = new QueryClient();
 
@@ -41,8 +42,9 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <Header />
-            <Routes>
+            <RoleViewProvider>
+              <Header />
+              <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
               <Route path="/dashboard" element={<Dashboard />} />
@@ -68,6 +70,7 @@ const App = () => (
               <Route path="/admin/audit" element={<AdminAudit />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </RoleViewProvider>
           </BrowserRouter>
         </TooltipProvider>
       </ThemeProvider>

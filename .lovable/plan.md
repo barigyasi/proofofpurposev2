@@ -1,25 +1,46 @@
-## Plan — Fix bounty creation against the live contract
+# Super Admin Role-View Switcher
 
-The deployed `BountyManager` only exposes `createBounty(uint256 rewardAmount) returns (uint256)`. Our app is calling a 4-arg version that doesn't exist on-chain → revert. We'll align the frontend with the live ABI and store the rich metadata (name, description, image, max participants, location, expiry) in the backend `bounties` table only.
+Let admins preview the app exactly the way each role sees it, without losing their admin powers, via a dropdown in the header.
 
-### Changes
+## How it works
 
-1. **`src/contracts/abis/BountyManager.json`** — replace with the actual deployed ABI: `createBounty(uint256) returns (uint256)`, `BountyCreated(uint256 bountyId, uint256 rewardAmount)` event, plus `owner()`, `approvedAdmins(address)`, `addParticipant`, `completeBounty`, `getParticipants`, `bounties(uint256)` if present (we'll keep view shape minimal — just `(rewardAmount, completed)` or whatever the live one returns; off-chain table holds the rest).
+- A new `RoleViewContext` stores a `viewAs` value (`admin | champion | vendor | catalyst | donor`), persisted in `sessionStorage`.
+- The header shows a "VIEWING AS ▾" dropdown **only when the signed-in user has the `admin` role**.
+- When an admin picks a view (e.g. "Champion"), every role-gated page treats them as that role and routes them to the matching dashboard.
+- Switching back to "Admin" restores the normal admin experience.
+- Non-admins never see the switcher and behavior is unchanged for them.
 
-2. **`src/hooks/useBountyAdmin.ts`**
-   - `createBounty()` calls `function createBounty(uint256 rewardAmount) returns (uint256)` with `toPurposeWei(reward)`.
-   - After `sendTransaction`, `waitForReceipt`, then decode logs with viem's `decodeEventLog` to pull `bountyId` from the `BountyCreated` event (no more `bountyCount()` follow-up read).
-   - Insert full metadata into `public.bounties` (`title`, `description`, `reward_amount`, `image_url`, `location`, `expires_at`, `on_chain_id = bountyId`, `on_chain_tx_hash`, `created_by`, `status='open'`).
-   - Drop the `bountyCount()` and `approvedAdmins()` reads from `preflight()` if those selectors aren't on the live contract — fall back to comparing against `owner()` only, plus our app's `admin` role.
+## UI
 
-3. **`src/hooks/useBounties.ts`** — stop reading the bounty list from chain. Source of truth becomes the `bounties` table (`select * order by created_at desc`). Optional per-row enrichment: read `getParticipants(on_chain_id)` if the live contract supports it; otherwise just show off-chain metadata.
+```text
+[ PROOF OF PURPOSE ]   Vendors  Dashboard  Governance ...   [VIEWING AS: CHAMPION ▾]  [LOGOUT] [☀]
+```
 
-4. **`src/pages/AdminBounties.tsx`** — render from the new backend-driven `useBounties()`. Keep the "complete" / "add participant" actions but guard them behind a try/catch so a missing on-chain method shows a friendly toast instead of crashing.
+Dropdown options: Admin · Champion · Vendor · Catalyst · Donor.
+A small gold pill ("PREVIEW MODE") shows under the header whenever `viewAs !== "admin"` so it's obvious the admin is impersonating a view.
 
-5. **`src/components/bounties/CreateBountyDialog.tsx`** — keep the form; just fix the React `forwardRef` warning by wrapping `DialogFooter` usage so the Button isn't given a ref it can't forward (small cleanup), and pass `maxParticipants` to the backend insert (not the contract).
+## Pages affected
 
-### Out of scope
-- No contract redeploy. We adapt to the live `createBounty(uint256)`.
-- No DAO/governance changes.
+Each page already gates on `roles.includes(...)`. We replace those checks with a single `useEffectiveRoles()` hook that, for admins, returns roles based on `viewAs`:
 
-Approve and I'll implement.
+- `viewAs="admin"` → real roles (admin keeps full access)
+- `viewAs="champion"` → `["champion"]`
+- `viewAs="vendor"` → `["vendor"]`
+- `viewAs="catalyst"` → `["catalyst"]`
+- `viewAs="donor"` → `[]` (donors have no role row; they just browse + donate)
+
+Pages updated to use `useEffectiveRoles()` instead of `useSessionRoles()` for routing/visibility decisions:
+`Dashboard`, `CatalystDashboard`, `VendorDashboard`, `Onboarding`, `Admin*` pages (they still require the *real* admin role to access — preview mode does not unlock admin pages for non-admins, but admins viewing as champion will be redirected from `/admin/*` to `/dashboard` so the preview feels real).
+
+## Technical changes
+
+1. **`src/context/RoleViewContext.tsx`** (new) — provider + `useRoleView()` hook, sessionStorage-backed.
+2. **`src/hooks/useEffectiveRoles.ts`** (new) — wraps `useSessionRoles`; if real roles include `admin` and `viewAs !== "admin"`, returns the synthetic role array. Also exposes `isAdminPreview` and `realRoles`.
+3. **`src/App.tsx`** — wrap routes with `<RoleViewProvider>`.
+4. **`src/components/layout/Header.tsx`** — add a shadcn `Select` (or simple `<DropdownMenu>`) shown only when `realRoles.includes("admin")`. Changing the value navigates to the appropriate home (`/admin`, `/dashboard?as=champion`, `/vendor`, `/catalyst`, `/donate`). Show a "PREVIEW MODE" banner when `isAdminPreview`.
+5. **Replace `useSessionRoles` with `useEffectiveRoles`** in: `Dashboard.tsx`, `CatalystDashboard.tsx`, `VendorDashboard.tsx`, `Onboarding.tsx`. Admin pages keep `useSessionRoles` for their hard gate but also read `viewAs` to redirect to `/dashboard` when an admin is previewing a non-admin role.
+6. Champion preview path: `Dashboard.tsx` already supports `?as=champion`. In preview mode it will skip the "pending application" gate and render `<ChampionDashboard />` directly so the admin sees real UI.
+
+## Out of scope
+
+- No changes to RLS or any backend logic. Preview is purely a client-side UI affordance — the admin's actual permissions are unchanged on the server.
