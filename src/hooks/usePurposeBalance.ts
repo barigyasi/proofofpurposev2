@@ -1,10 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { getContract, readContract, type Abi } from "thirdweb";
+import { getContract, readContract } from "thirdweb";
 import { thirdwebClient, baseChain } from "@/lib/thirdweb";
 import { CONTRACTS } from "@/config/contracts";
-import PurposeAbiJson from "@/contracts/abis/PurposeToken.json";
-
-const PurposeAbi = PurposeAbiJson as Abi;
 
 export function usePurposeBalance(address: string | undefined) {
   return useQuery({
@@ -16,22 +13,20 @@ export function usePurposeBalance(address: string | undefined) {
         client: thirdwebClient,
         chain: baseChain,
         address: CONTRACTS.PURPOSE_TOKEN,
-        abi: PurposeAbi,
       });
-      const raw = await readContract({
+      const raw = (await readContract({
         contract,
         method: "function balanceOf(address) view returns (uint256)",
         params: [address as `0x${string}`],
-      });
-      return raw as bigint;
+      })) as bigint;
+      return raw;
     },
   });
 }
 
 export function formatPurpose(raw: bigint | undefined): string {
   if (raw === undefined) return "0.00";
-  // 18 decimals → 2 dp display
   const whole = raw / 10n ** 18n;
-  const frac = (raw % 10n ** 18n) / 10n ** 16n; // two decimals
+  const frac = (raw % 10n ** 18n) / 10n ** 16n;
   return `${whole.toString()}.${frac.toString().padStart(2, "0")}`;
 }
