@@ -446,6 +446,42 @@ export type Database = {
         }
         Relationships: []
       }
+      membership_mints: {
+        Row: {
+          contract_address: string | null
+          created_at: string
+          donor_wallet: string
+          id: string
+          month_key: number
+          status: string
+          token_id: number | null
+          tx_hash: string | null
+          updated_at: string
+        }
+        Insert: {
+          contract_address?: string | null
+          created_at?: string
+          donor_wallet: string
+          id?: string
+          month_key: number
+          status?: string
+          token_id?: number | null
+          tx_hash?: string | null
+          updated_at?: string
+        }
+        Update: {
+          contract_address?: string | null
+          created_at?: string
+          donor_wallet?: string
+          id?: string
+          month_key?: number
+          status?: string
+          token_id?: number | null
+          tx_hash?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pending_applicants: {
         Row: {
           created_at: string

@@ -13,6 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { membershipDataUri, monthLabel, currentMonthKey } from "@/lib/membershipArt";
+import { MembershipsStrip } from "@/components/membership/MembershipsStrip";
 
 function toUsdc(amount: string): bigint {
   const [w, f = ""] = amount.split(".");
@@ -45,14 +47,22 @@ export default function Donate() {
       await waitForReceipt({ client: thirdwebClient, chain: baseChain, transactionHash });
       setHash(transactionHash);
 
-      await supabase.from("donations").insert({
+      const { data: donationRow } = await supabase.from("donations").insert({
         donor_wallet: account.address,
         source: "wallet",
         amount_usdc: Number(amount),
         tx_hash: transactionHash,
         status: "confirmed",
-      });
+      }).select().single();
       toast.success("Thank you! Donation recorded.");
+
+      if (donationRow && Number(amount) >= 5) {
+        supabase.functions.invoke("mint-monthly-membership", {
+          body: { donation_id: donationRow.id },
+        }).then(({ error }) => {
+          if (!error) toast.success("Monthly membership unlocked ✓");
+        });
+      }
       setAmount("");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
@@ -90,6 +100,24 @@ export default function Donate() {
           </a>
         </div>
       )}
+      <div className="brutal mt-6 flex items-center gap-4 p-4">
+        <img
+          src={membershipDataUri(account?.address ?? "0x0000000000000000000000000000000000000000", currentMonthKey(), 96)}
+          alt="this month's membership"
+          className="h-24 w-24 shrink-0"
+        />
+        <div>
+          <p className="font-mono text-[10px] uppercase tracking-widest text-primary">
+            // {monthLabel(currentMonthKey())} membership
+          </p>
+          <p className="mt-1 font-display text-lg leading-tight">
+            Donate $5 or more this month and this generative NFT auto-mints to you.
+          </p>
+          <p className="mt-1 font-mono text-[10px] text-muted-foreground">
+            Transferable. Secondary royalties fund the treasury. 1 vote per donor.
+          </p>
+        </div>
+      </div>
       <div className="brutal mt-8 p-6">
         <Label>Amount (USDC)</Label>
         <Input
@@ -119,6 +147,7 @@ export default function Donate() {
           → {CONTRACTS.DONATION_SPLIT}
         </p>
       </div>
+      <MembershipsStrip wallet={account?.address} />
     </main>
   );
 }

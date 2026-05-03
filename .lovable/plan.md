@@ -1,89 +1,94 @@
-## Bounty lifecycle: signup → start → check-in → complete
+# Monthly Membership NFT — Plan
 
-Restructure the bounty flow so that on-chain `addParticipant` only fires when a champion physically checks in at the event via QR scan, and `completeBounty` mints rewards to everyone who checked in.
+## Concept (locked in)
 
-### New lifecycle states (`bounties.status`)
+- **Trigger:** Any donation ≥ **$5 USDC** in a given calendar month auto-mints that month's membership NFT to the donor.
+- **One per wallet per month.** Donating multiple times in the same month does not stack mints (still 1 vote, still 1 NFT for that month). Donating in a new month mints that new month's piece.
+- **Auto-mint, no claim step.** Sponsored gas via the existing smart-wallet stack — donor sees only "Thanks, your May 2026 membership is in your wallet."
+- **Transferable** ERC-721 with on-chain **EIP-2981 royalties** routed to `DONATION_SPLIT` (so secondary sales keep funding the mission).
+- **Generative per donor:** shared monthly theme/palette, but each token's traits are unique to the wallet that earned it. Art is fully on-chain SVG.
+- **Governance is unchanged:** still 1 wallet = 1 vote, capped. Holding/buying the NFT on secondary does **not** grant voting rights — only the original donating wallet votes. (Buyers get the collectible + royalty-funded mission, not governance capture.)
+- **Weekly auction idea is dropped.**
+
+## What gets built
+
+### 1. Smart contract: `MembershipNFT.sol` (Base mainnet)
+
+ERC-721 + EIP-2981, owner-gated minter.
 
 ```text
-open       → champions can sign up (DB only)
-running    → admin started the event; check-in QR is live
-completed  → admin ended the event; on-chain rewards minted
+mintFor(address donor, uint16 monthKey, bytes32 seed)
+  - only callable by approved minter (Treasury-owned EOA / edge function)
+  - reverts if (donor, monthKey) already minted
+  - stores seed for on-chain tokenURI generation
+
+tokenURI(id) -> data:application/json;base64,...
+  - assembles SVG from layered traits selected by hashing(seed, monthKey)
+  - month determines palette + headline motif
+  - per-wallet seed determines body/accessory/background variants
+
+royaltyInfo(id, salePrice) -> (DONATION_SPLIT, salePrice * 500 / 10000)  // 5%
 ```
 
-`bounty_signups.status`:
+Notes:
+- Soulbound is **off** — `_update` not restricted.
+- `monthKey` = `YYYYMM` so months are deterministic and queryable.
+- Owner can register monthly palettes/motifs ahead of time; falls back to a default palette if a month isn't pre-registered.
+
+### 2. Edge function: `mint-monthly-membership`
+
+Triggered after a confirmed donation insert. Logic:
+
+1. Validate JWT, load donation row by id.
+2. If `amount_usdc < 5` → exit.
+3. Compute `monthKey` from `created_at` (UTC).
+4. Check `membership_mints` table for `(donor_wallet, month_key)` — if exists, exit.
+5. Build deterministic `seed = keccak256(donor_wallet || monthKey || salt)`.
+6. Call `MembershipNFT.mintFor(...)` using `BOUNTY_ADMIN_PRIVATE_KEY` (reuse existing signer) — sponsored from treasury EOA.
+7. Insert into `membership_mints` with token id + tx hash.
+
+Called from `Donate.tsx` right after the existing `supabase.from("donations").insert(...)` succeeds (non-blocking; toast updates to "Membership minted ✓").
+
+### 3. Database
+
+New table `membership_mints`:
 ```text
-pending    → signed up, not yet checked in
-checked_in → scanned QR + addParticipant tx confirmed on-chain
-no_show    → event ended without check-in
+id uuid pk
+donor_wallet text
+month_key int            -- 202605
+token_id bigint
+tx_hash text
+contract_address text
+created_at timestamptz
+unique(donor_wallet, month_key)
 ```
+RLS: public read, admin-only write (mints inserted by edge function via service role).
 
-### Schema changes (migration)
+Add `MEMBERSHIP_NFT` to `src/config/contracts.ts` once deployed.
 
-- `bounties`: add `min_participants int default 1`, `started_at timestamptz`, `completed_at timestamptz`, `check_in_token text` (random opaque token used in QR), `check_in_token_expires_at timestamptz`
-- `bounty_signups`: rename column meaning — keep `added_tx_hash`/`added_at` for the on-chain tx, add `checked_in_at timestamptz`. Status enum widens to include `checked_in`, `no_show`.
+### 4. UI
 
-### Admin UI (`AdminBounties.tsx`)
+- **Donate page:** add "Donate $5+ this month → get the May 2026 membership NFT" badge above the amount input. After successful donate of ≥$5, show the minted token preview inline.
+- **Dashboard / Champion dashboard:** new "Memberships" strip showing the donor's collected months as a horizontal scroll of on-chain SVG previews.
+- **About / Index:** short explainer card "Monthly membership · generative · funds the mission on resale."
+- **Admin → Treasury:** add a tile showing total memberships minted this month + lifetime, plus secondary-royalty USDC received (read from DONATION_SPLIT events, future iteration).
 
-For each open bounty:
-- Show pending signup count vs `min_participants`
-- "START EVENT" button — enabled only when count ≥ min. Generates `check_in_token`, sets status `running` and `started_at`. Shows a big QR linking to `/checkin/<bountyId>?t=<token>` for projection at the event entrance.
-- For `running` bounties: live list of who has checked in (addParticipant confirmed) vs still pending. Manual "ADD ON-CHAIN" still available as fallback.
-- "END EVENT" button — calls `completeBounty(onChainId)`, marks bounty `completed`, marks remaining pending signups `no_show`. Mints PURPOSE to checked-in participants (the contract handles distribution on completeBounty).
+### 5. Governance update (small)
 
-### Champion UI
+`Governance.tsx` already enforces 1-vote-per-wallet via the donor record. Add a guardrail: voting eligibility checks the `donations` table (donor_wallet has any confirmed donation), **not** NFT ownership. This makes the NFT freely tradable without leaking votes.
 
-- Available bounties: only `open` ones they haven't signed up for.
-- Active bounties (signed up, status `running`): big "SHOW MY CHECK-IN CODE" button that opens a personal QR encoding `{bountyId, walletAddress, signupId}`. The admin scans this at the event.
-- After check-in: card shows "✓ CHECKED IN — reward pending event close".
-- After completion: shows reward amount earned.
+## Out of scope for this pass
 
-### Check-in flow (two compatible paths)
+- Trait artwork itself — placeholder SVG primitives go in first; swap once you've sourced the layer set from Fiverr / commissioned work.
+- Secondary marketplace listing (OpenSea/Magic Eden auto-index it from contract metadata once deployed).
+- Royalty-receipt analytics dashboard (separate iteration once funds start flowing).
 
-**Path A — admin scans champion's personal QR (preferred):**
-1. Admin opens `/admin/bounties/<id>/scan` (camera scanner)
-2. Scans champion's QR → posts `{signupId, walletAddress}` to edge function `bounty-checkin`
-3. Edge function verifies admin role, verifies signup exists + status `pending` + bounty `running`, then calls `addParticipant` on-chain using `BOUNTY_ADMIN_PRIVATE_KEY`, updates row → status `checked_in`, `added_tx_hash`, `checked_in_at`.
+## Order of work once approved
 
-**Path B — champion scans event QR:**
-1. Event QR encodes `/checkin/<bountyId>?t=<token>`
-2. Page reads token, looks up signup by `auth.uid()`, posts to same edge function with token instead of admin auth.
-3. Edge function validates token + expiry, then same on-chain add.
+1. Write & deploy `MembershipNFT` to Base, add address to `contracts.ts`.
+2. Migration: `membership_mints` table + RLS.
+3. Edge function `mint-monthly-membership` + wire into `Donate.tsx`.
+4. UI: Donate badge, Dashboard memberships strip, Treasury tile.
+5. Placeholder generative SVG (5 layers, ~6 variants each) so something visible mints day one.
 
-Both paths funnel through one edge function so the on-chain write is centralized and gas is sponsored by the admin key.
-
-### Edge function: `bounty-checkin`
-
-Inputs: `{ bountyId: uuid, walletAddress: string, token?: string }`
-- Auth: either admin role (via JWT) OR valid `check_in_token` matching the bounty
-- Verify bounty status = `running` and not expired
-- Verify signup exists and status = `pending`
-- Call `addParticipant(onChainId, walletAddress)` using admin private key on Base
-- Update `bounty_signups` row → `checked_in`, store tx hash + timestamp
-
-### Files
-
-**New:**
-- `supabase/functions/bounty-checkin/index.ts` — gated on-chain check-in
-- `src/pages/CheckIn.tsx` — champion-side QR landing page
-- `src/pages/AdminBountyScan.tsx` — admin camera scanner
-- `src/components/champion/MyCheckInQR.tsx` — personal QR for active bounty
-
-**Modified:**
-- migration: add columns to `bounties` and `bounty_signups`
-- `useBountyAdmin.ts` — add `startEvent`, `endEvent`; update `completeBounty` to mark signups
-- `AdminBounties.tsx` — new lifecycle controls, signup counts, link to scanner
-- `ChampionDashboard.tsx` — surface check-in QR for `running` bounties; remove direct on-chain logic
-- `useBounties.ts` — include new fields; expose signup count
-
-### Dependencies
-
-- QR generation already present (`RedeemQRDialog` uses it)
-- QR scanning: add `html5-qrcode` or `@yudiel/react-qr-scanner` for camera input
-
-### Out of scope (this pass)
-
-- Geofencing the check-in (location verification)
-- Multi-day events / repeat check-ins
-- Bulk CSV import of attendance
-
-Approve and I'll implement the migration, edge function, and UI changes together.
+Approve and I'll execute in that order. The contract code itself I'll need you to deploy (or paste the deploy artifact back) — everything else I can ship end-to-end.
