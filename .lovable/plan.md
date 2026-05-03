@@ -1,58 +1,69 @@
+# Finalize Phase 1 + Champion Dashboard (Phase 2)
 
-# Proof of Purpose — Phase 1 Bootstrap
+## Part A — Close out Phase 1
 
-Set up the foundation of popmgm.org per the uploaded spec. Phase 1 only — no app pages yet. We stop after wallet login + admin allowlist works end-to-end.
+1. **Populate ABIs** with the source you pasted:
+   - `src/contracts/abis/PurposeToken.json` — full ERC20Burnable + `mint`, `setBountyManager`, `bountyManager`, `owner`, `transferOwnership`
+   - `src/contracts/abis/BountyManager.json` — full ABI from your first paste (`addParticipant`, `approveAdmin`, `completeBounty`, `createBounty`, `removeAdmin`, `updateTreasury`, plus the read methods + events)
+   - `src/contracts/abis/VendorRedemptionManager.json` — leave as `[]` placeholder until you paste it (not needed for champion view)
 
-## Scope (Phase 1)
+2. **Project memory** — write two notes:
+   - `mem://constraints/purpose-token-soulbound`: PurposeToken is **not** soulbound at the contract level. Mitigation: never expose `transfer`/`approve` PURPOSE UI. Burns happen via VendorRedemption only. Backlog: redeploy with `_update` override reverting unless `from == 0` or `to == 0`. You also plan to redeploy `PurposeBountyManager`.
+   - `mem://index.md` Core line: "PURPOSE token: never expose transfer/approve in UI."
 
-1. **Lovable Cloud** enabled.
-2. **Database schema** — full migration from `SCHEMA.md`:
-   - `app_role` enum + `user_roles` + `has_role` / `has_any_role` SECURITY DEFINER functions
-   - `profiles`, `wallet_auth_nonces`, `pending_applicants`
-   - `vendors`, `bounties`, `bounty_rewards`, `vendor_redemptions`, `donations`
-   - `bulletin_posts`, `bulletin_comments`, `proposals`, `votes`
-   - RLS policies (public read where transparency requires, admin-write via `has_role`)
-   - `tg_set_updated_at` trigger
-   - Storage buckets: `vendor-documents` (private), `avatars` (public), `bounty-images` (public)
-3. **Contracts config** — `src/config/contracts.ts` with all Base mainnet addresses (PURPOSE, BountyManager, VendorRedemption, Treasury, USDC, Donation Split). ABIs folder `src/contracts/abis/` seeded with the minimal ERC20 ABI; placeholders for `PurposeToken.json`, `BountyManager.json`, `VendorRedemptionManager.json` to be pasted in.
-4. **thirdweb client** — `src/lib/thirdweb.ts` with v5 client, Base chain, in-app wallet (email + Google + Apple + passkey + external wallet), smart accounts on Base with sponsored gas. `ThirdwebProvider` wired into `App.tsx`.
-5. **Edge functions** (all `verify_jwt = false`, validated in code):
-   - `wallet-auth-nonce` — issues SIWE-style nonce, stored in `wallet_auth_nonces` (5 min expiry)
-   - `wallet-auth` — verifies signature with `viem` (EOAs + ERC-1271 smart accounts), upserts user `{wallet}@wallet.local` with deterministic password derived from service role key, upserts `profiles` row, returns Supabase session, fires `grant-admin`
-   - `grant-admin` — idempotent allowlist: `0xa5a484Af10FF67257A06DDbf8DdE6A99a483f098` and `gyasi.eth` (resolved via mainnet RPC, cached); inserts admin role on conflict do nothing
-6. **Frontend primitives**:
-   - `<ConnectWalletButton />` — drives the nonce → sign → wallet-auth flow and stores Supabase session
-   - `<RoleGuard role="admin">` (and array variant) — calls `has_role` RPC
-   - `/login` page with the connect button + a tiny status panel (wallet, supabase session, roles) so we can verify end-to-end
-7. **Brand tokens** in `index.css` + `tailwind.config.ts`:
-   - Background `hsl(220 70% 12%)` deep navy
-   - Accent `hsl(43 96% 56%)` gold
-   - Semantic tokens only — no inline colors. Update `Index` to a minimal landing placeholder using the new tokens.
+## Part B — Champion Dashboard (matches your screenshot)
 
-## Out of scope (later phases)
+**Route:** `/dashboard` (default landing for any signed-in user without admin/vendor role).
 
-- Public pages (Home, About, How It Works, Vendors, Donate, Transparency)
-- Champion / Vendor / Donor dashboards
-- Admin pages (applicants, bounties, vendors, audit)
-- `record-donation`, Coinbase Commerce, CDP Onramp edge functions
-- QR scanner / redemption flow
+**Layout**
 
-## Things you'll need to provide after approval
+```text
+"What's poppin, Champ? 🚀"
 
-- ABI JSON for `PurposeToken`, `BountyManager`, `VendorRedemptionManager` (paste into chat or upload)
-- thirdweb client ID (default to the existing `0f6689ee21b2280f8ec05ad7986716e2` unless you say otherwise)
+┌─ Your $PURPOSE Balance ──────────────────┐
+│           <balance, gold, 2dp>           │
+│           [ Show Redeem QR ]             │
+└──────────────────────────────────────────┘
 
-## Tech notes
+──── Active Bounties ────
+  cards for bounties champ signed up for, not yet completed
 
-- Roles strictly in `user_roles`; never on `profiles`. RLS uses `has_role(auth.uid(), 'admin')`.
-- Wallet password derivation uses HMAC over `SUPABASE_SERVICE_ROLE_KEY + walletAddress` — wallet address is never the password.
-- Admin allowlist resolves `gyasi.eth` once per cold start via public mainnet RPC; resolution failure is non-fatal.
-- `wallet_auth_nonces` has RLS enabled with no policies — service role only.
-- No client-side admin checks; every gate goes through `has_role` RPC under the user's session.
+──── Available Bounties ────
+  cards for open bounties champ hasn't joined
+  [View Details]  [Sign Up]
+```
 
-## Acceptance check (Phase 1 done)
+**Components**
+- `pages/Dashboard.tsx` — role-router: admin→`/admin`, vendor→`/vendor`, else ChampionDashboard
+- `components/champion/ChampionDashboard.tsx` — page composition + greeting
+- `components/champion/PurposeBalanceCard.tsx` — `balanceOf(account)` on PURPOSE via thirdweb readContract; format from 1e18; gold accent
+- `components/champion/RedeemQRDialog.tsx` — QR encodes `{wallet, expires_at, signature}` (champion signs a short-lived nonce client-side; vendor scanner verifies later)
+- `components/bounties/BountyCard.tsx` — shared, props: `{ bounty, mode: "active" | "available", onSignUp, onViewDetails }`
+- `components/bounties/BountyDetailsDialog.tsx` — title, description, reward, slots, deadline
+- `hooks/useBounties.ts` — reads bounties from BountyManager: loop `bountyCount`, call `bounties(i)` + `getParticipants(i)`; split active vs available based on whether `account.address` is a participant and `completed == false`
+- `hooks/usePurposeBalance.ts` — wraps `balanceOf`, 15s polling + invalidation after sign-up
 
-- Visit `/login`, connect with email or external wallet → Supabase session created
-- `profiles` row exists with the wallet address
-- If wallet matches allowlist (or resolves to `gyasi.eth`), `user_roles` has an `admin` row
-- `<RoleGuard role="admin">` renders gated content for that wallet only
+**Data flow**
+- Bounty list = chain-only for now (no DB mirror — keeps state honest)
+- Sign-up calls `addParticipant(bountyId, account.address)` via thirdweb sponsored-gas smart account
+  - Note: in the contract you pasted, `addParticipant` requires the caller to be an approved admin. We'll need either (a) a champion-callable `signUpForBounty(bountyId)` in the redeployed BountyManager, or (b) a backend edge function `bounty-signup` that calls `addParticipant` with an admin signer key. **Recommendation: (a) — add a public `signUpForBounty` to your redeploy.** Until redeploy, the Sign Up button calls a `bounty-signup` edge function as a stopgap.
+
+**Styling**
+- Existing semantic tokens; balance number `text-primary text-4xl font-bold`
+- Section dividers: thin border with centered muted label (matches screenshot)
+- Empty state for Active: muted "No active bounties yet."
+
+## Part C — Header + role routing
+
+- `components/layout/Header.tsx`: logo, Vendors / Docs / Dashboard / About / Donate / Logout, theme toggle
+- Logout: `supabase.auth.signOut()` + thirdweb disconnect
+- Wire `<Header />` into App layout above all routes
+
+## What I'll need from you
+
+- **Stopgap signer for `bounty-signup`** (only if you want Sign Up to work *before* you redeploy): an admin EOA private key set as a Supabase secret `BOUNTY_ADMIN_PRIVATE_KEY`. Skip this if you're fine with Sign Up being disabled until your redeploy ships.
+- For the redeployed `PurposeBountyManager`, add a public `signUpForBounty(uint256 bountyId)` that does `bounties[bountyId].participants.push(msg.sender)` with checks for: bounty exists, not completed, not already signed up, max participants not exceeded.
+
+## Out of scope this pass
+
+Vendor scanner + redemption flow, admin pages (applicants/bounties/vendors), donations, transparency page, public marketing pages.
