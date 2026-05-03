@@ -14,16 +14,466 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bounties: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          expires_at: string | null
+          id: string
+          image_url: string | null
+          location: string | null
+          on_chain_id: number | null
+          on_chain_tx_hash: string | null
+          reward_amount: number
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          image_url?: string | null
+          location?: string | null
+          on_chain_id?: number | null
+          on_chain_tx_hash?: string | null
+          reward_amount: number
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          image_url?: string | null
+          location?: string | null
+          on_chain_id?: number | null
+          on_chain_tx_hash?: string | null
+          reward_amount?: number
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bounty_rewards: {
+        Row: {
+          bounty_id: string | null
+          created_at: string
+          id: string
+          mint_tx_hash: string | null
+          on_chain_bounty_id: number | null
+          participant_wallet: string
+          purpose_amount: number
+        }
+        Insert: {
+          bounty_id?: string | null
+          created_at?: string
+          id?: string
+          mint_tx_hash?: string | null
+          on_chain_bounty_id?: number | null
+          participant_wallet: string
+          purpose_amount: number
+        }
+        Update: {
+          bounty_id?: string | null
+          created_at?: string
+          id?: string
+          mint_tx_hash?: string | null
+          on_chain_bounty_id?: number | null
+          participant_wallet?: string
+          purpose_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bounty_rewards_bounty_id_fkey"
+            columns: ["bounty_id"]
+            isOneToOne: false
+            referencedRelation: "bounties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bulletin_comments: {
+        Row: {
+          author_id: string
+          created_at: string
+          id: string
+          message: string
+          post_id: string
+        }
+        Insert: {
+          author_id: string
+          created_at?: string
+          id?: string
+          message: string
+          post_id: string
+        }
+        Update: {
+          author_id?: string
+          created_at?: string
+          id?: string
+          message?: string
+          post_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bulletin_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "bulletin_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bulletin_posts: {
+        Row: {
+          author_id: string
+          created_at: string
+          id: string
+          message: string
+        }
+        Insert: {
+          author_id: string
+          created_at?: string
+          id?: string
+          message: string
+        }
+        Update: {
+          author_id?: string
+          created_at?: string
+          id?: string
+          message?: string
+        }
+        Relationships: []
+      }
+      donations: {
+        Row: {
+          amount_usdc: number
+          champion_referral: string | null
+          charge_id: string | null
+          created_at: string
+          donor_wallet: string
+          id: string
+          source: string
+          status: string
+          tx_hash: string | null
+        }
+        Insert: {
+          amount_usdc: number
+          champion_referral?: string | null
+          charge_id?: string | null
+          created_at?: string
+          donor_wallet: string
+          id?: string
+          source: string
+          status?: string
+          tx_hash?: string | null
+        }
+        Update: {
+          amount_usdc?: number
+          champion_referral?: string | null
+          charge_id?: string | null
+          created_at?: string
+          donor_wallet?: string
+          id?: string
+          source?: string
+          status?: string
+          tx_hash?: string | null
+        }
+        Relationships: []
+      }
+      pending_applicants: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          name: string | null
+          notes: string | null
+          phone: string | null
+          requested_role: Database["public"]["Enums"]["app_role"]
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string | null
+          notes?: string | null
+          phone?: string | null
+          requested_role: Database["public"]["Enums"]["app_role"]
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string | null
+          notes?: string | null
+          phone?: string | null
+          requested_role?: Database["public"]["Enums"]["app_role"]
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          wallet_address?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          display_name: string | null
+          email: string | null
+          id: string
+          phone: string | null
+          updated_at: string
+          username: string | null
+          wallet_address: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id: string
+          phone?: string | null
+          updated_at?: string
+          username?: string | null
+          wallet_address: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+          username?: string | null
+          wallet_address?: string
+        }
+        Relationships: []
+      }
+      proposals: {
+        Row: {
+          closes_at: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          text: string
+        }
+        Insert: {
+          closes_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          text: string
+        }
+        Update: {
+          closes_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          text?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          assigned_by: string | null
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          assigned_by?: string | null
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          assigned_by?: string | null
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vendor_redemptions: {
+        Row: {
+          champion_wallet: string
+          created_at: string
+          id: string
+          purpose_amount_wei: number
+          tx_hash: string | null
+          usdc_payout: number
+          vendor_wallet: string
+        }
+        Insert: {
+          champion_wallet: string
+          created_at?: string
+          id?: string
+          purpose_amount_wei: number
+          tx_hash?: string | null
+          usdc_payout: number
+          vendor_wallet: string
+        }
+        Update: {
+          champion_wallet?: string
+          created_at?: string
+          id?: string
+          purpose_amount_wei?: number
+          tx_hash?: string | null
+          usdc_payout?: number
+          vendor_wallet?: string
+        }
+        Relationships: []
+      }
+      vendors: {
+        Row: {
+          approved: boolean
+          approved_tx_hash: string | null
+          business_name: string
+          category: string | null
+          contact_email: string | null
+          created_at: string
+          description: string | null
+          id: string
+          logo_url: string | null
+          phone: string | null
+          updated_at: string
+          w9_url: string | null
+          wallet_address: string
+        }
+        Insert: {
+          approved?: boolean
+          approved_tx_hash?: string | null
+          business_name: string
+          category?: string | null
+          contact_email?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          phone?: string | null
+          updated_at?: string
+          w9_url?: string | null
+          wallet_address: string
+        }
+        Update: {
+          approved?: boolean
+          approved_tx_hash?: string | null
+          business_name?: string
+          category?: string | null
+          contact_email?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          phone?: string | null
+          updated_at?: string
+          w9_url?: string | null
+          wallet_address?: string
+        }
+        Relationships: []
+      }
+      votes: {
+        Row: {
+          choice: string
+          created_at: string
+          id: string
+          proposal_id: string | null
+          voter_id: string
+          voter_wallet: string
+        }
+        Insert: {
+          choice: string
+          created_at?: string
+          id?: string
+          proposal_id?: string | null
+          voter_id: string
+          voter_wallet: string
+        }
+        Update: {
+          choice?: string
+          created_at?: string
+          id?: string
+          proposal_id?: string | null
+          voter_id?: string
+          voter_wallet?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "votes_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wallet_auth_nonces: {
+        Row: {
+          created_at: string
+          expires_at: string
+          nonce: string
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          nonce: string
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          nonce?: string
+          wallet_address?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_any_role: {
+        Args: {
+          _roles: Database["public"]["Enums"]["app_role"][]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "vendor" | "champion" | "donor" | "support"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +600,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "vendor", "champion", "donor", "support"],
+    },
   },
 } as const
