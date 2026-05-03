@@ -10,6 +10,7 @@ export default function Dashboard() {
   const explicitChampion = params.get("as") === "champion";
   const { session, roles, isAdminPreview, isLoading } = useEffectiveRoles();
   const [appStatus, setAppStatus] = useState<"loading" | "none" | "pending" | "approved" | "rejected">("loading");
+  const [pendingOther, setPendingOther] = useState<"vendor" | "catalyst" | null | undefined>(undefined);
 
   useEffect(() => {
     if (isLoading) return;
@@ -20,10 +21,12 @@ export default function Dashboard() {
     if (roles.includes("admin")) return navigate("/admin", { replace: true });
     if (roles.includes("vendor")) return navigate("/vendor", { replace: true });
     if (roles.includes("catalyst")) return navigate("/catalyst", { replace: true });
-    if (!explicitChampion && roles.length === 0 && appStatus === "none" && !isAdminPreview) {
+    if (pendingOther === "vendor") return navigate("/vendor", { replace: true });
+    if (pendingOther === "catalyst") return navigate("/catalyst", { replace: true });
+    if (!explicitChampion && roles.length === 0 && appStatus === "none" && pendingOther === null && !isAdminPreview) {
       navigate("/onboarding", { replace: true });
     }
-  }, [isLoading, session, roles, navigate, explicitChampion, appStatus, isAdminPreview]);
+  }, [isLoading, session, roles, navigate, explicitChampion, appStatus, pendingOther, isAdminPreview]);
 
   // Look up champion application status
   useEffect(() => {
@@ -40,7 +43,25 @@ export default function Dashboard() {
     })();
   }, [session?.user?.id]);
 
-  if (isLoading || appStatus === "loading") {
+  // Look up pending vendor / catalyst applications so we can route them to the right dashboard
+  useEffect(() => {
+    if (!session?.user) return;
+    (async () => {
+      const [{ data: cat }, { data: ven }] = await Promise.all([
+        supabase.from("catalyst_orgs").select("id").eq("user_id", session.user.id).maybeSingle(),
+        // vendors table has no user_id — match by profile wallet
+        supabase.from("profiles").select("wallet_address").eq("id", session.user.id).maybeSingle().then(async ({ data: prof }) => {
+          if (!prof?.wallet_address) return { data: null as { id: string } | null };
+          return await supabase.from("vendors").select("id").ilike("wallet_address", prof.wallet_address).maybeSingle();
+        }),
+      ]);
+      if (ven) setPendingOther("vendor");
+      else if (cat) setPendingOther("catalyst");
+      else setPendingOther(null);
+    })();
+  }, [session?.user?.id]);
+
+  if (isLoading || appStatus === "loading" || pendingOther === undefined) {
     return (
       <main className="mx-auto max-w-3xl px-6 py-24 text-center">
         <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">// loading</p>

@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import { useEffectiveRoles } from "@/hooks/useEffectiveRoles";
 import { useGovernanceConfig } from "@/hooks/useGovernance";
 import { supabase } from "@/integrations/supabase/client";
+import { useCatalystApplication } from "@/hooks/useApplicationStatus";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,6 +28,7 @@ export default function CatalystDashboard() {
   const account = useActiveAccount();
   const navigate = useNavigate();
   const { session, roles, isLoading } = useEffectiveRoles();
+  const { status: appStatus, orgName } = useCatalystApplication(session?.user.id);
   const { data: gov } = useGovernanceConfig();
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [name, setName] = useState("");
@@ -35,12 +37,20 @@ export default function CatalystDashboard() {
   const [maxP, setMaxP] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const isApproved = roles.includes("catalyst");
+  const isPending = !isApproved && appStatus === "pending";
+
   useEffect(() => {
     if (isLoading) return;
-    if (!session) navigate("/login", { replace: true });
-    else if (!roles.includes("catalyst"))
-      navigate("/dashboard", { replace: true });
-  }, [isLoading, session, roles, navigate]);
+    if (!session) {
+      navigate("/login", { replace: true });
+      return;
+    }
+    if (appStatus === "loading") return;
+    if (!isApproved && appStatus === "none") {
+      navigate("/apply/catalyst", { replace: true });
+    }
+  }, [isLoading, session, isApproved, appStatus, navigate]);
 
   async function load() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -104,26 +114,40 @@ export default function CatalystDashboard() {
         </p>
       )}
 
-      <div className="brutal mt-8 p-6">
-        <h2 className="font-display text-2xl">NEW DRAFT</h2>
-        <div className="mt-4 space-y-3">
-          <div><Label>Bounty name *</Label><Input value={name} onChange={(e) => setName(e.target.value)} maxLength={120} /></div>
-          <div><Label>Description</Label><Textarea rows={4} value={description} onChange={(e) => setDescription(e.target.value)} maxLength={2000} /></div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>Reward (PURPOSE) *</Label>
-              <Input inputMode="decimal" value={reward} onChange={(e) => setReward(e.target.value.replace(/[^0-9.]/g, ""))} />
-            </div>
-            <div>
-              <Label>Max participants *</Label>
-              <Input type="number" min={1} value={maxP} onChange={(e) => setMaxP(e.target.value)} />
-            </div>
-          </div>
-          <Button onClick={submitDraft} disabled={busy} className="brutal-primary brutal-hover w-full font-display">
-            {busy ? "SAVING…" : "SUBMIT FOR VOTE"}
+      {isPending ? (
+        <div className="brutal mt-8 p-6">
+          <p className="font-mono text-[10px] uppercase tracking-widest text-primary">// pending approval</p>
+          <h2 className="mt-2 font-display text-3xl">{orgName ?? "Your org"}</h2>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Your catalyst application is in review. Once an admin approves your org, you'll be able
+            to draft bounties and submit them for the DAO vote.
+          </p>
+          <Button disabled className="brutal-primary mt-6 w-full font-display opacity-50 cursor-not-allowed">
+            NEW DRAFT · LOCKED
           </Button>
         </div>
-      </div>
+      ) : (
+        <div className="brutal mt-8 p-6">
+          <h2 className="font-display text-2xl">NEW DRAFT</h2>
+          <div className="mt-4 space-y-3">
+            <div><Label>Bounty name *</Label><Input value={name} onChange={(e) => setName(e.target.value)} maxLength={120} /></div>
+            <div><Label>Description</Label><Textarea rows={4} value={description} onChange={(e) => setDescription(e.target.value)} maxLength={2000} /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Reward (PURPOSE) *</Label>
+                <Input inputMode="decimal" value={reward} onChange={(e) => setReward(e.target.value.replace(/[^0-9.]/g, ""))} />
+              </div>
+              <div>
+                <Label>Max participants *</Label>
+                <Input type="number" min={1} value={maxP} onChange={(e) => setMaxP(e.target.value)} />
+              </div>
+            </div>
+            <Button onClick={submitDraft} disabled={busy} className="brutal-primary brutal-hover w-full font-display">
+              {busy ? "SAVING…" : "SUBMIT FOR VOTE"}
+            </Button>
+          </div>
+        </div>
+      )}
 
       <div className="mt-10">
         <h2 className="font-display text-2xl border-b-2 border-foreground pb-2">YOUR DRAFTS</h2>

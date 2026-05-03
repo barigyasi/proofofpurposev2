@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { useVendorApplication } from "@/hooks/useApplicationStatus";
 
 type Scanned = { wallet: string; expires_at: number; signature: string };
 
@@ -18,17 +19,27 @@ export default function VendorDashboard() {
   const account = useActiveAccount();
   const navigate = useNavigate();
   const { session, roles, isLoading } = useEffectiveRoles();
+  const { status: appStatus, businessName } = useVendorApplication(account?.address);
   const [scanned, setScanned] = useState<Scanned | null>(null);
   const [amount, setAmount] = useState("");
   const [busy, setBusy] = useState(false);
   const [scanning, setScanning] = useState(false);
 
+  const isApproved = roles.includes("vendor");
+  const isPending = !isApproved && appStatus === "pending";
+
   useEffect(() => {
     if (isLoading) return;
-    if (!session) navigate("/login", { replace: true });
-    else if (!roles.includes("vendor"))
-      navigate("/dashboard", { replace: true });
-  }, [isLoading, session, roles, navigate]);
+    if (!session) {
+      navigate("/login", { replace: true });
+      return;
+    }
+    if (appStatus === "loading") return;
+    if (!isApproved && appStatus === "none") {
+      // No application and no role → send to apply
+      navigate("/apply/vendor", { replace: true });
+    }
+  }, [isLoading, session, isApproved, appStatus, navigate]);
 
   if (isLoading || !session) return null;
 
@@ -100,7 +111,20 @@ export default function VendorDashboard() {
         <h1 className="mt-2 font-display text-5xl">REDEEM<br /><span className="text-primary">$PURPOSE</span></h1>
       </div>
 
-      {!scanned ? (
+
+      {isPending ? (
+        <div className="brutal mt-8 p-6">
+          <p className="font-mono text-[10px] uppercase tracking-widest text-primary">// pending approval</p>
+          <h2 className="mt-2 font-display text-3xl">{businessName ?? "Your business"}</h2>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Your vendor application is in review. Once an admin approves you, this terminal unlocks
+            and you can scan champion QR codes to accept $PURPOSE.
+          </p>
+          <Button disabled className="brutal-primary mt-6 w-full font-display text-2xl py-8 opacity-50 cursor-not-allowed">
+            SCAN CHAMPION QR · LOCKED
+          </Button>
+        </div>
+      ) : !scanned ? (
         <div className="mt-8 space-y-4">
           {scanning ? (
             <QRScanner onResult={handleResult} onError={(e) => toast.error(e)} />
