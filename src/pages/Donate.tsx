@@ -69,9 +69,27 @@ export default function Donate() {
         </p>
         <h1 className="mt-2 font-display text-5xl">DONATE</h1>
         <p className="mt-3 max-w-prose text-sm text-muted-foreground">
-          Funds go to the on-chain donation split contract — fully transparent, fully on Base.
+          Funds go directly on-chain to the donation split contract. No account
+          needed — just connect and give.
         </p>
       </div>
+      {!account && (
+        <div className="brutal mt-6 p-4 text-sm">
+          <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+            // step 1 of 2
+          </p>
+          <p className="mt-2">
+            Connect with email, Google, Apple, or passkey to send your donation. No
+            sign-up form. Gas is on us.
+          </p>
+          <a
+            href="/login"
+            className="brutal-primary brutal-hover mt-3 inline-block px-4 py-2 font-display text-sm"
+          >
+            CONNECT →
+          </a>
+        </div>
+      )}
       <div className="brutal mt-8 p-6">
         <Label>Amount (USDC)</Label>
         <Input
@@ -81,8 +99,12 @@ export default function Donate() {
           placeholder="50"
           className="mt-2 text-2xl"
         />
-        <Button onClick={donate} disabled={busy} className="brutal-primary brutal-hover mt-4 w-full font-display text-lg">
-          {busy ? "SENDING…" : "DONATE NOW"}
+        <Button
+          onClick={donate}
+          disabled={busy || !account}
+          className="brutal-primary brutal-hover mt-4 w-full font-display text-lg"
+        >
+          {busy ? "SENDING…" : account ? "DONATE NOW" : "CONNECT TO DONATE"}
         </Button>
         {hash && (
           <a
