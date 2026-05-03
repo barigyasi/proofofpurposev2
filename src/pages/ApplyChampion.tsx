@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 
 const schema = z.object({
   championName: z.string().trim().min(2).max(120),
+  championEmail: z.string().trim().email().max(255),
   dateOfBirth: z.string().min(1, "Date of birth required"),
   school: z.string().trim().min(2).max(160),
   guardianName: z.string().trim().min(2).max(120),
@@ -27,6 +28,7 @@ export default function ApplyChampion() {
   const [existing, setExisting] = useState<{ status: string } | null>(null);
   const [form, setForm] = useState({
     championName: "",
+    championEmail: "",
     dateOfBirth: "",
     school: "",
     guardianName: "",
@@ -70,6 +72,7 @@ export default function ApplyChampion() {
         user_id: user.id,
         wallet_address: account.address,
         champion_name: parsed.data.championName,
+        champion_email: parsed.data.championEmail,
         date_of_birth: parsed.data.dateOfBirth,
         school: parsed.data.school,
         guardian_name: parsed.data.guardianName,
@@ -83,7 +86,7 @@ export default function ApplyChampion() {
         wallet_address: account.address,
         requested_role: "champion" as never,
         name: parsed.data.championName,
-        email: parsed.data.guardianEmail,
+        email: parsed.data.championEmail,
         phone: parsed.data.guardianPhone,
       });
       toast.success("Application submitted — pending verification");
@@ -129,6 +132,7 @@ export default function ApplyChampion() {
         <section className="space-y-4">
           <p className="font-mono text-[11px] uppercase tracking-widest text-primary">// about you</p>
           <div><Label>Full name *</Label><Input value={form.championName} onChange={(e) => set("championName", e.target.value)} maxLength={120} /></div>
+          <div><Label>Your email *</Label><Input type="email" value={form.championEmail} onChange={(e) => set("championEmail", e.target.value)} maxLength={255} /></div>
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Date of birth *</Label><Input type="date" value={form.dateOfBirth} onChange={(e) => set("dateOfBirth", e.target.value)} /></div>
             <div><Label>School *</Label><Input value={form.school} onChange={(e) => set("school", e.target.value)} maxLength={160} /></div>

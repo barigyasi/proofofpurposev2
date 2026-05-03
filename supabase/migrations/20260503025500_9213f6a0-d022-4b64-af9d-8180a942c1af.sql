@@ -1,0 +1,1 @@
+ALTER TABLE public.champion_applications ADD COLUMN champion_email text;

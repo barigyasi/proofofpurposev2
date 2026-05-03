@@ -19,6 +19,7 @@ type Applicant = {
 
 type ChampionApp = {
   champion_name: string;
+  champion_email: string | null;
   date_of_birth: string;
   school: string;
   guardian_name: string;
@@ -76,7 +77,7 @@ export default function AdminApplicants() {
     if (a.requested_role === "champion") {
       const { data } = await supabase
         .from("champion_applications")
-        .select("champion_name,date_of_birth,school,guardian_name,guardian_email,guardian_phone,guardian_relationship,notes")
+        .select("champion_name,champion_email,date_of_birth,school,guardian_name,guardian_email,guardian_phone,guardian_relationship,notes")
         .ilike("wallet_address", a.wallet_address)
         .order("created_at", { ascending: false })
         .limit(1)
@@ -192,6 +193,7 @@ export default function AdminApplicants() {
                   ) : a.requested_role === "champion" ? (
                     <div className="grid gap-3 sm:grid-cols-2">
                       <Field label="Champion" value={(d as ChampionApp).champion_name} />
+                      <Field label="Champion email" value={(d as ChampionApp).champion_email ?? "—"} />
                       <Field label="Date of birth" value={(d as ChampionApp).date_of_birth} />
                       <Field label="School" value={(d as ChampionApp).school} />
                       <Field label="Guardian" value={`${(d as ChampionApp).guardian_name} (${(d as ChampionApp).guardian_relationship})`} />
