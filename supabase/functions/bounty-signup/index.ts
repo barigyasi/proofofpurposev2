@@ -29,19 +29,6 @@ const ABI = [
     stateMutability: "view",
     type: "function",
   },
-  {
-    inputs: [{ name: "", type: "uint256" }],
-    name: "bounties",
-    outputs: [
-      { name: "name", type: "string" },
-      { name: "description", type: "string" },
-      { name: "rewardAmount", type: "uint256" },
-      { name: "maxParticipants", type: "uint256" },
-      { name: "completed", type: "bool" },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
 ] as const;
 
 Deno.serve(async (req) => {
