@@ -1,15 +1,17 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useActiveAccount } from "thirdweb/react";
 import { useSessionRoles } from "@/hooks/useSessionRoles";
 
 const TILES = [
-  { label: "APPLICANTS", desc: "Review pending champions + vendors", soon: true },
-  { label: "BOUNTIES", desc: "Create, fund, complete bounties", soon: true },
-  { label: "VENDORS", desc: "Approve / revoke vendor wallets", soon: true },
-  { label: "DONATIONS", desc: "Live ledger of inflows", soon: true },
-  { label: "AUDIT LOG", desc: "Every admin action, on-chain + off", soon: true },
-  { label: "TREASURY", desc: "USDC + PURPOSE positions", soon: true },
+  { to: "/admin/bounties", label: "BOUNTIES", desc: "Create, fund, complete bounties" },
+  { to: "/admin/applicants", label: "APPLICANTS", desc: "Review pending champions, vendors, catalysts" },
+  { to: "/admin/catalysts", label: "CATALYSTS", desc: "Approve / revoke partner orgs" },
+  { to: "/admin/vendors", label: "VENDORS", desc: "Approve / revoke vendor wallets" },
+  { to: "/admin/donations", label: "DONATIONS", desc: "Live ledger of inflows" },
+  { to: "/admin/treasury", label: "TREASURY", desc: "USDC + PURPOSE positions" },
+  { to: "/governance", label: "GOVERNANCE", desc: "DAO proposals + votes" },
+  { to: "/admin/audit", label: "AUDIT LOG", desc: "Every admin action, on-chain + off" },
 ];
 
 export default function Admin() {
@@ -19,13 +21,8 @@ export default function Admin() {
 
   useEffect(() => {
     if (isLoading) return;
-    if (!session) {
-      navigate("/login", { replace: true });
-      return;
-    }
-    if (!roles.includes("admin")) {
-      navigate("/dashboard", { replace: true });
-    }
+    if (!session) navigate("/login", { replace: true });
+    else if (!roles.includes("admin")) navigate("/dashboard", { replace: true });
   }, [isLoading, session, roles, navigate]);
 
   if (isLoading || !session || !roles.includes("admin")) return null;
@@ -41,25 +38,16 @@ export default function Admin() {
           <span className="text-primary">CONTROL</span>
         </h1>
         {account && (
-          <p className="mt-3 font-mono text-xs text-muted-foreground">
-            {account.address}
-          </p>
+          <p className="mt-3 font-mono text-xs text-muted-foreground">{account.address}</p>
         )}
       </div>
 
       <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {TILES.map((t) => (
-          <div key={t.label} className="brutal brutal-hover p-6">
-            <div className="flex items-center justify-between">
-              <h3 className="font-display text-2xl">{t.label}</h3>
-              {t.soon && (
-                <span className="brutal-primary px-2 py-0.5 font-mono text-[10px] uppercase">
-                  soon
-                </span>
-              )}
-            </div>
+          <Link key={t.label} to={t.to} className="brutal brutal-hover block p-6">
+            <h3 className="font-display text-2xl">{t.label}</h3>
             <p className="mt-3 text-sm text-muted-foreground">{t.desc}</p>
-          </div>
+          </Link>
         ))}
       </div>
     </main>
