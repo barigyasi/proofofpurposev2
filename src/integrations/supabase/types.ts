@@ -62,6 +62,71 @@ export type Database = {
         }
         Relationships: []
       }
+      bounty_drafts: {
+        Row: {
+          catalyst_id: string | null
+          created_at: string
+          dao_proposal_id: number | null
+          description: string | null
+          expires_at: string | null
+          id: string
+          image_url: string | null
+          location: string | null
+          max_participants: number
+          name: string
+          on_chain_bounty_id: number | null
+          on_chain_tx_hash: string | null
+          proposer_id: string
+          reward_purpose: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          catalyst_id?: string | null
+          created_at?: string
+          dao_proposal_id?: number | null
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          image_url?: string | null
+          location?: string | null
+          max_participants: number
+          name: string
+          on_chain_bounty_id?: number | null
+          on_chain_tx_hash?: string | null
+          proposer_id: string
+          reward_purpose: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          catalyst_id?: string | null
+          created_at?: string
+          dao_proposal_id?: number | null
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          image_url?: string | null
+          location?: string | null
+          max_participants?: number
+          name?: string
+          on_chain_bounty_id?: number | null
+          on_chain_tx_hash?: string | null
+          proposer_id?: string
+          reward_purpose?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bounty_drafts_catalyst_id_fkey"
+            columns: ["catalyst_id"]
+            isOneToOne: false
+            referencedRelation: "catalyst_orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bounty_rewards: {
         Row: {
           bounty_id: string | null
@@ -153,6 +218,57 @@ export type Database = {
         }
         Relationships: []
       }
+      catalyst_orgs: {
+        Row: {
+          approved: boolean
+          approved_at: string | null
+          approved_by: string | null
+          contact_email: string | null
+          created_at: string
+          id: string
+          location: string | null
+          logo_url: string | null
+          mission: string | null
+          org_name: string
+          updated_at: string
+          user_id: string
+          wallet_address: string
+          website: string | null
+        }
+        Insert: {
+          approved?: boolean
+          approved_at?: string | null
+          approved_by?: string | null
+          contact_email?: string | null
+          created_at?: string
+          id?: string
+          location?: string | null
+          logo_url?: string | null
+          mission?: string | null
+          org_name: string
+          updated_at?: string
+          user_id: string
+          wallet_address: string
+          website?: string | null
+        }
+        Update: {
+          approved?: boolean
+          approved_at?: string | null
+          approved_by?: string | null
+          contact_email?: string | null
+          created_at?: string
+          id?: string
+          location?: string | null
+          logo_url?: string | null
+          mission?: string | null
+          org_name?: string
+          updated_at?: string
+          user_id?: string
+          wallet_address?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       donations: {
         Row: {
           amount_usdc: number
@@ -186,6 +302,27 @@ export type Database = {
           source?: string
           status?: string
           tx_hash?: string | null
+        }
+        Relationships: []
+      }
+      governance_config: {
+        Row: {
+          id: number
+          updated_at: string
+          vote_contract_address: string | null
+          vote_token_address: string | null
+        }
+        Insert: {
+          id?: number
+          updated_at?: string
+          vote_contract_address?: string | null
+          vote_token_address?: string | null
+        }
+        Update: {
+          id?: number
+          updated_at?: string
+          vote_contract_address?: string | null
+          vote_token_address?: string | null
         }
         Relationships: []
       }
@@ -473,7 +610,13 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "vendor" | "champion" | "donor" | "support"
+      app_role:
+        | "admin"
+        | "vendor"
+        | "champion"
+        | "donor"
+        | "support"
+        | "catalyst"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -601,7 +744,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "vendor", "champion", "donor", "support"],
+      app_role: ["admin", "vendor", "champion", "donor", "support", "catalyst"],
     },
   },
 } as const

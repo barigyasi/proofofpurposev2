@@ -53,6 +53,18 @@ const Index = () => {
         >
           DONATE
         </Link>
+        <Link
+          to="/apply/catalyst"
+          className="brutal brutal-hover inline-flex items-center px-8 py-5 font-display text-xl"
+        >
+          BECOME A CATALYST
+        </Link>
+        <Link
+          to="/apply/vendor"
+          className="brutal brutal-hover inline-flex items-center px-8 py-5 font-display text-xl"
+        >
+          BECOME A VENDOR
+        </Link>
       </section>
     </main>
   );

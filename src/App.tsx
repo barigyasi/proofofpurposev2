@@ -10,6 +10,22 @@ import Index from "./pages/Index.tsx";
 import Login from "./pages/Login.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
 import Admin from "./pages/Admin.tsx";
+import AdminBounties from "./pages/AdminBounties.tsx";
+import AdminApplicants from "./pages/AdminApplicants.tsx";
+import AdminCatalysts from "./pages/AdminCatalysts.tsx";
+import AdminVendors from "./pages/AdminVendors.tsx";
+import AdminDonations from "./pages/AdminDonations.tsx";
+import AdminTreasury from "./pages/AdminTreasury.tsx";
+import AdminAudit from "./pages/AdminAudit.tsx";
+import CatalystDashboard from "./pages/CatalystDashboard.tsx";
+import VendorDashboard from "./pages/VendorDashboard.tsx";
+import ApplyCatalyst from "./pages/ApplyCatalyst.tsx";
+import ApplyVendor from "./pages/ApplyVendor.tsx";
+import Vendors from "./pages/Vendors.tsx";
+import Donate from "./pages/Donate.tsx";
+import About from "./pages/About.tsx";
+import Governance from "./pages/Governance.tsx";
+import Bulletin from "./pages/Bulletin.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -27,8 +43,23 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/catalyst" element={<CatalystDashboard />} />
+              <Route path="/vendor" element={<VendorDashboard />} />
+              <Route path="/apply/catalyst" element={<ApplyCatalyst />} />
+              <Route path="/apply/vendor" element={<ApplyVendor />} />
+              <Route path="/vendors" element={<Vendors />} />
+              <Route path="/donate" element={<Donate />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/governance" element={<Governance />} />
+              <Route path="/bulletin" element={<Bulletin />} />
               <Route path="/admin" element={<Admin />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="/admin/bounties" element={<AdminBounties />} />
+              <Route path="/admin/applicants" element={<AdminApplicants />} />
+              <Route path="/admin/catalysts" element={<AdminCatalysts />} />
+              <Route path="/admin/vendors" element={<AdminVendors />} />
+              <Route path="/admin/donations" element={<AdminDonations />} />
+              <Route path="/admin/treasury" element={<AdminTreasury />} />
+              <Route path="/admin/audit" element={<AdminAudit />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

@@ -19,6 +19,10 @@ export default function Dashboard() {
     }
     if (roles.includes("vendor")) {
       navigate("/vendor", { replace: true });
+      return;
+    }
+    if (roles.includes("catalyst")) {
+      navigate("/catalyst", { replace: true });
     }
   }, [isLoading, session, roles, navigate]);
 
@@ -32,7 +36,12 @@ export default function Dashboard() {
     );
   }
 
-  if (!session || roles.includes("admin") || roles.includes("vendor")) {
+  if (
+    !session ||
+    roles.includes("admin") ||
+    roles.includes("vendor") ||
+    roles.includes("catalyst")
+  ) {
     return null;
   }
 
