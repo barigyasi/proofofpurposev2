@@ -150,6 +150,13 @@ export function Header() {
         </div>
       </div>
 
+      {isPreview && (
+        <div className="border-t-2 border-primary bg-primary/10 px-4 py-2 text-center font-mono text-[11px] uppercase tracking-widest text-primary sm:px-6">
+          // preview mode · viewing as {viewAs} ·{" "}
+          <button onClick={() => handleViewChange("admin")} className="underline">exit</button>
+        </div>
+      )}
+
       {open && (
         <div className="border-t-2 border-foreground md:hidden">
           <nav className="flex flex-col">
