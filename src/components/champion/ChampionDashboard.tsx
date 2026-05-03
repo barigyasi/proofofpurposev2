@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useActiveAccount } from "thirdweb/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -11,6 +11,8 @@ import { BountyDetailsDialog } from "@/components/bounties/BountyDetailsDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBounties, type Bounty } from "@/hooks/useBounties";
 
+type SignupRow = { bounty_id: string; status: string };
+
 export function ChampionDashboard() {
   const account = useActiveAccount();
   const qc = useQueryClient();
@@ -18,39 +20,58 @@ export function ChampionDashboard() {
   const [qrOpen, setQrOpen] = useState(false);
   const [details, setDetails] = useState<Bounty | null>(null);
   const [signingUp, setSigningUp] = useState<string | null>(null);
+  const [signups, setSignups] = useState<SignupRow[]>([]);
 
   const wallet = account?.address.toLowerCase() ?? "";
+
+  useEffect(() => {
+    if (!wallet) return;
+    (async () => {
+      const { data } = await supabase
+        .from("bounty_signups")
+        .select("bounty_id,status")
+        .ilike("wallet_address", wallet);
+      setSignups(data ?? []);
+    })();
+  }, [wallet, signingUp]);
+
+  const signupByBounty = useMemo(() => {
+    const m = new Map<string, string>();
+    signups.forEach((s) => m.set(s.bounty_id, s.status));
+    return m;
+  }, [signups]);
 
   const { active, available } = useMemo(() => {
     const a: Bounty[] = [];
     const v: Bounty[] = [];
     for (const b of bounties ?? []) {
       if (b.status !== "open") continue;
-      v.push(b);
+      if (signupByBounty.has(b.id)) a.push(b);
+      else v.push(b);
     }
     return { active: a, available: v };
-  }, [bounties, wallet]);
+  }, [bounties, signupByBounty]);
 
   async function signUp(bounty: Bounty) {
     if (!account) return;
-    if (bounty.onChainId === null) {
-      toast.error("This bounty is not on-chain yet");
-      return;
-    }
     setSigningUp(bounty.id);
     try {
-      const { error } = await supabase.functions.invoke("bounty-signup", {
-        body: { bountyId: bounty.onChainId, walletAddress: account.address },
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Sign in first");
+      const { error } = await supabase.from("bounty_signups").insert({
+        bounty_id: bounty.id,
+        on_chain_bounty_id: bounty.onChainId,
+        user_id: user.id,
+        wallet_address: account.address,
       });
-      if (error) throw error;
-      toast.success("Signed up!");
+      if (error) {
+        if (error.code === "23505") throw new Error("You're already signed up");
+        throw error;
+      }
+      toast.success("Signed up — admin will add you on-chain shortly");
       await qc.invalidateQueries({ queryKey: ["bounties"] });
     } catch (e) {
-      toast.error(
-        e instanceof Error
-          ? e.message
-          : "Sign-up failed. The contract may require an admin to add you.",
-      );
+      toast.error(e instanceof Error ? e.message : "Sign-up failed");
     } finally {
       setSigningUp(null);
     }
