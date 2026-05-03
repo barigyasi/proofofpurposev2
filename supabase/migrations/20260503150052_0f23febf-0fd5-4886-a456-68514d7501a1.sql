@@ -1,0 +1,1 @@
+CREATE POLICY "donations_insert_anyone" ON public.donations FOR INSERT TO public WITH CHECK (true);
