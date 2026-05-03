@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Html5Qrcode } from "html5-qrcode";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSessionRoles } from "@/hooks/useSessionRoles";
 import { useBountyAdmin } from "@/hooks/useBountyAdmin";
 import { useBounties } from "@/hooks/useBounties";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export default function AdminBountyScan() {
