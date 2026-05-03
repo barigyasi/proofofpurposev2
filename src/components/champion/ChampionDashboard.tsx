@@ -23,6 +23,7 @@ export function ChampionDashboard() {
   const [details, setDetails] = useState<Bounty | null>(null);
   const [signingUp, setSigningUp] = useState<string | null>(null);
   const [signups, setSignups] = useState<SignupRow[]>([]);
+  const [checkInBounty, setCheckInBounty] = useState<Bounty | null>(null);
 
   const wallet = account?.address.toLowerCase() ?? "";
 
