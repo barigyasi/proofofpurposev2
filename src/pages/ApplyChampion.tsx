@@ -72,6 +72,7 @@ export default function ApplyChampion() {
         user_id: user.id,
         wallet_address: account.address,
         champion_name: parsed.data.championName,
+        champion_email: parsed.data.championEmail,
         date_of_birth: parsed.data.dateOfBirth,
         school: parsed.data.school,
         guardian_name: parsed.data.guardianName,
@@ -85,7 +86,7 @@ export default function ApplyChampion() {
         wallet_address: account.address,
         requested_role: "champion" as never,
         name: parsed.data.championName,
-        email: parsed.data.guardianEmail,
+        email: parsed.data.championEmail,
         phone: parsed.data.guardianPhone,
       });
       toast.success("Application submitted — pending verification");
