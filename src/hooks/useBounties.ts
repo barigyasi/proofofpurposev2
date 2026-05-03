@@ -1,69 +1,43 @@
 import { useQuery } from "@tanstack/react-query";
-import { getContract, readContract } from "thirdweb";
-import { thirdwebClient, baseChain } from "@/lib/thirdweb";
-import { CONTRACTS } from "@/config/contracts";
+import { supabase } from "@/integrations/supabase/client";
 
 export type Bounty = {
-  id: number;
+  id: string;
+  onChainId: number | null;
   name: string;
   description: string;
-  rewardAmount: bigint;
-  maxParticipants: bigint;
-  completed: boolean;
-  participants: string[];
+  rewardAmount: number;
+  status: string;
+  imageUrl: string | null;
+  location: string | null;
+  expiresAt: string | null;
+  txHash: string | null;
+  createdAt: string;
 };
-
-function bountyContract() {
-  return getContract({
-    client: thirdwebClient,
-    chain: baseChain,
-    address: CONTRACTS.BOUNTY_MANAGER,
-  });
-}
 
 export function useBounties() {
   return useQuery({
     queryKey: ["bounties"],
     refetchInterval: 30000,
     queryFn: async (): Promise<Bounty[]> => {
-      const contract = bountyContract();
-      const count = (await readContract({
-        contract,
-        method: "function bountyCount() view returns (uint256)",
-        params: [],
-      })) as bigint;
-      const total = Number(count);
-      if (total === 0) return [];
-      const ids = Array.from({ length: total }, (_, i) => i);
-      const results = await Promise.all(
-        ids.map(async (i) => {
-          const [tuple, participants] = await Promise.all([
-            readContract({
-              contract,
-              method:
-                "function bounties(uint256) view returns (string, string, uint256, uint256, bool)",
-              params: [BigInt(i)],
-            }) as Promise<readonly [string, string, bigint, bigint, boolean]>,
-            readContract({
-              contract,
-              method:
-                "function getParticipants(uint256) view returns (address[])",
-              params: [BigInt(i)],
-            }) as Promise<readonly string[]>,
-          ]);
-          const [name, description, rewardAmount, maxParticipants, completed] = tuple;
-          return {
-            id: i,
-            name,
-            description,
-            rewardAmount,
-            maxParticipants,
-            completed,
-            participants: [...participants],
-          };
-        }),
-      );
-      return results;
+      const { data, error } = await supabase
+        .from("bounties")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []).map((b) => ({
+        id: b.id,
+        onChainId: b.on_chain_id !== null && b.on_chain_id !== undefined ? Number(b.on_chain_id) : null,
+        name: b.title,
+        description: b.description ?? "",
+        rewardAmount: Number(b.reward_amount),
+        status: b.status,
+        imageUrl: b.image_url,
+        location: b.location,
+        expiresAt: b.expires_at,
+        txHash: b.on_chain_tx_hash,
+        createdAt: b.created_at,
+      }));
     },
   });
 }
