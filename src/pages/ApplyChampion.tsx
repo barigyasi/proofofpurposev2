@@ -132,6 +132,7 @@ export default function ApplyChampion() {
         <section className="space-y-4">
           <p className="font-mono text-[11px] uppercase tracking-widest text-primary">// about you</p>
           <div><Label>Full name *</Label><Input value={form.championName} onChange={(e) => set("championName", e.target.value)} maxLength={120} /></div>
+          <div><Label>Your email *</Label><Input type="email" value={form.championEmail} onChange={(e) => set("championEmail", e.target.value)} maxLength={255} /></div>
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Date of birth *</Label><Input type="date" value={form.dateOfBirth} onChange={(e) => set("dateOfBirth", e.target.value)} /></div>
             <div><Label>School *</Label><Input value={form.school} onChange={(e) => set("school", e.target.value)} maxLength={160} /></div>
