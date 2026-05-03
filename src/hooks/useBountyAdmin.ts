@@ -140,7 +140,7 @@ export function useBountyAdmin() {
     }
   }
 
-  async function addParticipant(onChainId: number, addr: string) {
+  async function addParticipant(onChainId: number, addr: string, bountyRowId?: string) {
     if (!account) throw new Error("Connect wallet");
     if (onChainId === null || onChainId === undefined) throw new Error("No on-chain id");
     setBusy(true);
@@ -152,8 +152,17 @@ export function useBountyAdmin() {
       });
       const { transactionHash } = await sendTransaction({ transaction: tx, account });
       await waitForReceipt({ client: thirdwebClient, chain: baseChain, transactionHash });
+      if (bountyRowId) {
+        const { data: { user } } = await supabase.auth.getUser();
+        await supabase
+          .from("bounty_signups")
+          .update({ status: "added", added_tx_hash: transactionHash, added_at: new Date().toISOString(), added_by: user?.id ?? null })
+          .eq("bounty_id", bountyRowId)
+          .ilike("wallet_address", addr);
+      }
       toast.success("Participant added");
       await qc.invalidateQueries({ queryKey: ["bounties"] });
+      await qc.invalidateQueries({ queryKey: ["bounty-signups"] });
     } finally {
       setBusy(false);
     }

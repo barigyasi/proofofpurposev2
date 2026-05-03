@@ -165,6 +165,48 @@ export type Database = {
           },
         ]
       }
+      bounty_signups: {
+        Row: {
+          added_at: string | null
+          added_by: string | null
+          added_tx_hash: string | null
+          bounty_id: string
+          created_at: string
+          id: string
+          on_chain_bounty_id: number | null
+          status: string
+          updated_at: string
+          user_id: string | null
+          wallet_address: string
+        }
+        Insert: {
+          added_at?: string | null
+          added_by?: string | null
+          added_tx_hash?: string | null
+          bounty_id: string
+          created_at?: string
+          id?: string
+          on_chain_bounty_id?: number | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          wallet_address: string
+        }
+        Update: {
+          added_at?: string | null
+          added_by?: string | null
+          added_tx_hash?: string | null
+          bounty_id?: string
+          created_at?: string
+          id?: string
+          on_chain_bounty_id?: number | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          wallet_address?: string
+        }
+        Relationships: []
+      }
       bulletin_comments: {
         Row: {
           author_id: string

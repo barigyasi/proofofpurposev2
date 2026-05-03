@@ -1,14 +1,22 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useActiveAccount } from "thirdweb/react";
 import { useSessionRoles } from "@/hooks/useSessionRoles";
 import { useBounties } from "@/hooks/useBounties";
 import { useBountyAdmin } from "@/hooks/useBountyAdmin";
 import { CreateBountyDialog } from "@/components/bounties/CreateBountyDialog";
-import { formatPurpose } from "@/hooks/usePurposeBalance";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+
+type Signup = {
+  id: string;
+  bounty_id: string;
+  on_chain_bounty_id: number | null;
+  wallet_address: string;
+  status: string;
+  created_at: string;
+};
 
 export default function AdminBounties() {
   const navigate = useNavigate();
@@ -18,6 +26,20 @@ export default function AdminBounties() {
   const { busy, completeBounty, addParticipant } = useBountyAdmin();
   const [open, setOpen] = useState(false);
   const [addAddr, setAddAddr] = useState<Record<number, string>>({});
+  const [signups, setSignups] = useState<Signup[]>([]);
+
+  async function loadSignups() {
+    const { data } = await supabase
+      .from("bounty_signups")
+      .select("id,bounty_id,on_chain_bounty_id,wallet_address,status,created_at")
+      .eq("status", "pending")
+      .order("created_at", { ascending: true });
+    setSignups((data ?? []) as Signup[]);
+  }
+
+  useEffect(() => {
+    if (roles.includes("admin")) loadSignups();
+  }, [roles, busy]);
 
   useEffect(() => {
     if (isLoading) return;
@@ -68,11 +90,36 @@ export default function AdminBounties() {
                   </p>
                 </div>
               </div>
+              {(() => {
+                const pending = signups.filter((s) => s.bounty_id === b.id);
+                return pending.length > 0 && (
+                  <div className="mt-4 border-t-2 border-foreground pt-3">
+                    <p className="font-mono text-[10px] uppercase tracking-widest text-primary">
+                      // pending signups ({pending.length})
+                    </p>
+                    <div className="mt-2 space-y-2">
+                      {pending.map((s) => (
+                        <div key={s.id} className="flex flex-wrap items-center justify-between gap-2 bg-muted/30 p-2">
+                          <code className="font-mono text-[11px]">{s.wallet_address}</code>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={busy || b.onChainId === null}
+                            onClick={() => addParticipant(b.onChainId as number, s.wallet_address, b.id)}
+                          >
+                            ADD ON-CHAIN
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
               <div className="mt-4 flex flex-wrap items-center gap-2 border-t-2 border-foreground pt-3">
                 {b.onChainId !== null && (
                   <>
                     <Input
-                      placeholder="0x… add participant"
+                      placeholder="0x… add participant manually"
                       value={addAddr[b.onChainId] ?? ""}
                       onChange={(e) =>
                         setAddAddr({ ...addAddr, [b.onChainId as number]: e.target.value })
@@ -82,7 +129,7 @@ export default function AdminBounties() {
                     <Button
                       variant="outline"
                       disabled={busy || !addAddr[b.onChainId]}
-                      onClick={() => addParticipant(b.onChainId as number, addAddr[b.onChainId as number])}
+                      onClick={() => addParticipant(b.onChainId as number, addAddr[b.onChainId as number], b.id)}
                     >
                       ADD
                     </Button>
