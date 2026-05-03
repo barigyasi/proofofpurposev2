@@ -111,7 +111,20 @@ export default function VendorDashboard() {
         <h1 className="mt-2 font-display text-5xl">REDEEM<br /><span className="text-primary">$PURPOSE</span></h1>
       </div>
 
-      {!scanned ? (
+
+      {isPending ? (
+        <div className="brutal mt-8 p-6">
+          <p className="font-mono text-[10px] uppercase tracking-widest text-primary">// pending approval</p>
+          <h2 className="mt-2 font-display text-3xl">{businessName ?? "Your business"}</h2>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Your vendor application is in review. Once an admin approves you, this terminal unlocks
+            and you can scan champion QR codes to accept $PURPOSE.
+          </p>
+          <Button disabled className="brutal-primary mt-6 w-full font-display text-2xl py-8 opacity-50 cursor-not-allowed">
+            SCAN CHAMPION QR · LOCKED
+          </Button>
+        </div>
+      ) : !scanned ? (
         <div className="mt-8 space-y-4">
           {scanning ? (
             <QRScanner onResult={handleResult} onError={(e) => toast.error(e)} />
