@@ -13,6 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { membershipDataUri, monthLabel, currentMonthKey } from "@/lib/membershipArt";
+import { MembershipsStrip } from "@/components/membership/MembershipsStrip";
 
 function toUsdc(amount: string): bigint {
   const [w, f = ""] = amount.split(".");
