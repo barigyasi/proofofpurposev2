@@ -6,6 +6,7 @@ import { useSessionRoles } from "@/hooks/useSessionRoles";
 import { useBountyAdmin } from "@/hooks/useBountyAdmin";
 import { useBounties } from "@/hooks/useBounties";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -20,6 +21,7 @@ export default function AdminBountyScan() {
   const [scanning, setScanning] = useState(false);
   const [last, setLast] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState<{ wallet: string; at: number } | null>(null);
+  const [manualWallet, setManualWallet] = useState("");
 
   const bounty = bounties?.find((b) => b.id === id);
 
@@ -147,6 +149,38 @@ export default function AdminBountyScan() {
             last scanned: <span className="text-primary">{last}</span>
           </p>
         )}
+      </div>
+
+      <div className="mt-6 brutal p-4">
+        <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+          // manual check-in fallback
+        </p>
+        <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+          <Input
+            value={manualWallet}
+            onChange={(e) => setManualWallet(e.target.value.trim())}
+            placeholder="0x… champion wallet"
+            className="font-mono text-xs"
+          />
+          <Button
+            disabled={busy || !/^0x[a-fA-F0-9]{40}$/.test(manualWallet) || !id}
+            onClick={async () => {
+              if (!id) return;
+              try {
+                await checkInParticipant(id, manualWallet);
+                setConfirmed({ wallet: manualWallet, at: Date.now() });
+                setManualWallet("");
+                await refetchSignups();
+                await qc.invalidateQueries({ queryKey: ["bounty-signups"] });
+              } catch (e) {
+                toast.error(e instanceof Error ? e.message : "Failed");
+              }
+            }}
+            className="brutal-primary brutal-hover font-display"
+          >
+            {busy ? "…" : "CHECK IN"}
+          </Button>
+        </div>
       </div>
     </main>
   );
