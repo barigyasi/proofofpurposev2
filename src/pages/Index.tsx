@@ -45,7 +45,7 @@ const Index = () => {
           to="/login"
           className="brutal-primary brutal-hover inline-flex items-center px-8 py-5 font-display text-xl"
         >
-          CONNECT WALLET →
+          GET STARTED →
         </Link>
         <Link
           to="/donate"

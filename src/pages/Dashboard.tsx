@@ -1,10 +1,12 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ChampionDashboard } from "@/components/champion/ChampionDashboard";
 import { useSessionRoles } from "@/hooks/useSessionRoles";
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const explicitChampion = params.get("as") === "champion";
   const { session, roles, isLoading } = useSessionRoles();
 
   useEffect(() => {
@@ -23,8 +25,13 @@ export default function Dashboard() {
     }
     if (roles.includes("catalyst")) {
       navigate("/catalyst", { replace: true });
+      return;
     }
-  }, [isLoading, session, roles, navigate]);
+    // No assigned role yet → onboarding (unless they explicitly opted into champion view)
+    if (!explicitChampion && roles.length === 0) {
+      navigate("/onboarding", { replace: true });
+    }
+  }, [isLoading, session, roles, navigate, explicitChampion]);
 
   if (isLoading) {
     return (
@@ -40,7 +47,8 @@ export default function Dashboard() {
     !session ||
     roles.includes("admin") ||
     roles.includes("vendor") ||
-    roles.includes("catalyst")
+    roles.includes("catalyst") ||
+    (!explicitChampion && roles.length === 0)
   ) {
     return null;
   }

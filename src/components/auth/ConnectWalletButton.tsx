@@ -5,19 +5,20 @@ import {
   useActiveWallet,
   ConnectButton,
 } from "thirdweb/react";
-import { thirdwebClient, baseChain, wallets } from "@/lib/thirdweb";
+import { thirdwebClient, baseChain, wallets, adminWallets } from "@/lib/thirdweb";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+interface Props {
+  /** "default" = in-app smart wallet (champions/catalysts/donors/vendors). "admin" = EOA only. */
+  mode?: "default" | "admin";
+  label?: string;
+}
+
 /**
- * SIWE-style flow that auto-triggers as soon as a wallet is connected:
- *   1. Wallet connects via thirdweb (in-app or external).
- *   2. Backend issues nonce/message.
- *   3. Wallet signs the message.
- *   4. Backend verifies sig + creates Supabase session.
- *   5. supabase-js client is hydrated with the session.
+ * Sign in flow: connect → backend nonce → sign → backend verifies → supabase session.
  */
-export function ConnectWalletButton() {
+export function ConnectWalletButton({ mode = "default", label }: Props) {
   const account = useActiveAccount();
   const wallet = useActiveWallet();
   const { disconnect } = useDisconnect();
@@ -25,7 +26,6 @@ export function ConnectWalletButton() {
   const [authedWallet, setAuthedWallet] = useState<string | null>(null);
   const inFlight = useRef<string | null>(null);
 
-  // Pick up an existing supabase session on mount
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       const email = data.session?.user.email;
@@ -35,7 +35,6 @@ export function ConnectWalletButton() {
     });
   }, []);
 
-  // Auto-authenticate once a wallet is connected
   useEffect(() => {
     if (!account) return;
     const addr = account.address.toLowerCase();
@@ -53,7 +52,6 @@ export function ConnectWalletButton() {
     setAuthing(true);
     try {
       const walletAddress = account.address;
-
       const nonceRes = await supabase.functions.invoke("wallet-auth-nonce", {
         body: { walletAddress },
       });
@@ -80,10 +78,8 @@ export function ConnectWalletButton() {
       setAuthedWallet(walletAddress.toLowerCase());
       toast.success("Signed in");
     } catch (e: unknown) {
-      console.error("wallet auth failed", e);
-      toast.error(
-        e instanceof Error ? e.message : "Sign-in failed. Please try again.",
-      );
+      console.error("auth failed", e);
+      toast.error(e instanceof Error ? e.message : "Sign-in failed. Please try again.");
     } finally {
       setAuthing(false);
     }
@@ -99,39 +95,47 @@ export function ConnectWalletButton() {
       try {
         await disconnect(wallet);
       } catch (e) {
-        console.warn("wallet disconnect", e);
+        console.warn("disconnect", e);
       }
     }
     setAuthedWallet(null);
   }
 
   if (!account) {
+    const isAdmin = mode === "admin";
     return (
       <ConnectButton
         client={thirdwebClient}
         chain={baseChain}
-        wallets={wallets}
+        wallets={isAdmin ? adminWallets : wallets}
         connectButton={{
-          label: "CONNECT WALLET →",
-          className: "!font-display !text-lg !px-8 !py-5 !rounded-none !border-2 !border-foreground !bg-primary !text-primary-foreground",
+          label: label ?? (isAdmin ? "ADMIN SIGN-IN →" : "SIGN IN →"),
+          className:
+            "!font-display !text-lg !px-8 !py-5 !rounded-none !border-2 !border-foreground !bg-primary !text-primary-foreground",
         }}
-        connectModal={{ size: "compact", title: "Sign in to Proof of Purpose" }}
+        connectModal={{
+          size: "compact",
+          title: isAdmin ? "Admin sign-in" : "Sign in to Proof of Purpose",
+          showThirdwebBranding: false,
+        }}
       />
     );
   }
 
-  const isAuthed =
-    authedWallet && authedWallet === account.address.toLowerCase();
+  const isAuthed = authedWallet && authedWallet === account.address.toLowerCase();
+  const isAdmin = mode === "admin";
 
   return (
     <div className="space-y-3">
       <div className="brutal flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-            wallet
+            {isAdmin ? "address" : "account"}
           </p>
           <code className="font-mono text-sm">
-            {account.address.slice(0, 8)}…{account.address.slice(-6)}
+            {isAdmin
+              ? `${account.address.slice(0, 8)}…${account.address.slice(-6)}`
+              : "✓ ready"}
           </code>
         </div>
         <div>
@@ -153,7 +157,7 @@ export function ConnectWalletButton() {
         onClick={fullDisconnect}
         className="brutal brutal-hover w-full px-4 py-2 font-display text-sm"
       >
-        DISCONNECT
+        SIGN OUT
       </button>
     </div>
   );
