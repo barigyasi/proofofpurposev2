@@ -1,94 +1,35 @@
-# Monthly Membership NFT — Plan
+# Fix: Champion check-in QR won't scan
 
-## Concept (locked in)
+## Root cause
 
-- **Trigger:** Any donation ≥ **$5 USDC** in a given calendar month auto-mints that month's membership NFT to the donor.
-- **One per wallet per month.** Donating multiple times in the same month does not stack mints (still 1 vote, still 1 NFT for that month). Donating in a new month mints that new month's piece.
-- **Auto-mint, no claim step.** Sponsored gas via the existing smart-wallet stack — donor sees only "Thanks, your May 2026 membership is in your wallet."
-- **Transferable** ERC-721 with on-chain **EIP-2981 royalties** routed to `DONATION_SPLIT` (so secondary sales keep funding the mission).
-- **Generative per donor:** shared monthly theme/palette, but each token's traits are unique to the wallet that earned it. Art is fully on-chain SVG.
-- **Governance is unchanged:** still 1 wallet = 1 vote, capped. Holding/buying the NFT on secondary does **not** grant voting rights — only the original donating wallet votes. (Buyers get the collectible + royalty-funded mission, not governance capture.)
-- **Weekly auction idea is dropped.**
+Two compounding issues in the existing flow:
 
-## What gets built
+1. **Champion-side QR (`CheckInQRDialog`)** is rendered at `size={220}` with `level="M"` and a JSON payload that includes a 36-char bounty UUID + 42-char wallet (~110 chars). That produces a dense QR that's small on a phone screen and hard to focus on under event lighting. The wrapper also forces `bg-background` (dark navy) around an SVG whose default white bg is fine, but the visual contrast/framing isn't optimal.
 
-### 1. Smart contract: `MembershipNFT.sol` (Base mainnet)
+2. **Admin scanner (`AdminBountyScan`)** uses a fixed `qrbox: 260` regardless of camera/container size, `fps: 10`, and no aspect ratio hint. On many phones the camera resolution + small qrbox = the dense QR falls below the decode threshold.
 
-ERC-721 + EIP-2981, owner-gated minter.
+Manual check-in already works as a fallback (used during last test), so we only need to make the QR itself reliably scannable.
 
-```text
-mintFor(address donor, uint16 monthKey, bytes32 seed)
-  - only callable by approved minter (Treasury-owned EOA / edge function)
-  - reverts if (donor, monthKey) already minted
-  - stores seed for on-chain tokenURI generation
+## Changes
 
-tokenURI(id) -> data:application/json;base64,...
-  - assembles SVG from layered traits selected by hashing(seed, monthKey)
-  - month determines palette + headline motif
-  - per-wallet seed determines body/accessory/background variants
+### `src/components/champion/CheckInQRDialog.tsx`
+- Increase `size` from 220 → 320.
+- Drop EC level from `"M"` to `"L"` (payload is small; `L` = less dense modules = easier to scan).
+- Set explicit `bgColor="#ffffff"` and `fgColor="#000000"` (ignore brand colors for scannables — black-on-white is non-negotiable for camera decode).
+- Add `includeMargin` (quiet zone) and tighten the surrounding frame so the QR + quiet zone dominate the dialog.
+- Keep wallet address shown below as text fallback.
 
-royaltyInfo(id, salePrice) -> (DONATION_SPLIT, salePrice * 500 / 10000)  // 5%
-```
+### `src/pages/AdminBountyScan.tsx`
+- Replace fixed `qrbox: 260` with a viewfinder function that sizes to ~70% of the smaller container dimension (adapts to phone vs desktop).
+- Bump `fps` from 10 → 15.
+- Add `aspectRatio: 1.0` and `experimentalFeatures: { useBarCodeDetectorIfSupported: true }` for better native decoding on iOS/Android Chrome.
+- Add a small "manual entry" affordance: a wallet-address input + "Check in" button beside START/STOP, so admin never has to leave the scan page if a QR refuses to decode. Reuses existing `checkInParticipant(id, wallet)`.
 
-Notes:
-- Soulbound is **off** — `_update` not restricted.
-- `monthKey` = `YYYYMM` so months are deterministic and queryable.
-- Owner can register monthly palettes/motifs ahead of time; falls back to a default palette if a month isn't pre-registered.
+### Vendor redeem QR (`RedeemQRDialog`)
+Same scannability fix while we're here, since user will hit it next when testing the vendor flow:
+- Bump `size` 240 → 320, set explicit black-on-white, drop to `level="L"`, add quiet zone.
+- (Keep gold styling on surrounding chrome, just not on the QR itself.)
 
-### 2. Edge function: `mint-monthly-membership`
-
-Triggered after a confirmed donation insert. Logic:
-
-1. Validate JWT, load donation row by id.
-2. If `amount_usdc < 5` → exit.
-3. Compute `monthKey` from `created_at` (UTC).
-4. Check `membership_mints` table for `(donor_wallet, month_key)` — if exists, exit.
-5. Build deterministic `seed = keccak256(donor_wallet || monthKey || salt)`.
-6. Call `MembershipNFT.mintFor(...)` using `BOUNTY_ADMIN_PRIVATE_KEY` (reuse existing signer) — sponsored from treasury EOA.
-7. Insert into `membership_mints` with token id + tx hash.
-
-Called from `Donate.tsx` right after the existing `supabase.from("donations").insert(...)` succeeds (non-blocking; toast updates to "Membership minted ✓").
-
-### 3. Database
-
-New table `membership_mints`:
-```text
-id uuid pk
-donor_wallet text
-month_key int            -- 202605
-token_id bigint
-tx_hash text
-contract_address text
-created_at timestamptz
-unique(donor_wallet, month_key)
-```
-RLS: public read, admin-only write (mints inserted by edge function via service role).
-
-Add `MEMBERSHIP_NFT` to `src/config/contracts.ts` once deployed.
-
-### 4. UI
-
-- **Donate page:** add "Donate $5+ this month → get the May 2026 membership NFT" badge above the amount input. After successful donate of ≥$5, show the minted token preview inline.
-- **Dashboard / Champion dashboard:** new "Memberships" strip showing the donor's collected months as a horizontal scroll of on-chain SVG previews.
-- **About / Index:** short explainer card "Monthly membership · generative · funds the mission on resale."
-- **Admin → Treasury:** add a tile showing total memberships minted this month + lifetime, plus secondary-royalty USDC received (read from DONATION_SPLIT events, future iteration).
-
-### 5. Governance update (small)
-
-`Governance.tsx` already enforces 1-vote-per-wallet via the donor record. Add a guardrail: voting eligibility checks the `donations` table (donor_wallet has any confirmed donation), **not** NFT ownership. This makes the NFT freely tradable without leaking votes.
-
-## Out of scope for this pass
-
-- Trait artwork itself — placeholder SVG primitives go in first; swap once you've sourced the layer set from Fiverr / commissioned work.
-- Secondary marketplace listing (OpenSea/Magic Eden auto-index it from contract metadata once deployed).
-- Royalty-receipt analytics dashboard (separate iteration once funds start flowing).
-
-## Order of work once approved
-
-1. Write & deploy `MembershipNFT` to Base, add address to `contracts.ts`.
-2. Migration: `membership_mints` table + RLS.
-3. Edge function `mint-monthly-membership` + wire into `Donate.tsx`.
-4. UI: Donate badge, Dashboard memberships strip, Treasury tile.
-5. Placeholder generative SVG (5 layers, ~6 variants each) so something visible mints day one.
-
-Approve and I'll execute in that order. The contract code itself I'll need you to deploy (or paste the deploy artifact back) — everything else I can ship end-to-end.
+## Out of scope
+- Soulbound PURPOSE token redeploy — user will handle separately at contract-redeploy time.
+- No DB / edge function / contract changes needed.
