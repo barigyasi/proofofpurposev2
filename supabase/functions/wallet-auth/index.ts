@@ -125,16 +125,20 @@ Deno.serve(async (req) => {
     });
     if (signInErr) throw signInErr;
 
-    // Fire-and-forget admin allowlist grant
-    const url = `${Deno.env.get("SUPABASE_URL")!}/functions/v1/grant-admin`;
-    fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")!}`,
-      },
-      body: JSON.stringify({ walletAddress: wallet, userId }),
-    }).catch((e) => console.warn("grant-admin call failed", e));
+    // Await admin allowlist grant so role exists before client redirects
+    try {
+      const url = `${Deno.env.get("SUPABASE_URL")!}/functions/v1/grant-admin`;
+      await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")!}`,
+        },
+        body: JSON.stringify({ walletAddress: wallet, userId }),
+      });
+    } catch (e) {
+      console.warn("grant-admin call failed", e);
+    }
 
     return new Response(
       JSON.stringify({
