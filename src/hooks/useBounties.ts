@@ -13,6 +13,10 @@ export type Bounty = {
   expiresAt: string | null;
   txHash: string | null;
   createdAt: string;
+  minParticipants: number;
+  startedAt: string | null;
+  completedAt: string | null;
+  checkInToken: string | null;
 };
 
 export function useBounties() {
@@ -25,18 +29,22 @@ export function useBounties() {
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []).map((b) => ({
-        id: b.id,
+      return (data ?? []).map((b: Record<string, unknown>) => ({
+        id: b.id as string,
         onChainId: b.on_chain_id !== null && b.on_chain_id !== undefined ? Number(b.on_chain_id) : null,
-        name: b.title,
-        description: b.description ?? "",
+        name: b.title as string,
+        description: (b.description as string) ?? "",
         rewardAmount: Number(b.reward_amount),
-        status: b.status,
-        imageUrl: b.image_url,
-        location: b.location,
-        expiresAt: b.expires_at,
-        txHash: b.on_chain_tx_hash,
-        createdAt: b.created_at,
+        status: b.status as string,
+        imageUrl: (b.image_url as string) ?? null,
+        location: (b.location as string) ?? null,
+        expiresAt: (b.expires_at as string) ?? null,
+        txHash: (b.on_chain_tx_hash as string) ?? null,
+        createdAt: b.created_at as string,
+        minParticipants: Number(b.min_participants ?? 1),
+        startedAt: (b.started_at as string) ?? null,
+        completedAt: (b.completed_at as string) ?? null,
+        checkInToken: (b.check_in_token as string) ?? null,
       }));
     },
   });

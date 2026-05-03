@@ -5,9 +5,11 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { PurposeBalanceCard } from "@/components/champion/PurposeBalanceCard";
 import { RedeemQRDialog } from "@/components/champion/RedeemQRDialog";
+import { CheckInQRDialog } from "@/components/champion/CheckInQRDialog";
 import { SectionDivider } from "@/components/champion/SectionDivider";
 import { BountyCard } from "@/components/bounties/BountyCard";
 import { BountyDetailsDialog } from "@/components/bounties/BountyDetailsDialog";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBounties, type Bounty } from "@/hooks/useBounties";
 
@@ -21,6 +23,7 @@ export function ChampionDashboard() {
   const [details, setDetails] = useState<Bounty | null>(null);
   const [signingUp, setSigningUp] = useState<string | null>(null);
   const [signups, setSignups] = useState<SignupRow[]>([]);
+  const [checkInBounty, setCheckInBounty] = useState<Bounty | null>(null);
 
   const wallet = account?.address.toLowerCase() ?? "";
 
@@ -45,9 +48,9 @@ export function ChampionDashboard() {
     const a: Bounty[] = [];
     const v: Bounty[] = [];
     for (const b of bounties ?? []) {
-      if (b.status !== "open") continue;
+      if (b.status === "completed") continue;
       if (signupByBounty.has(b.id)) a.push(b);
-      else v.push(b);
+      else if (b.status === "open") v.push(b);
     }
     return { active: a, available: v };
   }, [bounties, signupByBounty]);
@@ -114,14 +117,31 @@ export function ChampionDashboard() {
           </p>
         ) : (
           <div className="space-y-4 pt-2">
-            {active.map((b) => (
-              <BountyCard
-                key={b.id}
-                bounty={b}
-                mode="active"
-                onViewDetails={() => setDetails(b)}
-              />
-            ))}
+            {active.map((b) => {
+              const status = signupByBounty.get(b.id);
+              return (
+                <div key={b.id} className="space-y-2">
+                  <BountyCard
+                    bounty={b}
+                    mode="active"
+                    onViewDetails={() => setDetails(b)}
+                  />
+                  {b.status === "running" && status === "pending" && (
+                    <Button
+                      onClick={() => setCheckInBounty(b)}
+                      className="brutal-primary brutal-hover w-full font-display"
+                    >
+                      SHOW CHECK-IN CODE
+                    </Button>
+                  )}
+                  {(status === "checked_in" || status === "added") && b.status === "running" && (
+                    <p className="border-2 border-primary bg-primary/10 p-2 text-center font-mono text-xs uppercase text-primary">
+                      ✓ checked in — reward pending event close
+                    </p>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -151,6 +171,15 @@ export function ChampionDashboard() {
       </div>
 
       <RedeemQRDialog open={qrOpen} onOpenChange={setQrOpen} />
+      {checkInBounty && account && (
+        <CheckInQRDialog
+          open={!!checkInBounty}
+          onOpenChange={(o) => !o && setCheckInBounty(null)}
+          bountyId={checkInBounty.id}
+          bountyName={checkInBounty.name}
+          walletAddress={account.address}
+        />
+      )}
       <BountyDetailsDialog
         bounty={details}
         onOpenChange={(o) => !o && setDetails(null)}

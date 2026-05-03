@@ -23,7 +23,7 @@ export default function AdminBounties() {
   const account = useActiveAccount();
   const { session, roles, isLoading } = useSessionRoles();
   const { data: bounties, isLoading: bountiesLoading } = useBounties();
-  const { busy, completeBounty, addParticipant } = useBountyAdmin();
+  const { busy, completeBounty, addParticipant, startEvent } = useBountyAdmin();
   const [open, setOpen] = useState(false);
   const [addAddr, setAddAddr] = useState<Record<number, string>>({});
   const [signups, setSignups] = useState<Signup[]>([]);
@@ -32,7 +32,6 @@ export default function AdminBounties() {
     const { data } = await supabase
       .from("bounty_signups")
       .select("id,bounty_id,on_chain_bounty_id,wallet_address,status,created_at")
-      .eq("status", "pending")
       .order("created_at", { ascending: true });
     setSignups((data ?? []) as Signup[]);
   }
@@ -91,58 +90,91 @@ export default function AdminBounties() {
                 </div>
               </div>
               {(() => {
-                const pending = signups.filter((s) => s.bounty_id === b.id);
-                return pending.length > 0 && (
-                  <div className="mt-4 border-t-2 border-foreground pt-3">
-                    <p className="font-mono text-[10px] uppercase tracking-widest text-primary">
-                      // pending signups ({pending.length})
-                    </p>
-                    <div className="mt-2 space-y-2">
-                      {pending.map((s) => (
-                        <div key={s.id} className="flex flex-wrap items-center justify-between gap-2 bg-muted/30 p-2">
-                          <code className="font-mono text-[11px]">{s.wallet_address}</code>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            disabled={busy || b.onChainId === null}
-                            onClick={() => addParticipant(b.onChainId as number, s.wallet_address, b.id)}
-                          >
-                            ADD ON-CHAIN
-                          </Button>
-                        </div>
-                      ))}
+                const all = signups.filter((s) => s.bounty_id === b.id);
+                const pending = all.filter((s) => s.status === "pending");
+                const checkedIn = all.filter((s) => s.status === "checked_in" || s.status === "added");
+                return (
+                  <>
+                    <div className="mt-3 flex flex-wrap gap-3 font-mono text-[10px] uppercase text-muted-foreground">
+                      <span>signed up: <span className="text-foreground">{all.length}</span></span>
+                      <span>checked in: <span className="text-primary">{checkedIn.length}</span></span>
+                      <span>min required: {b.minParticipants}</span>
                     </div>
-                  </div>
+                    {all.length > 0 && (
+                      <div className="mt-3 border-t-2 border-foreground pt-3">
+                        <p className="font-mono text-[10px] uppercase tracking-widest text-primary">
+                          // signups
+                        </p>
+                        <div className="mt-2 space-y-2">
+                          {all.map((s) => (
+                            <div key={s.id} className="flex flex-wrap items-center justify-between gap-2 bg-muted/30 p-2">
+                              <div className="flex flex-col">
+                                <code className="font-mono text-[11px]">{s.wallet_address}</code>
+                                <span className="font-mono text-[9px] uppercase text-muted-foreground">{s.status}</span>
+                              </div>
+                              {s.status === "pending" && b.status === "running" && b.onChainId !== null && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  disabled={busy}
+                                  onClick={() => addParticipant(b.onChainId as number, s.wallet_address, b.id)}
+                                >
+                                  CHECK IN MANUALLY
+                                </Button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
                 );
               })()}
               <div className="mt-4 flex flex-wrap items-center gap-2 border-t-2 border-foreground pt-3">
-                {b.onChainId !== null && (
-                  <>
-                    <Input
-                      placeholder="0x… add participant manually"
-                      value={addAddr[b.onChainId] ?? ""}
-                      onChange={(e) =>
-                        setAddAddr({ ...addAddr, [b.onChainId as number]: e.target.value })
-                      }
-                      className="max-w-xs"
-                    />
-                    <Button
-                      variant="outline"
-                      disabled={busy || !addAddr[b.onChainId]}
-                      onClick={() => addParticipant(b.onChainId as number, addAddr[b.onChainId as number], b.id)}
-                    >
-                      ADD
-                    </Button>
-                  </>
-                )}
                 {b.status === "open" && (
                   <Button
-                    disabled={busy}
-                    onClick={() => completeBounty(b.id, b.onChainId)}
+                    disabled={busy || signups.filter((s) => s.bounty_id === b.id).length < b.minParticipants}
+                    onClick={() => startEvent(b.id)}
                     className="brutal-primary brutal-hover font-display"
                   >
-                    COMPLETE
+                    START EVENT
                   </Button>
+                )}
+                {b.status === "running" && (
+                  <>
+                    <Button
+                      onClick={() => navigate(`/admin/bounties/${b.id}/scan`)}
+                      className="brutal-primary brutal-hover font-display"
+                    >
+                      OPEN SCANNER
+                    </Button>
+                    {b.onChainId !== null && (
+                      <>
+                        <Input
+                          placeholder="0x… add manually"
+                          value={addAddr[b.onChainId] ?? ""}
+                          onChange={(e) =>
+                            setAddAddr({ ...addAddr, [b.onChainId as number]: e.target.value })
+                          }
+                          className="max-w-xs"
+                        />
+                        <Button
+                          variant="outline"
+                          disabled={busy || !addAddr[b.onChainId]}
+                          onClick={() => addParticipant(b.onChainId as number, addAddr[b.onChainId as number], b.id)}
+                        >
+                          ADD
+                        </Button>
+                      </>
+                    )}
+                    <Button
+                      disabled={busy}
+                      onClick={() => completeBounty(b.id, b.onChainId)}
+                      className="brutal-primary brutal-hover font-display"
+                    >
+                      END EVENT
+                    </Button>
+                  </>
                 )}
               </div>
             </div>
