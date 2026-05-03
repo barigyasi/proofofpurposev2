@@ -48,9 +48,9 @@ export function ChampionDashboard() {
     const a: Bounty[] = [];
     const v: Bounty[] = [];
     for (const b of bounties ?? []) {
-      if (b.status !== "open") continue;
+      if (b.status === "completed") continue;
       if (signupByBounty.has(b.id)) a.push(b);
-      else v.push(b);
+      else if (b.status === "open") v.push(b);
     }
     return { active: a, available: v };
   }, [bounties, signupByBounty]);
