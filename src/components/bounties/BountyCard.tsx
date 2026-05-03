@@ -1,6 +1,3 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import type { Bounty } from "@/hooks/useBounties";
 import { formatPurpose } from "@/hooks/usePurposeBalance";
 
@@ -23,43 +20,47 @@ export function BountyCard({
 }: Props) {
   const filled = bounty.participants.length;
   const max = Number(bounty.maxParticipants);
+  const full = filled >= max;
+
   return (
-    <Card>
-      <CardContent className="flex flex-col gap-3 py-5">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h3 className="text-base font-semibold">{bounty.name}</h3>
-            <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-              {bounty.description}
-            </p>
-          </div>
-          <Badge variant="secondary">
-            {filled}/{max} signed up
-          </Badge>
-        </div>
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-sm text-muted-foreground">
-            Reward:{" "}
-            <span className="font-semibold text-primary">
-              {formatPurpose(bounty.rewardAmount)} PURPOSE
-            </span>
+    <div className="brutal p-5 sm:p-6">
+      <div className="flex items-start justify-between gap-3">
+        <h3 className="font-display text-2xl sm:text-3xl">{bounty.name}</h3>
+        <span className="brutal-primary px-2 py-1 font-mono text-[10px] uppercase">
+          {filled}/{max}
+        </span>
+      </div>
+      <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
+        {bounty.description}
+      </p>
+
+      <div className="mt-5 flex flex-wrap items-end justify-between gap-3 border-t-2 border-foreground pt-4">
+        <div>
+          <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+            reward
           </p>
-          <div className="flex gap-2">
-            <Button variant="secondary" size="sm" onClick={onViewDetails}>
-              View Details
-            </Button>
-            {mode === "available" && (
-              <Button
-                size="sm"
-                onClick={onSignUp}
-                disabled={signedUp || signingUp || filled >= max}
-              >
-                {signingUp ? "Signing up…" : signedUp ? "Signed up" : "Sign Up"}
-              </Button>
-            )}
-          </div>
+          <p className="font-display text-2xl text-primary">
+            {formatPurpose(bounty.rewardAmount)}
+          </p>
         </div>
-      </CardContent>
-    </Card>
+        <div className="flex gap-2">
+          <button
+            onClick={onViewDetails}
+            className="brutal brutal-hover px-4 py-2 font-display text-sm"
+          >
+            DETAILS
+          </button>
+          {mode === "available" && (
+            <button
+              onClick={onSignUp}
+              disabled={signedUp || signingUp || full}
+              className="brutal-primary brutal-hover px-4 py-2 font-display text-sm disabled:opacity-50"
+            >
+              {signingUp ? "…" : signedUp ? "JOINED" : full ? "FULL" : "SIGN UP"}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

@@ -4,12 +4,10 @@ interface Props {
 
 export function SectionDivider({ label }: Props) {
   return (
-    <div className="flex items-center gap-3 py-2">
-      <div className="h-px flex-1 bg-border" />
-      <span className="text-xs uppercase tracking-widest text-muted-foreground">
-        {label}
-      </span>
-      <div className="h-px flex-1 bg-border" />
+    <div className="flex items-center gap-3 py-3">
+      <div className="h-0.5 flex-1 bg-foreground" />
+      <span className="font-display text-sm tracking-wider">{label}</span>
+      <div className="h-0.5 flex-1 bg-foreground" />
     </div>
   );
 }

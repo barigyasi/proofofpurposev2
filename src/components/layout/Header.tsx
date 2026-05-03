@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
-import { Moon, Sun } from "lucide-react";
+import { Moon, Sun, Menu, X } from "lucide-react";
 import { useActiveWallet, useDisconnect } from "thirdweb/react";
 import type { Session } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,6 @@ import { cn } from "@/lib/utils";
 
 const NAV = [
   { to: "/vendors", label: "Vendors" },
-  { to: "/docs", label: "Docs" },
   { to: "/dashboard", label: "Dashboard" },
   { to: "/about", label: "About" },
   { to: "/donate", label: "Donate" },
@@ -23,6 +22,8 @@ export function Header() {
   const { disconnect } = useDisconnect();
   const { theme, setTheme } = useTheme();
   const [session, setSession] = useState<Session | null>(null);
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
@@ -31,46 +32,68 @@ export function Header() {
   }, []);
 
   async function logout() {
+    if (busy) return;
+    setBusy(true);
     try {
-      await supabase.auth.signOut();
-      if (wallet) await disconnect(wallet);
+      await supabase.auth.signOut().catch((e) => console.warn("signOut", e));
+      if (wallet) {
+        try {
+          await disconnect(wallet);
+        } catch (e) {
+          console.warn("wallet disconnect", e);
+        }
+      }
     } finally {
-      navigate("/");
+      setBusy(false);
+      setOpen(false);
+      navigate("/", { replace: true });
     }
   }
 
   return (
-    <header className="border-b border-border bg-card/40 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <Link to="/" className="flex items-center gap-2">
-          <span className="text-base font-bold tracking-tight text-primary">
-            Proof of Purpose
+    <header className="sticky top-0 z-50 border-b-2 border-foreground bg-background">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6">
+        <Link to="/" className="flex items-center gap-3">
+          <span className="grid h-9 w-9 place-items-center bg-primary text-primary-foreground font-display text-lg">
+            P
+          </span>
+          <span className="font-display text-lg leading-none sm:text-xl">
+            PROOF<br className="hidden sm:inline" /> OF PURPOSE
           </span>
         </Link>
-        <nav className="hidden items-center gap-6 md:flex">
-          {NAV.map((n) => (
-            <Link
-              key={n.to}
-              to={n.to}
-              className={cn(
-                "text-sm transition-colors hover:text-primary",
-                pathname.startsWith(n.to)
-                  ? "text-foreground"
-                  : "text-muted-foreground",
-              )}
-            >
-              {n.label}
-            </Link>
-          ))}
+
+        <nav className="hidden items-center gap-1 md:flex">
+          {NAV.map((n) => {
+            const active = pathname.startsWith(n.to);
+            return (
+              <Link
+                key={n.to}
+                to={n.to}
+                className={cn(
+                  "px-3 py-2 font-display text-sm",
+                  active
+                    ? "bg-primary text-primary-foreground"
+                    : "text-foreground hover:bg-secondary",
+                )}
+              >
+                {n.label}
+              </Link>
+            );
+          })}
         </nav>
+
         <div className="flex items-center gap-2">
           {session ? (
-            <Button variant="destructive" size="sm" onClick={logout}>
-              Logout
+            <Button
+              onClick={logout}
+              disabled={busy}
+              className="hidden font-display brutal-primary brutal-hover sm:inline-flex"
+            >
+              {busy ? "BYE…" : "LOGOUT"}
             </Button>
           ) : (
-            <Button asChild size="sm">
-              <Link to="/login">Sign in</Link>
+            <Button asChild className="hidden font-display brutal-primary brutal-hover sm:inline-flex">
+              <Link to="/login">SIGN IN</Link>
             </Button>
           )}
           <Button
@@ -78,11 +101,55 @@ export function Header() {
             size="icon"
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             aria-label="Toggle theme"
+            className="border-2 border-foreground"
           >
             {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setOpen((v) => !v)}
+            aria-label="Toggle menu"
+            className="border-2 border-foreground md:hidden"
+          >
+            {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+          </Button>
         </div>
       </div>
+
+      {open && (
+        <div className="border-t-2 border-foreground md:hidden">
+          <nav className="flex flex-col">
+            {NAV.map((n) => (
+              <Link
+                key={n.to}
+                to={n.to}
+                onClick={() => setOpen(false)}
+                className="border-b border-foreground px-4 py-3 font-display text-base"
+              >
+                {n.label}
+              </Link>
+            ))}
+            {session ? (
+              <button
+                onClick={logout}
+                disabled={busy}
+                className="bg-primary px-4 py-3 text-left font-display text-base text-primary-foreground"
+              >
+                {busy ? "BYE…" : "LOGOUT"}
+              </button>
+            ) : (
+              <Link
+                to="/login"
+                onClick={() => setOpen(false)}
+                className="bg-primary px-4 py-3 font-display text-base text-primary-foreground"
+              >
+                SIGN IN
+              </Link>
+            )}
+          </nav>
+        </div>
+      )}
     </header>
   );
 }

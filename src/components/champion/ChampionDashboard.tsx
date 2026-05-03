@@ -25,8 +25,8 @@ export function ChampionDashboard() {
     const a: Bounty[] = [];
     const v: Bounty[] = [];
     for (const b of bounties ?? []) {
-      const joined = b.participants.some((p) => p.toLowerCase() === wallet);
       if (b.completed) continue;
+      const joined = b.participants.some((p) => p.toLowerCase() === wallet);
       if (joined) a.push(b);
       else v.push(b);
     }
@@ -56,15 +56,23 @@ export function ChampionDashboard() {
 
   if (!account) {
     return (
-      <main className="mx-auto max-w-3xl px-6 py-16 text-center text-muted-foreground">
-        Connect your wallet to view your dashboard.
+      <main className="mx-auto max-w-3xl px-6 py-24 text-center">
+        <p className="font-display text-3xl">CONNECT WALLET TO CONTINUE</p>
       </main>
     );
   }
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-10">
-      <h1 className="text-center text-3xl font-bold">What's poppin, Champ? 🚀</h1>
+    <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
+      <div className="border-b-2 border-foreground pb-6">
+        <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
+          // champion dashboard
+        </p>
+        <h1 className="mt-3 font-display text-5xl sm:text-7xl">
+          WHAT'S<br />
+          POPPIN, <span className="text-primary">CHAMP?</span>
+        </h1>
+      </div>
 
       <div className="mt-8">
         <PurposeBalanceCard
@@ -73,16 +81,16 @@ export function ChampionDashboard() {
         />
       </div>
 
-      <div className="mt-10 space-y-3">
-        <SectionDivider label="Active Bounties" />
+      <div className="mt-12">
+        <SectionDivider label="ACTIVE BOUNTIES" />
         {isLoading ? (
           <Skeleton className="h-24 w-full" />
         ) : active.length === 0 ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">
-            No active bounties yet.
+          <p className="py-10 text-center font-mono text-sm text-muted-foreground">
+            // no active bounties yet
           </p>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4 pt-2">
             {active.map((b) => (
               <BountyCard
                 key={b.id}
@@ -95,16 +103,16 @@ export function ChampionDashboard() {
         )}
       </div>
 
-      <div className="mt-10 space-y-3">
-        <SectionDivider label="Available Bounties" />
+      <div className="mt-12">
+        <SectionDivider label="AVAILABLE BOUNTIES" />
         {isLoading ? (
           <Skeleton className="h-24 w-full" />
         ) : available.length === 0 ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">
-            Nothing available right now. Check back soon.
+          <p className="py-10 text-center font-mono text-sm text-muted-foreground">
+            // nothing available — check back soon
           </p>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4 pt-2">
             {available.map((b) => (
               <BountyCard
                 key={b.id}
