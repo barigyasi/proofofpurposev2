@@ -65,11 +65,18 @@ export function RedeemQRDialog({ open, onOpenChange }: Props) {
           {error ? (
             <p className="text-sm text-destructive">{error}</p>
           ) : payload ? (
-            <div className="rounded-lg bg-card p-4">
-              <QRCodeSVG value={payload} size={240} bgColor="transparent" fgColor="#fbbf24" />
+            <div className="rounded-lg bg-white p-3">
+              <QRCodeSVG
+                value={payload}
+                size={320}
+                level="L"
+                bgColor="#ffffff"
+                fgColor="#000000"
+                includeMargin
+              />
             </div>
           ) : (
-            <Skeleton className="h-[240px] w-[240px]" />
+            <Skeleton className="h-[320px] w-[320px]" />
           )}
         </div>
       </DialogContent>

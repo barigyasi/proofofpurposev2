@@ -63,7 +63,17 @@ export default function AdminBountyScan() {
     try {
       await scanner.start(
         { facingMode: "environment" },
-        { fps: 10, qrbox: 260 },
+        {
+          fps: 15,
+          aspectRatio: 1.0,
+          qrbox: (w: number, h: number) => {
+            const min = Math.min(w, h);
+            const size = Math.floor(min * 0.75);
+            return { width: size, height: size };
+          },
+          // @ts-expect-error - experimentalFeatures is supported but not in older type defs
+          experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+        },
         async (decoded) => {
           try {
             const data = JSON.parse(decoded);
