@@ -101,6 +101,21 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-2">
+          {isAdmin && (
+            <Select value={viewAs} onValueChange={(v) => handleViewChange(v as ViewAs)}>
+              <SelectTrigger className="hidden h-9 w-[170px] border-2 border-foreground font-mono text-[11px] uppercase tracking-widest sm:inline-flex">
+                <Eye className="mr-1 h-3 w-3" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="admin">View: Admin</SelectItem>
+                <SelectItem value="champion">View: Champion</SelectItem>
+                <SelectItem value="vendor">View: Vendor</SelectItem>
+                <SelectItem value="catalyst">View: Catalyst</SelectItem>
+                <SelectItem value="donor">View: Donor</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
           {session ? (
             <Button
               onClick={logout}
