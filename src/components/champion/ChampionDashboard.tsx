@@ -62,7 +62,7 @@ export function ChampionDashboard() {
     setSigningUp(bounty.id);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Sign in first");
+      if (!user) throw new Error("Enter first");
       const { error } = await supabase.from("bounty_signups").insert({
         bounty_id: bounty.id,
         on_chain_bounty_id: bounty.onChainId,
