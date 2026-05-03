@@ -269,6 +269,63 @@ export type Database = {
         }
         Relationships: []
       }
+      champion_applications: {
+        Row: {
+          champion_name: string
+          created_at: string
+          date_of_birth: string
+          guardian_email: string
+          guardian_name: string
+          guardian_phone: string
+          guardian_relationship: string
+          id: string
+          notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          school: string
+          status: string
+          updated_at: string
+          user_id: string
+          wallet_address: string
+        }
+        Insert: {
+          champion_name: string
+          created_at?: string
+          date_of_birth: string
+          guardian_email: string
+          guardian_name: string
+          guardian_phone: string
+          guardian_relationship: string
+          id?: string
+          notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          school: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          wallet_address: string
+        }
+        Update: {
+          champion_name?: string
+          created_at?: string
+          date_of_birth?: string
+          guardian_email?: string
+          guardian_name?: string
+          guardian_phone?: string
+          guardian_relationship?: string
+          id?: string
+          notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          school?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          wallet_address?: string
+        }
+        Relationships: []
+      }
       donations: {
         Row: {
           amount_usdc: number
