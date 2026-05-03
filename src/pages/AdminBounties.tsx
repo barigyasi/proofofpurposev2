@@ -57,38 +57,41 @@ export default function AdminBounties() {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p className="font-mono text-[10px] uppercase text-muted-foreground">
-                    #{b.id} · {b.completed ? "COMPLETED" : "OPEN"}
+                    {b.onChainId !== null ? `#${b.onChainId}` : "off-chain"} · {b.status.toUpperCase()}
                   </p>
                   <h3 className="mt-1 font-display text-2xl">{b.name}</h3>
                   <p className="mt-1 max-w-xl text-sm text-muted-foreground">{b.description}</p>
                 </div>
                 <div className="text-right">
                   <p className="font-display text-xl text-primary">
-                    {formatPurpose(b.rewardAmount)}
-                  </p>
-                  <p className="font-mono text-[10px] text-muted-foreground">
-                    {b.participants.length}/{Number(b.maxParticipants)} filled
+                    {b.rewardAmount.toLocaleString()} PURPOSE
                   </p>
                 </div>
               </div>
               <div className="mt-4 flex flex-wrap items-center gap-2 border-t-2 border-foreground pt-3">
-                <Input
-                  placeholder="0x… add participant"
-                  value={addAddr[b.id] ?? ""}
-                  onChange={(e) => setAddAddr({ ...addAddr, [b.id]: e.target.value })}
-                  className="max-w-xs"
-                />
-                <Button
-                  variant="outline"
-                  disabled={busy || !addAddr[b.id]}
-                  onClick={() => addParticipant(b.id, addAddr[b.id])}
-                >
-                  ADD
-                </Button>
-                {!b.completed && (
+                {b.onChainId !== null && (
+                  <>
+                    <Input
+                      placeholder="0x… add participant"
+                      value={addAddr[b.onChainId] ?? ""}
+                      onChange={(e) =>
+                        setAddAddr({ ...addAddr, [b.onChainId as number]: e.target.value })
+                      }
+                      className="max-w-xs"
+                    />
+                    <Button
+                      variant="outline"
+                      disabled={busy || !addAddr[b.onChainId]}
+                      onClick={() => addParticipant(b.onChainId as number, addAddr[b.onChainId as number])}
+                    >
+                      ADD
+                    </Button>
+                  </>
+                )}
+                {b.status === "open" && (
                   <Button
                     disabled={busy}
-                    onClick={() => completeBounty(b.id)}
+                    onClick={() => completeBounty(b.id, b.onChainId)}
                     className="brutal-primary brutal-hover font-display"
                   >
                     COMPLETE
