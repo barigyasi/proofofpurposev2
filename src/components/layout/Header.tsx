@@ -170,6 +170,23 @@ export function Header() {
                 {n.label}
               </Link>
             ))}
+            {isAdmin && (
+              <div className="border-b border-foreground p-3">
+                <Select value={viewAs} onValueChange={(v) => { handleViewChange(v as ViewAs); setOpen(false); }}>
+                  <SelectTrigger className="h-10 w-full border-2 border-foreground font-mono text-xs uppercase">
+                    <Eye className="mr-1 h-3 w-3" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">View: Admin</SelectItem>
+                    <SelectItem value="champion">View: Champion</SelectItem>
+                    <SelectItem value="vendor">View: Vendor</SelectItem>
+                    <SelectItem value="catalyst">View: Catalyst</SelectItem>
+                    <SelectItem value="donor">View: Donor</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             {session ? (
               <button
                 onClick={logout}
