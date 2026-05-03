@@ -1,8 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { getContract, readContract } from "thirdweb";
+import { getContract, readContract, type Abi } from "thirdweb";
 import { thirdwebClient, baseChain } from "@/lib/thirdweb";
 import { CONTRACTS } from "@/config/contracts";
-import PurposeAbi from "@/contracts/abis/PurposeToken.json";
+import PurposeAbiJson from "@/contracts/abis/PurposeToken.json";
+
+const PurposeAbi = PurposeAbiJson as Abi;
 
 export function usePurposeBalance(address: string | undefined) {
   return useQuery({
@@ -14,14 +16,14 @@ export function usePurposeBalance(address: string | undefined) {
         client: thirdwebClient,
         chain: baseChain,
         address: CONTRACTS.PURPOSE_TOKEN,
-        abi: PurposeAbi as never,
+        abi: PurposeAbi,
       });
-      const raw = (await readContract({
+      const raw = await readContract({
         contract,
-        method: "balanceOf",
+        method: "function balanceOf(address) view returns (uint256)",
         params: [address as `0x${string}`],
-      })) as bigint;
-      return raw;
+      });
+      return raw as bigint;
     },
   });
 }

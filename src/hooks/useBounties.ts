@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { getContract, readContract } from "thirdweb";
 import { thirdwebClient, baseChain } from "@/lib/thirdweb";
 import { CONTRACTS } from "@/config/contracts";
-import BountyAbi from "@/contracts/abis/BountyManager.json";
 
 export type Bounty = {
   id: number;
@@ -19,7 +18,6 @@ function bountyContract() {
     client: thirdwebClient,
     chain: baseChain,
     address: CONTRACTS.BOUNTY_MANAGER,
-    abi: BountyAbi as never,
   });
 }
 
@@ -31,7 +29,7 @@ export function useBounties() {
       const contract = bountyContract();
       const count = (await readContract({
         contract,
-        method: "bountyCount",
+        method: "function bountyCount() view returns (uint256)",
         params: [],
       })) as bigint;
       const total = Number(count);
@@ -42,12 +40,14 @@ export function useBounties() {
           const [tuple, participants] = await Promise.all([
             readContract({
               contract,
-              method: "bounties",
+              method:
+                "function bounties(uint256) view returns (string, string, uint256, uint256, bool)",
               params: [BigInt(i)],
             }) as Promise<readonly [string, string, bigint, bigint, boolean]>,
             readContract({
               contract,
-              method: "getParticipants",
+              method:
+                "function getParticipants(uint256) view returns (address[])",
               params: [BigInt(i)],
             }) as Promise<readonly string[]>,
           ]);
