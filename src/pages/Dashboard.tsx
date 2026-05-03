@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ChampionDashboard } from "@/components/champion/ChampionDashboard";
-import { useSessionRoles } from "@/hooks/useSessionRoles";
+import { useEffectiveRoles } from "@/hooks/useEffectiveRoles";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const explicitChampion = params.get("as") === "champion";
-  const { session, roles, isLoading } = useSessionRoles();
+  const { session, roles, isAdminPreview, isLoading } = useEffectiveRoles();
   const [appStatus, setAppStatus] = useState<"loading" | "none" | "pending" | "approved" | "rejected">("loading");
 
   useEffect(() => {
@@ -20,10 +20,10 @@ export default function Dashboard() {
     if (roles.includes("admin")) return navigate("/admin", { replace: true });
     if (roles.includes("vendor")) return navigate("/vendor", { replace: true });
     if (roles.includes("catalyst")) return navigate("/catalyst", { replace: true });
-    if (!explicitChampion && roles.length === 0 && appStatus === "none") {
+    if (!explicitChampion && roles.length === 0 && appStatus === "none" && !isAdminPreview) {
       navigate("/onboarding", { replace: true });
     }
-  }, [isLoading, session, roles, navigate, explicitChampion, appStatus]);
+  }, [isLoading, session, roles, navigate, explicitChampion, appStatus, isAdminPreview]);
 
   // Look up champion application status
   useEffect(() => {
@@ -52,8 +52,8 @@ export default function Dashboard() {
     return null;
   }
 
-  // Champion role granted → show full dashboard
-  if (roles.includes("champion")) return <ChampionDashboard />;
+  // Champion role granted (or admin previewing as champion) → show full dashboard
+  if (roles.includes("champion") || isAdminPreview) return <ChampionDashboard />;
 
   // Has a submitted application but no role yet
   if (appStatus === "pending" || appStatus === "rejected") {
