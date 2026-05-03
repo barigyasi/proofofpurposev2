@@ -42,6 +42,10 @@ Solidity: `0.8.24` or later.
    (Add the BountyManager too if you ever want to refund/clawback to it.)
 6. From treasury wallet: `usdc.approve(vendorRedemptionV2, max)` so the
    redemption contract can pull USDC payouts.
+7. From admin, on VendorRedemptionV2: `grantRole(SETTLEMENT_ROLE, backendSignerAddress)`
+   — this is the hot key the edge function uses to call `redeemFor(vendor, champion, amount)`
+   after a champion confirms a POS charge or online-shop checkout. Lovable will
+   request a `REDEMPTION_SIGNER_PRIVATE_KEY` secret when wiring V2.
 
 ## After deploy — what to send back
 

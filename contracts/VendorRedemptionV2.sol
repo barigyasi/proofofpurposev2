@@ -26,6 +26,8 @@ contract VendorRedemptionV2 is AccessControl, ReentrancyGuard {
 
     bytes32 public constant VENDOR_ADMIN_ROLE = keccak256("VENDOR_ADMIN_ROLE");
     bytes32 public constant VENDOR_ROLE = keccak256("VENDOR_ROLE");
+    /// @notice Backend hot-key that settles authorized redemptions on behalf of any approved vendor.
+    bytes32 public constant SETTLEMENT_ROLE = keccak256("SETTLEMENT_ROLE");
 
     IPurposeBurnable public immutable purposeToken;
     IERC20 public immutable usdc;
@@ -105,10 +107,32 @@ contract VendorRedemptionV2 is AccessControl, ReentrancyGuard {
         onlyRole(VENDOR_ROLE)
         returns (uint256 usdcPaid)
     {
+        usdcPaid = _settle(msg.sender, champion, amountPurpose);
+    }
+
+    /**
+     * @notice Settle a redemption on behalf of an approved vendor.
+     *         Used by the backend settlement signer after the champion
+     *         confirms a POP POS charge or online-shop checkout off-chain.
+     */
+    function redeemFor(address vendor, address champion, uint256 amountPurpose)
+        external
+        nonReentrant
+        onlyRole(SETTLEMENT_ROLE)
+        returns (uint256 usdcPaid)
+    {
+        if (!hasRole(VENDOR_ROLE, vendor)) revert NotApprovedVendor();
+        usdcPaid = _settle(vendor, champion, amountPurpose);
+    }
+
+    function _settle(address vendor, address champion, uint256 amountPurpose)
+        internal
+        returns (uint256 usdcPaid)
+    {
         purposeToken.burnFrom(champion, amountPurpose);
         usdcPaid = (amountPurpose * rateNumerator) / rateDenominator;
-        usdc.safeTransferFrom(treasury, msg.sender, usdcPaid);
-        emit Redeemed(msg.sender, champion, amountPurpose, usdcPaid);
+        usdc.safeTransferFrom(treasury, vendor, usdcPaid);
+        emit Redeemed(vendor, champion, amountPurpose, usdcPaid);
     }
 
     function quoteUSDC(uint256 amountPurpose) external view returns (uint256) {
