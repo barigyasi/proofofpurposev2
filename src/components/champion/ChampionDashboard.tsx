@@ -5,9 +5,11 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { PurposeBalanceCard } from "@/components/champion/PurposeBalanceCard";
 import { RedeemQRDialog } from "@/components/champion/RedeemQRDialog";
+import { CheckInQRDialog } from "@/components/champion/CheckInQRDialog";
 import { SectionDivider } from "@/components/champion/SectionDivider";
 import { BountyCard } from "@/components/bounties/BountyCard";
 import { BountyDetailsDialog } from "@/components/bounties/BountyDetailsDialog";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBounties, type Bounty } from "@/hooks/useBounties";
 
