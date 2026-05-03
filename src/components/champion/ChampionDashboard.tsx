@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useActiveAccount } from "thirdweb/react";
+import { MembershipsStrip } from "@/components/membership/MembershipsStrip";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
