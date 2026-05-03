@@ -32,8 +32,8 @@ export default function Governance() {
         </p>
         <h1 className="mt-2 font-display text-5xl">GOVERNANCE</h1>
         <p className="mt-3 max-w-prose text-sm text-muted-foreground">
-          Donors, Catalysts, and the super admin vote on which bounties go live. Voting weight
-          comes from on-chain participation in Proof of Purpose.
+          Catalysts and Donors vote on which bounties go live. Voting weight comes from on-chain
+          participation in Proof of Purpose.
         </p>
       </div>
 
