@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { TreasuryStat } from "@/components/TreasuryStat";
 
 const Index = () => {
   return (
@@ -14,6 +15,10 @@ const Index = () => {
           <br />
           PURPOSE
         </h1>
+      </section>
+
+      <section className="mt-8">
+        <TreasuryStat />
       </section>
 
       <section className="mt-12 grid gap-6 md:grid-cols-3">
