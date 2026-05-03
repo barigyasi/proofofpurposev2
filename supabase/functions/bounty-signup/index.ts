@@ -57,14 +57,7 @@ Deno.serve(async (req) => {
     const rpc = "https://mainnet.base.org";
     const publicClient = createPublicClient({ chain: base, transport: http(rpc) });
 
-    // Defensive checks before spending gas
-    const bounty = (await publicClient.readContract({
-      address: BOUNTY_MANAGER,
-      abi: ABI,
-      functionName: "bounties",
-      args: [BigInt(bountyId)],
-    })) as readonly [string, string, bigint, bigint, boolean];
-    if (bounty[4]) return json({ error: "Bounty already completed" }, 400);
+    // Defensive check: avoid duplicate signup (the on-chain tx would revert anyway)
     const participants = (await publicClient.readContract({
       address: BOUNTY_MANAGER,
       abi: ABI,
@@ -74,9 +67,6 @@ Deno.serve(async (req) => {
     const lower = walletAddress.toLowerCase();
     if (participants.some((p) => p.toLowerCase() === lower)) {
       return json({ error: "Already signed up" }, 400);
-    }
-    if (BigInt(participants.length) >= bounty[3]) {
-      return json({ error: "Bounty is full" }, 400);
     }
 
     const account = privateKeyToAccount(pk as `0x${string}`);
