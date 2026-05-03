@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard.tsx";
 import Onboarding from "./pages/Onboarding.tsx";
 import Admin from "./pages/Admin.tsx";
 import AdminBounties from "./pages/AdminBounties.tsx";
+import AdminBountyScan from "./pages/AdminBountyScan.tsx";
 import AdminApplicants from "./pages/AdminApplicants.tsx";
 import AdminCatalysts from "./pages/AdminCatalysts.tsx";
 import AdminVendors from "./pages/AdminVendors.tsx";
