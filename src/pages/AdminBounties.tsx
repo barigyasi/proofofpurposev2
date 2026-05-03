@@ -23,7 +23,7 @@ export default function AdminBounties() {
   const account = useActiveAccount();
   const { session, roles, isLoading } = useSessionRoles();
   const { data: bounties, isLoading: bountiesLoading } = useBounties();
-  const { busy, completeBounty, addParticipant } = useBountyAdmin();
+  const { busy, completeBounty, addParticipant, startEvent } = useBountyAdmin();
   const [open, setOpen] = useState(false);
   const [addAddr, setAddAddr] = useState<Record<number, string>>({});
   const [signups, setSignups] = useState<Signup[]>([]);
@@ -32,7 +32,6 @@ export default function AdminBounties() {
     const { data } = await supabase
       .from("bounty_signups")
       .select("id,bounty_id,on_chain_bounty_id,wallet_address,status,created_at")
-      .eq("status", "pending")
       .order("created_at", { ascending: true });
     setSignups((data ?? []) as Signup[]);
   }
