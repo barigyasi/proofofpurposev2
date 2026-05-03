@@ -1,5 +1,4 @@
 import type { Bounty } from "@/hooks/useBounties";
-import { formatPurpose } from "@/hooks/usePurposeBalance";
 
 interface Props {
   bounty: Bounty;
@@ -18,16 +17,14 @@ export function BountyCard({
   onViewDetails,
   onSignUp,
 }: Props) {
-  const filled = bounty.participants.length;
-  const max = Number(bounty.maxParticipants);
-  const full = filled >= max;
+  const closed = bounty.status !== "open";
 
   return (
     <div className="brutal p-5 sm:p-6">
       <div className="flex items-start justify-between gap-3">
         <h3 className="font-display text-2xl sm:text-3xl">{bounty.name}</h3>
         <span className="brutal-primary px-2 py-1 font-mono text-[10px] uppercase">
-          {filled}/{max}
+          {bounty.status}
         </span>
       </div>
       <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
@@ -40,7 +37,7 @@ export function BountyCard({
             reward
           </p>
           <p className="font-display text-2xl text-primary">
-            {formatPurpose(bounty.rewardAmount)}
+            {bounty.rewardAmount.toLocaleString()} PURPOSE
           </p>
         </div>
         <div className="flex gap-2">
@@ -53,10 +50,10 @@ export function BountyCard({
           {mode === "available" && (
             <button
               onClick={onSignUp}
-              disabled={signedUp || signingUp || full}
+              disabled={signedUp || signingUp || closed}
               className="brutal-primary brutal-hover px-4 py-2 font-display text-sm disabled:opacity-50"
             >
-              {signingUp ? "…" : signedUp ? "JOINED" : full ? "FULL" : "SIGN UP"}
+              {signingUp ? "…" : signedUp ? "JOINED" : closed ? "CLOSED" : "SIGN UP"}
             </button>
           )}
         </div>

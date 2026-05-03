@@ -17,7 +17,7 @@ export function ChampionDashboard() {
   const { data: bounties, isLoading } = useBounties();
   const [qrOpen, setQrOpen] = useState(false);
   const [details, setDetails] = useState<Bounty | null>(null);
-  const [signingUp, setSigningUp] = useState<number | null>(null);
+  const [signingUp, setSigningUp] = useState<string | null>(null);
 
   const wallet = account?.address.toLowerCase() ?? "";
 
@@ -25,20 +25,22 @@ export function ChampionDashboard() {
     const a: Bounty[] = [];
     const v: Bounty[] = [];
     for (const b of bounties ?? []) {
-      if (b.completed) continue;
-      const joined = b.participants.some((p) => p.toLowerCase() === wallet);
-      if (joined) a.push(b);
-      else v.push(b);
+      if (b.status !== "open") continue;
+      v.push(b);
     }
     return { active: a, available: v };
   }, [bounties, wallet]);
 
   async function signUp(bounty: Bounty) {
     if (!account) return;
+    if (bounty.onChainId === null) {
+      toast.error("This bounty is not on-chain yet");
+      return;
+    }
     setSigningUp(bounty.id);
     try {
       const { error } = await supabase.functions.invoke("bounty-signup", {
-        body: { bountyId: bounty.id, walletAddress: account.address },
+        body: { bountyId: bounty.onChainId, walletAddress: account.address },
       });
       if (error) throw error;
       toast.success("Signed up!");
