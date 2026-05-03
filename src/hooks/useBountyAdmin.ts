@@ -141,7 +141,10 @@ export function useBountyAdmin() {
   }
 
   async function completeBounty(rowId: string, onChainId: number | null) {
-    if (!account) throw new Error("Connect wallet");
+    if (!account) {
+      toast.error("Connect admin wallet first");
+      return;
+    }
     setBusy(true);
     try {
       if (onChainId !== null) {
@@ -158,7 +161,6 @@ export function useBountyAdmin() {
         .update({ status: "completed", completed_at: new Date().toISOString() })
         .eq("id", rowId);
       if (error) throw error;
-      // Mark remaining pending signups as no-show
       await supabase
         .from("bounty_signups")
         .update({ status: "no_show" })
@@ -167,6 +169,16 @@ export function useBountyAdmin() {
       toast.success("Event ended — rewards minted to checked-in participants");
       await qc.invalidateQueries({ queryKey: ["bounties"] });
       await qc.invalidateQueries({ queryKey: ["bounty-signups"] });
+    } catch (e) {
+      const raw = e instanceof Error ? e.message : String(e);
+      if (/Treasury insufficient/i.test(raw)) {
+        toast.error("Treasury is out of $PURPOSE — fund the Treasury contract before ending this event.", { duration: 8000 });
+      } else if (/user rejected|denied/i.test(raw)) {
+        toast.error("Transaction rejected in wallet");
+      } else {
+        toast.error(`End-event failed: ${raw.slice(0, 160)}`);
+      }
+      console.error("completeBounty failed:", e);
     } finally {
       setBusy(false);
     }
