@@ -1,0 +1,11 @@
+[
+  {"inputs":[{"name":"vendor","type":"address"},{"name":"champion","type":"address"},{"name":"amountPurpose","type":"uint256"}],"name":"redeemFor","outputs":[{"name":"usdcPaid","type":"uint256"}],"stateMutability":"nonpayable","type":"function"},
+  {"inputs":[{"name":"champion","type":"address"},{"name":"amountPurpose","type":"uint256"}],"name":"redeem","outputs":[{"name":"usdcPaid","type":"uint256"}],"stateMutability":"nonpayable","type":"function"},
+  {"inputs":[{"name":"vendor","type":"address"}],"name":"approveVendor","outputs":[],"stateMutability":"nonpayable","type":"function"},
+  {"inputs":[{"name":"vendor","type":"address"}],"name":"revokeVendor","outputs":[],"stateMutability":"nonpayable","type":"function"},
+  {"inputs":[{"name":"amountPurpose","type":"uint256"}],"name":"quoteUSDC","outputs":[{"name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+  {"inputs":[{"name":"role","type":"bytes32"},{"name":"account","type":"address"}],"name":"hasRole","outputs":[{"name":"","type":"bool"}],"stateMutability":"view","type":"function"},
+  {"inputs":[],"name":"SETTLEMENT_ROLE","outputs":[{"name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},
+  {"inputs":[],"name":"VENDOR_ROLE","outputs":[{"name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},
+  {"anonymous":false,"inputs":[{"indexed":true,"name":"vendor","type":"address"},{"indexed":true,"name":"champion","type":"address"},{"indexed":false,"name":"purposeBurned","type":"uint256"},{"indexed":false,"name":"usdcPaid","type":"uint256"}],"name":"Redeemed","type":"event"}
+]
