@@ -118,6 +118,28 @@ export function useBountyAdmin() {
     }
   }
 
+  async function startEvent(rowId: string) {
+    setBusy(true);
+    try {
+      const token = crypto.randomUUID().replace(/-/g, "");
+      const expires = new Date(Date.now() + 1000 * 60 * 60 * 12).toISOString();
+      const { error } = await supabase
+        .from("bounties")
+        .update({
+          status: "running",
+          started_at: new Date().toISOString(),
+          check_in_token: token,
+          check_in_token_expires_at: expires,
+        })
+        .eq("id", rowId);
+      if (error) throw error;
+      toast.success("Event started — check-in QR is live");
+      await qc.invalidateQueries({ queryKey: ["bounties"] });
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function completeBounty(rowId: string, onChainId: number | null) {
     if (!account) throw new Error("Connect wallet");
     setBusy(true);
@@ -131,10 +153,39 @@ export function useBountyAdmin() {
         const { transactionHash } = await sendTransaction({ transaction: tx, account });
         await waitForReceipt({ client: thirdwebClient, chain: baseChain, transactionHash });
       }
-      const { error } = await supabase.from("bounties").update({ status: "completed" }).eq("id", rowId);
+      const { error } = await supabase
+        .from("bounties")
+        .update({ status: "completed", completed_at: new Date().toISOString() })
+        .eq("id", rowId);
       if (error) throw error;
-      toast.success("Bounty completed");
+      // Mark remaining pending signups as no-show
+      await supabase
+        .from("bounty_signups")
+        .update({ status: "no_show" })
+        .eq("bounty_id", rowId)
+        .eq("status", "pending");
+      toast.success("Event ended — rewards minted to checked-in participants");
       await qc.invalidateQueries({ queryKey: ["bounties"] });
+      await qc.invalidateQueries({ queryKey: ["bounty-signups"] });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function checkInParticipant(bountyId: string, walletAddress: string) {
+    setBusy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("bounty-checkin", {
+        body: { bountyId, walletAddress },
+      });
+      if (error) throw error;
+      if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
+      toast.success("Checked in on-chain");
+      await qc.invalidateQueries({ queryKey: ["bounty-signups"] });
+      return data;
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Check-in failed");
+      throw e;
     } finally {
       setBusy(false);
     }
@@ -156,7 +207,13 @@ export function useBountyAdmin() {
         const { data: { user } } = await supabase.auth.getUser();
         await supabase
           .from("bounty_signups")
-          .update({ status: "added", added_tx_hash: transactionHash, added_at: new Date().toISOString(), added_by: user?.id ?? null })
+          .update({
+            status: "checked_in",
+            added_tx_hash: transactionHash,
+            added_at: new Date().toISOString(),
+            checked_in_at: new Date().toISOString(),
+            added_by: user?.id ?? null,
+          })
           .eq("bounty_id", bountyRowId)
           .ilike("wallet_address", addr);
       }
@@ -168,5 +225,5 @@ export function useBountyAdmin() {
     }
   }
 
-  return { busy, preflight, createBounty, completeBounty, addParticipant };
+  return { busy, preflight, createBounty, completeBounty, addParticipant, startEvent, checkInParticipant };
 }
