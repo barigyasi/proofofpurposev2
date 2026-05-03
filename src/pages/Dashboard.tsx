@@ -10,6 +10,7 @@ export default function Dashboard() {
   const explicitChampion = params.get("as") === "champion";
   const { session, roles, isAdminPreview, isLoading } = useEffectiveRoles();
   const [appStatus, setAppStatus] = useState<"loading" | "none" | "pending" | "approved" | "rejected">("loading");
+  const [pendingOther, setPendingOther] = useState<"vendor" | "catalyst" | null | undefined>(undefined);
 
   useEffect(() => {
     if (isLoading) return;
@@ -20,10 +21,12 @@ export default function Dashboard() {
     if (roles.includes("admin")) return navigate("/admin", { replace: true });
     if (roles.includes("vendor")) return navigate("/vendor", { replace: true });
     if (roles.includes("catalyst")) return navigate("/catalyst", { replace: true });
-    if (!explicitChampion && roles.length === 0 && appStatus === "none" && !isAdminPreview) {
+    if (pendingOther === "vendor") return navigate("/vendor", { replace: true });
+    if (pendingOther === "catalyst") return navigate("/catalyst", { replace: true });
+    if (!explicitChampion && roles.length === 0 && appStatus === "none" && pendingOther === null && !isAdminPreview) {
       navigate("/onboarding", { replace: true });
     }
-  }, [isLoading, session, roles, navigate, explicitChampion, appStatus, isAdminPreview]);
+  }, [isLoading, session, roles, navigate, explicitChampion, appStatus, pendingOther, isAdminPreview]);
 
   // Look up champion application status
   useEffect(() => {
