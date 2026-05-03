@@ -16,14 +16,14 @@ const CHOICES = [
     icon: Building2,
     tag: "catalyst",
     title: "REPRESENT AN ORG",
-    body: "Apply as a Catalyst — propose bounties for the youth in your community.",
+    body: "Apply as a Catalyst — review unlocks your dashboard so you can propose bounties for the youth in your community.",
   },
   {
     to: "/apply/vendor",
     icon: Store,
     tag: "vendor",
     title: "ACCEPT $PURPOSE",
-    body: "Apply as a vendor — let champions spend tokens on goods + services.",
+    body: "Apply as a vendor — review unlocks your terminal so champions can spend tokens with you.",
   },
   {
     to: "/apply/champion",
