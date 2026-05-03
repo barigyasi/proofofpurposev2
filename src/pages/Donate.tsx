@@ -147,6 +147,7 @@ export default function Donate() {
           → {CONTRACTS.DONATION_SPLIT}
         </p>
       </div>
+      <MembershipsStrip wallet={account?.address} />
     </main>
   );
 }
