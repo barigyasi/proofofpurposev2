@@ -109,9 +109,16 @@ export default function AdminBountyScan() {
         </p>
         <h1 className="mt-2 font-display text-4xl">{bounty?.name ?? "EVENT"}</h1>
         <p className="mt-1 font-mono text-xs text-muted-foreground">
-          status: {bounty?.status.toUpperCase()}
+          status: {bounty?.status.toUpperCase()} · checked in: <span className="text-primary">{checkedInCount}</span> / {totalCount}
         </p>
       </div>
+
+      {confirmed && Date.now() - confirmed.at < 8000 && (
+        <div className="mt-4 border-2 border-primary bg-primary/10 p-3">
+          <p className="font-display text-lg text-primary">✓ CHECKED IN</p>
+          <code className="break-all font-mono text-[11px] text-foreground">{confirmed.wallet}</code>
+        </div>
+      )}
 
       <div className="mt-6 brutal p-4">
         <div id="scanner-region" className="mx-auto w-full max-w-md" />
