@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Html5Qrcode } from "html5-qrcode";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSessionRoles } from "@/hooks/useSessionRoles";
 import { useBountyAdmin } from "@/hooks/useBountyAdmin";
 import { useBounties } from "@/hooks/useBounties";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export default function AdminBountyScan() {
@@ -13,11 +15,32 @@ export default function AdminBountyScan() {
   const { session, roles, isLoading } = useSessionRoles();
   const { data: bounties } = useBounties();
   const { checkInParticipant, busy } = useBountyAdmin();
+  const qc = useQueryClient();
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const [scanning, setScanning] = useState(false);
   const [last, setLast] = useState<string | null>(null);
+  const [confirmed, setConfirmed] = useState<{ wallet: string; at: number } | null>(null);
 
   const bounty = bounties?.find((b) => b.id === id);
+
+  const { data: signups, refetch: refetchSignups } = useQuery({
+    queryKey: ["bounty-signups", id],
+    enabled: !!id,
+    refetchInterval: 5000,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("bounty_signups")
+        .select("id,wallet_address,status,checked_in_at")
+        .eq("bounty_id", id!)
+        .order("created_at", { ascending: true });
+      return data ?? [];
+    },
+  });
+
+  const checkedInCount = (signups ?? []).filter(
+    (s) => s.status === "checked_in" || s.status === "added",
+  ).length;
+  const totalCount = signups?.length ?? 0;
 
   useEffect(() => {
     if (isLoading) return;
@@ -50,7 +73,14 @@ export default function AdminBountyScan() {
             }
             if (last === data.walletAddress) return;
             setLast(data.walletAddress);
-            await checkInParticipant(id, data.walletAddress);
+            try {
+              await checkInParticipant(id, data.walletAddress);
+              setConfirmed({ wallet: data.walletAddress, at: Date.now() });
+              await refetchSignups();
+              await qc.invalidateQueries({ queryKey: ["bounty-signups"] });
+            } catch {
+              setLast(null); // allow retry
+            }
           } catch {
             toast.error("Bad QR");
           }
@@ -79,9 +109,16 @@ export default function AdminBountyScan() {
         </p>
         <h1 className="mt-2 font-display text-4xl">{bounty?.name ?? "EVENT"}</h1>
         <p className="mt-1 font-mono text-xs text-muted-foreground">
-          status: {bounty?.status.toUpperCase()}
+          status: {bounty?.status.toUpperCase()} · checked in: <span className="text-primary">{checkedInCount}</span> / {totalCount}
         </p>
       </div>
+
+      {confirmed && Date.now() - confirmed.at < 8000 && (
+        <div className="mt-4 border-2 border-primary bg-primary/10 p-3">
+          <p className="font-display text-lg text-primary">✓ CHECKED IN</p>
+          <code className="break-all font-mono text-[11px] text-foreground">{confirmed.wallet}</code>
+        </div>
+      )}
 
       <div className="mt-6 brutal p-4">
         <div id="scanner-region" className="mx-auto w-full max-w-md" />
