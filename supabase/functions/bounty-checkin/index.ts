@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
     const account = privateKeyToAccount((pk.startsWith("0x") ? pk : `0x${pk}`) as `0x${string}`);
 
     const bountyManagerAddr = (Deno.env.get("BOUNTY_MANAGER_ADDRESS") ??
-      "0xC07b8E4a3B2f0aDd23F94fB7d6F6c48cE5F8E5D9") as `0x${string}`;
+      "0x0F2Cf105534657b954169CeD15f3294E19350a51") as `0x${string}`;
 
     const publicClient = createPublicClient({ chain: base, transport: http() });
     const walletClient = createWalletClient({ chain: base, transport: http(), account });
