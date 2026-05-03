@@ -47,14 +47,18 @@ export default function Donate() {
       await waitForReceipt({ client: thirdwebClient, chain: baseChain, transactionHash });
       setHash(transactionHash);
 
-      const { data: donationRow } = await supabase.from("donations").insert({
+      const { data: donationRow, error: insErr } = await supabase.from("donations").insert({
         donor_wallet: account.address,
         source: "wallet",
         amount_usdc: Number(amount),
         tx_hash: transactionHash,
         status: "confirmed",
       }).select().single();
-      toast.success("Thank you! Donation recorded.");
+      if (insErr) {
+        toast.error(`On-chain donation succeeded, but recording failed: ${insErr.message}`);
+      } else {
+        toast.success("Thank you! Donation recorded.");
+      }
 
       if (donationRow && Number(amount) >= 5) {
         supabase.functions.invoke("mint-monthly-membership", {
