@@ -100,6 +100,24 @@ export default function Donate() {
           </a>
         </div>
       )}
+      <div className="brutal mt-6 flex items-center gap-4 p-4">
+        <img
+          src={membershipDataUri(account?.address ?? "0x0000000000000000000000000000000000000000", currentMonthKey(), 96)}
+          alt="this month's membership"
+          className="h-24 w-24 shrink-0"
+        />
+        <div>
+          <p className="font-mono text-[10px] uppercase tracking-widest text-primary">
+            // {monthLabel(currentMonthKey())} membership
+          </p>
+          <p className="mt-1 font-display text-lg leading-tight">
+            Donate $5 or more this month and this generative NFT auto-mints to you.
+          </p>
+          <p className="mt-1 font-mono text-[10px] text-muted-foreground">
+            Transferable. Secondary royalties fund the treasury. 1 vote per donor.
+          </p>
+        </div>
+      </div>
       <div className="brutal mt-8 p-6">
         <Label>Amount (USDC)</Label>
         <Input
