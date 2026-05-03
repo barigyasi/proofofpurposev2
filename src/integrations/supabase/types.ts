@@ -611,6 +611,63 @@ export type Database = {
         }
         Relationships: []
       }
+      vendor_charges: {
+        Row: {
+          champion_signature: string | null
+          champion_wallet: string
+          created_at: string
+          error: string | null
+          expires_at: string
+          id: string
+          memo: string | null
+          nonce: string
+          purpose_amount_wei: number
+          settled_at: string | null
+          status: string
+          tx_hash: string | null
+          updated_at: string
+          usdc_payout: number | null
+          vendor_user_id: string | null
+          vendor_wallet: string
+        }
+        Insert: {
+          champion_signature?: string | null
+          champion_wallet: string
+          created_at?: string
+          error?: string | null
+          expires_at?: string
+          id?: string
+          memo?: string | null
+          nonce: string
+          purpose_amount_wei: number
+          settled_at?: string | null
+          status?: string
+          tx_hash?: string | null
+          updated_at?: string
+          usdc_payout?: number | null
+          vendor_user_id?: string | null
+          vendor_wallet: string
+        }
+        Update: {
+          champion_signature?: string | null
+          champion_wallet?: string
+          created_at?: string
+          error?: string | null
+          expires_at?: string
+          id?: string
+          memo?: string | null
+          nonce?: string
+          purpose_amount_wei?: number
+          settled_at?: string | null
+          status?: string
+          tx_hash?: string | null
+          updated_at?: string
+          usdc_payout?: number | null
+          vendor_user_id?: string | null
+          vendor_wallet?: string
+        }
+        Relationships: []
+      }
       vendor_redemptions: {
         Row: {
           champion_wallet: string

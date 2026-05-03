@@ -13,6 +13,7 @@ import { BountyDetailsDialog } from "@/components/bounties/BountyDetailsDialog";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBounties, type Bounty } from "@/hooks/useBounties";
+import { ChampionChargeWatcher } from "@/components/champion/ChampionChargeWatcher";
 
 type SignupRow = { bounty_id: string; status: string };
 
@@ -91,6 +92,7 @@ export function ChampionDashboard() {
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
+      <ChampionChargeWatcher />
       <div className="border-b-2 border-foreground pb-6">
         <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
           // champion dashboard
