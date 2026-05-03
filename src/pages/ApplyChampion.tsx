@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 
 const schema = z.object({
   championName: z.string().trim().min(2).max(120),
+  championEmail: z.string().trim().email().max(255),
   dateOfBirth: z.string().min(1, "Date of birth required"),
   school: z.string().trim().min(2).max(160),
   guardianName: z.string().trim().min(2).max(120),
