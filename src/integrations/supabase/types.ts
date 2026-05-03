@@ -77,60 +77,119 @@ export type Database = {
         }
         Relationships: []
       }
+      bounty_draft_votes: {
+        Row: {
+          choice: string
+          created_at: string
+          draft_id: string
+          id: string
+          updated_at: string
+          voter_id: string
+          voter_wallet: string | null
+        }
+        Insert: {
+          choice: string
+          created_at?: string
+          draft_id: string
+          id?: string
+          updated_at?: string
+          voter_id: string
+          voter_wallet?: string | null
+        }
+        Update: {
+          choice?: string
+          created_at?: string
+          draft_id?: string
+          id?: string
+          updated_at?: string
+          voter_id?: string
+          voter_wallet?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bounty_draft_votes_draft_id_fkey"
+            columns: ["draft_id"]
+            isOneToOne: false
+            referencedRelation: "bounty_drafts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bounty_drafts: {
         Row: {
+          abstain_count: number
           catalyst_id: string | null
           created_at: string
           dao_proposal_id: number | null
           description: string | null
+          executed_at: string | null
+          executed_by: string | null
           expires_at: string | null
           id: string
           image_url: string | null
           location: string | null
           max_participants: number
           name: string
+          no_count: number
           on_chain_bounty_id: number | null
           on_chain_tx_hash: string | null
           proposer_id: string
           reward_purpose: number
           status: string
           updated_at: string
+          vote_closes_at: string
+          vote_opens_at: string
+          yes_count: number
         }
         Insert: {
+          abstain_count?: number
           catalyst_id?: string | null
           created_at?: string
           dao_proposal_id?: number | null
           description?: string | null
+          executed_at?: string | null
+          executed_by?: string | null
           expires_at?: string | null
           id?: string
           image_url?: string | null
           location?: string | null
           max_participants: number
           name: string
+          no_count?: number
           on_chain_bounty_id?: number | null
           on_chain_tx_hash?: string | null
           proposer_id: string
           reward_purpose: number
           status?: string
           updated_at?: string
+          vote_closes_at?: string
+          vote_opens_at?: string
+          yes_count?: number
         }
         Update: {
+          abstain_count?: number
           catalyst_id?: string | null
           created_at?: string
           dao_proposal_id?: number | null
           description?: string | null
+          executed_at?: string | null
+          executed_by?: string | null
           expires_at?: string | null
           id?: string
           image_url?: string | null
           location?: string | null
           max_participants?: number
           name?: string
+          no_count?: number
           on_chain_bounty_id?: number | null
           on_chain_tx_hash?: string | null
           proposer_id?: string
           reward_purpose?: number
           status?: string
           updated_at?: string
+          vote_closes_at?: string
+          vote_opens_at?: string
+          yes_count?: number
         }
         Relationships: [
           {

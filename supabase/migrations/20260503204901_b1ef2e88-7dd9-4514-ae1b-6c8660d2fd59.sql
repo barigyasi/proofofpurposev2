@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.tg_recount_draft_votes() FROM PUBLIC, anon, authenticated;
