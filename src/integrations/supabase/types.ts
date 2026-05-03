@@ -271,6 +271,7 @@ export type Database = {
       }
       champion_applications: {
         Row: {
+          champion_email: string | null
           champion_name: string
           created_at: string
           date_of_birth: string
@@ -289,6 +290,7 @@ export type Database = {
           wallet_address: string
         }
         Insert: {
+          champion_email?: string | null
           champion_name: string
           created_at?: string
           date_of_birth: string
@@ -307,6 +309,7 @@ export type Database = {
           wallet_address: string
         }
         Update: {
+          champion_email?: string | null
           champion_name?: string
           created_at?: string
           date_of_birth?: string
