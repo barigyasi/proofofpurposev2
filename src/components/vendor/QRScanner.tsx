@@ -32,8 +32,7 @@ export function QRScanner({ onResult, onError }: Props) {
       .catch((e) => onError?.(String(e)));
 
     return () => {
-      scanner.stop().catch(() => {});
-      scanner.clear().catch(() => {});
+      try { scanner.stop().then(() => scanner.clear()).catch(() => {}); } catch { /* noop */ }
     };
   }, []);
 
