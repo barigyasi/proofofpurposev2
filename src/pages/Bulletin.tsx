@@ -28,7 +28,7 @@ export default function Bulletin() {
   useEffect(() => { load(); }, []);
 
   async function post() {
-    if (!user) return toast.error("Sign in first");
+    if (!user) return toast.error("Enter first");
     if (!msg.trim()) return;
     const { error } = await supabase.from("bulletin_posts").insert({ author_id: user, message: msg.trim() });
     if (error) toast.error(error.message);
@@ -36,7 +36,7 @@ export default function Bulletin() {
   }
 
   async function comment(postId: string) {
-    if (!user) return toast.error("Sign in first");
+    if (!user) return toast.error("Enter first");
     const text = reply[postId]?.trim();
     if (!text) return;
     const { error } = await supabase.from("bulletin_comments").insert({ post_id: postId, author_id: user, message: text });
