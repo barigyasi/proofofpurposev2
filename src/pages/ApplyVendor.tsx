@@ -57,8 +57,8 @@ export default function ApplyVendor() {
         phone,
       });
 
-      toast.success("Application submitted");
-      navigate("/dashboard", { replace: true });
+      toast.success("Application submitted — awaiting admin approval");
+      navigate("/vendor", { replace: true });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
     } finally {

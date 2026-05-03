@@ -65,7 +65,7 @@ export default function ApplyCatalyst() {
       });
 
       toast.success("Application submitted — awaiting admin approval");
-      navigate("/dashboard", { replace: true });
+      navigate("/catalyst", { replace: true });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
     } finally {
