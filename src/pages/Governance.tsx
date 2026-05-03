@@ -71,7 +71,7 @@ export default function Governance() {
         </p>
         {!canVote && (
           <p className="brutal mt-4 p-3 font-mono text-[10px]">
-            // sign in as a Donor or Catalyst to cast a vote
+            // enter as a Donor or Catalyst to cast a vote
           </p>
         )}
       </div>

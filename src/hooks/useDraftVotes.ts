@@ -58,7 +58,7 @@ export function useDraftVotes() {
 
   async function castVote(draftId: string, choice: VoteChoice, walletAddress?: string | null) {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Sign in to vote");
+    if (!user) throw new Error("Enter to vote");
     const existing = myVotes[draftId];
     if (existing) {
       const { error } = await supabase
