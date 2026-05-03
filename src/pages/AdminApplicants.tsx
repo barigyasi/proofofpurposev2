@@ -77,7 +77,7 @@ export default function AdminApplicants() {
     if (a.requested_role === "champion") {
       const { data } = await supabase
         .from("champion_applications")
-        .select("champion_name,date_of_birth,school,guardian_name,guardian_email,guardian_phone,guardian_relationship,notes")
+        .select("champion_name,champion_email,date_of_birth,school,guardian_name,guardian_email,guardian_phone,guardian_relationship,notes")
         .ilike("wallet_address", a.wallet_address)
         .order("created_at", { ascending: false })
         .limit(1)
