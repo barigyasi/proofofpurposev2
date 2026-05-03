@@ -8,6 +8,7 @@ export default function Dashboard() {
   const { session, roles, isLoading } = useSessionRoles();
 
   useEffect(() => {
+    if (isLoading) return;
     if (!session) {
       navigate("/login", { replace: true });
       return;
@@ -19,7 +20,7 @@ export default function Dashboard() {
     if (roles.includes("vendor")) {
       navigate("/vendor", { replace: true });
     }
-  }, [session, roles, navigate]);
+  }, [isLoading, session, roles, navigate]);
 
   if (isLoading) {
     return (
