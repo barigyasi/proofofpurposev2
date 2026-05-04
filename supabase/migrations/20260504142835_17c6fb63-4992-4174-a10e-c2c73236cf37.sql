@@ -1,0 +1,1 @@
+ALTER TABLE public.bounties ADD COLUMN max_participants integer;

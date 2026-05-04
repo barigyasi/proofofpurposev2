@@ -26,6 +26,7 @@ export type Database = {
           id: string
           image_url: string | null
           location: string | null
+          max_participants: number | null
           min_participants: number
           on_chain_id: number | null
           on_chain_tx_hash: string | null
@@ -46,6 +47,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           location?: string | null
+          max_participants?: number | null
           min_participants?: number
           on_chain_id?: number | null
           on_chain_tx_hash?: string | null
@@ -66,6 +68,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           location?: string | null
+          max_participants?: number | null
           min_participants?: number
           on_chain_id?: number | null
           on_chain_tx_hash?: string | null
