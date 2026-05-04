@@ -92,6 +92,46 @@ export function CreateBountyDialog({ open, onOpenChange }: Props) {
             {warn}
           </p>
         )}
+        {treasury && (
+          <div
+            className={`border-2 p-3 font-mono text-[11px] ${
+              wouldOverdraw
+                ? "border-destructive bg-destructive/10 text-destructive"
+                : "border-foreground bg-muted/30 text-muted-foreground"
+            }`}
+          >
+            <div className="flex flex-wrap justify-between gap-2">
+              <span>// treasury balance</span>
+              <span className="text-foreground">{treasury.balance.toLocaleString()} PURPOSE</span>
+            </div>
+            <div className="flex flex-wrap justify-between gap-2">
+              <span>// already committed (open + running)</span>
+              <span className="text-foreground">{treasury.committed.toLocaleString()} PURPOSE</span>
+            </div>
+            {newCommitment > 0 && (
+              <div className="flex flex-wrap justify-between gap-2">
+                <span>// this bounty (reward × max)</span>
+                <span className="text-foreground">{newCommitment.toLocaleString()} PURPOSE</span>
+              </div>
+            )}
+            <div className="mt-1 flex flex-wrap justify-between gap-2 border-t border-current pt-1">
+              <span>// headroom after</span>
+              <span className={wouldOverdraw ? "text-destructive" : "text-primary"}>
+                {projectedHeadroom !== null ? projectedHeadroom.toLocaleString() : "—"} PURPOSE
+              </span>
+            </div>
+            {wouldOverdraw && (
+              <label className="mt-2 flex cursor-pointer items-center gap-2 text-foreground">
+                <input
+                  type="checkbox"
+                  checked={override}
+                  onChange={(e) => setOverride(e.target.checked)}
+                />
+                I understand the Treasury must be funded before this event ends.
+              </label>
+            )}
+          </div>
+        )}
         <div className="space-y-3">
           <div>
             <Label>Name</Label>
@@ -150,7 +190,11 @@ export function CreateBountyDialog({ open, onOpenChange }: Props) {
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={submit} disabled={busy} className="brutal-primary brutal-hover font-display">
+          <Button
+            onClick={submit}
+            disabled={busy || (wouldOverdraw && !override)}
+            className="brutal-primary brutal-hover font-display"
+          >
             {busy ? "POSTING…" : "POST ON-CHAIN"}
           </Button>
         </DialogFooter>
