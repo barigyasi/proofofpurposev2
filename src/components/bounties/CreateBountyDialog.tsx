@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useBountyAdmin } from "@/hooks/useBountyAdmin";
+import { useTreasuryHeadroom } from "@/hooks/useTreasuryHeadroom";
 import { uploadPublicImage } from "@/lib/storage";
 
 interface Props {
@@ -22,6 +23,7 @@ interface Props {
 
 export function CreateBountyDialog({ open, onOpenChange }: Props) {
   const { busy, preflight, createBounty } = useBountyAdmin();
+  const { data: treasury, refetch: refetchTreasury } = useTreasuryHeadroom();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [reward, setReward] = useState("");
@@ -30,16 +32,30 @@ export function CreateBountyDialog({ open, onOpenChange }: Props) {
   const [expires, setExpires] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [warn, setWarn] = useState<string | null>(null);
+  const [override, setOverride] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     setWarn(null);
+    setOverride(false);
     preflight().then((r) => !r.ok && setWarn(r.reason ?? null));
+    refetchTreasury();
   }, [open]);
+
+  // Live treasury impact for the values currently in the form
+  const rewardNum = Number(reward) || 0;
+  const maxNum = Number(maxP) || 0;
+  const newCommitment = rewardNum * Math.max(1, maxNum);
+  const projectedHeadroom = treasury ? treasury.headroom - newCommitment : null;
+  const wouldOverdraw = projectedHeadroom !== null && projectedHeadroom < 0;
 
   async function submit() {
     if (!name || !reward || !maxP) {
       toast.error("Fill name, reward, and max participants");
+      return;
+    }
+    if (wouldOverdraw && !override) {
+      toast.error("Treasury cannot cover this bounty — fund it or check the override box");
       return;
     }
     try {
