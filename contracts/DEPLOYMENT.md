@@ -193,29 +193,35 @@ This is required so `redeemFor(vendor, …)` doesn't revert with
 
 ---
 
-### Step 9 — `PurposeGovToken` (governance weight)
+### Step 9 — `PurposeGovToken` (governance weight) — thirdweb **Token** prebuilt
 
 > **Why a separate token?** PURPOSE is soulbound — it can't be moved between
-> wallets, so it doesn't have proper ERC20Votes checkpoints. Governance needs
-> a transferable, vote-tracked token. Hand it out 1:1 to Donors and Catalysts.
+> wallets, so it doesn't have proper vote checkpoints. Governance needs a
+> transferable, vote-tracked token. Hand it out 1:1 to Donors and Catalysts.
 
-Use OpenZeppelin's `ERC20Votes` template (or thirdweb's "Token Vote ERC20")
-with these params:
+Deploy via the thirdweb dashboard → **"Token"** prebuilt contract (not a
+custom OZ contract). Thirdweb's `TokenERC20` already implements ERC20Votes
+checkpoints and `delegate()`, which is exactly what the Vote contract needs.
+
+Params:
 - name: `Proof of Purpose Vote`
 - symbol: `vPURPOSE`
-- initial supply: `0` (you'll mint as members onboard)
-- admin: admin EOA
+- initial supply: `0` (you'll mint as members onboard via the dashboard's "Mint" tab)
+- primary sale recipient / admin: admin EOA
 
 Save as `PURPOSE_GOV`.
 
-> ⚠ Voters must call `delegate(self)` once before their balance counts. The
-> frontend will do this transparently after V2 governance is wired.
+> ⚠ Voters must call `delegate(self)` once before their balance counts toward
+> a proposal. The frontend will do this transparently after V2 governance is
+> wired.
 
 ---
 
-### Step 10 — `VoteERC20` (thirdweb governor)
+### Step 10 — thirdweb **Vote** governor
 
-Deploy via the thirdweb dashboard → "Vote (ERC20)". Constructor params:
+Deploy via the thirdweb dashboard → **"Vote"** prebuilt contract (the
+underlying contract is named `VoteERC20` in thirdweb's repo, but in the
+dashboard it's just labeled **"Vote"**). Params:
 
 | Field | Testnet value | Mainnet value |
 |---|---|---|
