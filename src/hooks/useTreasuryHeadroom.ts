@@ -75,13 +75,16 @@ export async function readTreasuryHeadroom() {
     }) as Promise<bigint>,
     supabase
       .from("bounties")
-      .select("reward_amount,min_participants,status")
+      .select("reward_amount,max_participants,min_participants,status")
       .in("status", ["open", "running"]),
   ]);
   const balance = Number(balanceWei) / 10 ** PURPOSE_DECIMALS;
   const committed = (rows ?? []).reduce((sum, b) => {
     const reward = Number(b.reward_amount) || 0;
-    const cap = Math.max(1, Number(b.min_participants) || 1);
+    const cap = Math.max(
+      1,
+      Number(b.max_participants) || Number(b.min_participants) || 1,
+    );
     return sum + reward * cap;
   }, 0);
   return { balance, committed, headroom: balance - committed };
