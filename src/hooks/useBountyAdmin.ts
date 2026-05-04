@@ -100,6 +100,7 @@ export function useBountyAdmin() {
         title: input.name,
         description: input.description,
         reward_amount: reward,
+        max_participants: input.maxParticipants,
         on_chain_id: onChainId,
         on_chain_tx_hash: transactionHash,
         image_url: input.imageUrl ?? null,

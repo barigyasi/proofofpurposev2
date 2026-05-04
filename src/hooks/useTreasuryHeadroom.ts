@@ -30,19 +30,20 @@ export function useTreasuryHeadroom() {
         }) as Promise<bigint>,
         supabase
           .from("bounties")
-          .select("reward_amount,min_participants,status")
+          .select("reward_amount,max_participants,min_participants,status")
           .in("status", ["open", "running"]),
       ]);
 
       const balance = Number(balanceWei) / 10 ** PURPOSE_DECIMALS;
 
-      // We don't store max_participants on bounties (only min_participants).
-      // Use min_participants as the conservative committed-cap proxy until a
-      // dedicated max column is added. This intentionally under-estimates risk
-      // for events without a cap — surface that in the dashboard copy.
+      // Committed = sum(reward * max_participants) for non-completed bounties.
+      // Falls back to min_participants, then 1, when max is unset.
       const committed = (rows ?? []).reduce((sum, b) => {
         const reward = Number(b.reward_amount) || 0;
-        const cap = Math.max(1, Number(b.min_participants) || 1);
+        const cap = Math.max(
+          1,
+          Number(b.max_participants) || Number(b.min_participants) || 1,
+        );
         return sum + reward * cap;
       }, 0);
 
@@ -74,13 +75,16 @@ export async function readTreasuryHeadroom() {
     }) as Promise<bigint>,
     supabase
       .from("bounties")
-      .select("reward_amount,min_participants,status")
+      .select("reward_amount,max_participants,min_participants,status")
       .in("status", ["open", "running"]),
   ]);
   const balance = Number(balanceWei) / 10 ** PURPOSE_DECIMALS;
   const committed = (rows ?? []).reduce((sum, b) => {
     const reward = Number(b.reward_amount) || 0;
-    const cap = Math.max(1, Number(b.min_participants) || 1);
+    const cap = Math.max(
+      1,
+      Number(b.max_participants) || Number(b.min_participants) || 1,
+    );
     return sum + reward * cap;
   }, 0);
   return { balance, committed, headroom: balance - committed };
