@@ -193,27 +193,43 @@ This is required so `redeemFor(vendor, …)` doesn't revert with
 
 ---
 
-### Step 9 — `PurposeGovToken` (governance weight) — thirdweb **Token** prebuilt
+### Step 9 — `vPURPOSE` shadow vote token (thirdweb **Token** prebuilt)
 
-> **Why a separate token?** PURPOSE is soulbound — it can't be moved between
-> wallets, so it doesn't have proper vote checkpoints. Governance needs a
-> transferable, vote-tracked token. Hand it out 1:1 to Donors and Catalysts.
+> **Why this exists.** Voting power in POP comes from **holding a current
+> month's membership NFT** — 1 NFT = 1 vote, that's it. But thirdweb's
+> prebuilt **Vote** contract reads vote weight from an **ERC20Votes** token,
+> not from an ERC721 balance. So we deploy a tiny "shadow" ERC20 (`vPURPOSE`)
+> that the backend keeps **1:1 in sync** with active membership NFTs:
+>
+> - When `mint-monthly-membership` mints a membership NFT → backend also
+>   mints `1 vPURPOSE` to that holder.
+> - When the membership lapses (next month rollover, no renewal) → backend
+>   burns that `1 vPURPOSE`.
+>
+> Voters never see this token. From their perspective: "I have an active
+> membership → I can vote." It's purely the on-chain mechanism the prebuilt
+> Vote contract needs.
 
-Deploy via the thirdweb dashboard → **"Token"** prebuilt contract (not a
-custom OZ contract). Thirdweb's `TokenERC20` already implements ERC20Votes
-checkpoints and `delegate()`, which is exactly what the Vote contract needs.
+Deploy via the thirdweb dashboard → **"Token"** prebuilt contract. Thirdweb's
+`TokenERC20` already implements ERC20Votes checkpoints + `delegate()`.
 
 Params:
 - name: `Proof of Purpose Vote`
 - symbol: `vPURPOSE`
-- initial supply: `0` (you'll mint as members onboard via the dashboard's "Mint" tab)
+- initial supply: `0` (backend mints/burns as memberships activate)
 - primary sale recipient / admin: admin EOA
 
 Save as `PURPOSE_GOV`.
 
-> ⚠ Voters must call `delegate(self)` once before their balance counts toward
-> a proposal. The frontend will do this transparently after V2 governance is
-> wired.
+After deploy, on **`PURPOSE_GOV`** from admin:
+```
+grantRole(MINTER_ROLE, BACKEND_SIGNER_ADDRESS)
+```
+This lets the same backend hot key that runs `mint-monthly-membership` also
+mint/burn vPURPOSE in the same job.
+
+> ⚠ Voters must call `delegate(self)` once before their balance counts. The
+> frontend will do this transparently the first time a member opens a proposal.
 
 ---
 
@@ -229,13 +245,17 @@ dashboard it's just labeled **"Vote"**). Params:
 | `_token` | `PURPOSE_GOV` | `PURPOSE_GOV` |
 | `_initialVotingDelay` (blocks) | `1` (≈ 2 s) | `7200` (≈ 4 h on Base 2 s blocks) |
 | `_initialVotingPeriod` (blocks) | `300` (≈ 10 min — easy testing) | `129600` (≈ 72 h to match the off-chain UX) |
-| `_initialProposalThreshold` | `1` (anyone with 1 vPURPOSE) | `1e18` (1 vPURPOSE) |
-| `_initialVoteQuorumFraction` | `4` (4 %) | `4` |
+| `_initialProposalThreshold` | `1e18` (1 membership) | `1e18` (1 membership) |
+| `_initialVoteQuorumFraction` | `4` (4 % of active memberships) | `4` |
 
 Save as `GOVERNOR`.
 
 ✅ Sanity check: `governor.token()` returns `PURPOSE_GOV`,
 `votingDelay()` and `votingPeriod()` match what you set.
+
+> Because supply = number of active members, **4 % quorum = 4 % of currently
+> active memberships**, which is what you want — quorum scales with community
+> size automatically.
 
 ---
 
