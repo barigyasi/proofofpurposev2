@@ -5,6 +5,7 @@ import { useSessionRoles } from "@/hooks/useSessionRoles";
 import { useBounties } from "@/hooks/useBounties";
 import { useBountyAdmin } from "@/hooks/useBountyAdmin";
 import { CreateBountyDialog } from "@/components/bounties/CreateBountyDialog";
+import { TreasuryHeadroomCard } from "@/components/admin/TreasuryHeadroomCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -65,6 +66,10 @@ export default function AdminBounties() {
         <Button onClick={() => setOpen(true)} className="brutal-primary brutal-hover font-display">
           + NEW BOUNTY
         </Button>
+      </div>
+
+      <div className="mt-6">
+        <TreasuryHeadroomCard />
       </div>
 
       <div className="mt-8 space-y-4">

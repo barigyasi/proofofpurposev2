@@ -147,6 +147,41 @@ export function useBountyAdmin() {
     }
     setBusy(true);
     try {
+      // Pre-end treasury check: how much PURPOSE will this event mint?
+      const [{ data: bountyRow }, { count: checkedInCount }] = await Promise.all([
+        supabase.from("bounties").select("reward_amount").eq("id", rowId).maybeSingle(),
+        supabase
+          .from("bounty_signups")
+          .select("id", { count: "exact", head: true })
+          .eq("bounty_id", rowId)
+          .in("status", ["checked_in", "added"]),
+      ]);
+      const reward = Number(bountyRow?.reward_amount) || 0;
+      const payouts = (checkedInCount ?? 0) * reward;
+
+      if (payouts > 0) {
+        const purpose = getContract({
+          client: thirdwebClient,
+          chain: baseChain,
+          address: CONTRACTS.PURPOSE_TOKEN,
+        });
+        const balanceWei = (await readContract({
+          contract: purpose,
+          method: "function balanceOf(address) view returns (uint256)",
+          params: [CONTRACTS.TREASURY as `0x${string}`],
+        })) as bigint;
+        const balance = Number(balanceWei) / 10 ** PURPOSE_DECIMALS;
+        if (balance < payouts) {
+          const proceed = window.confirm(
+            `Treasury holds ${balance.toLocaleString()} PURPOSE but this event will mint ${payouts.toLocaleString()} PURPOSE to ${checkedInCount} checked-in participant(s). The on-chain end-event tx will revert. Send anyway?`,
+          );
+          if (!proceed) {
+            setBusy(false);
+            return;
+          }
+        }
+      }
+
       if (onChainId !== null) {
         const tx = prepareContractCall({
           contract: bm(),
