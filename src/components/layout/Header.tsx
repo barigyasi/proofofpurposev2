@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { useSessionRoles } from "@/hooks/useSessionRoles";
 import { useRoleView, type ViewAs } from "@/context/RoleViewContext";
+import popMark from "@/assets/pop-mark.png";
 
 const NAV = [
   { to: "/vendors", label: "Vendors" },
@@ -71,11 +72,9 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 border-b-2 border-foreground bg-background">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6">
-        <Link to="/" className="flex items-center gap-3">
-          <span className="grid h-9 w-9 place-items-center bg-primary text-primary-foreground font-display text-lg">
-            P
-          </span>
-          <span className="font-display text-lg leading-none sm:text-xl">
+        <Link to="/" className="flex items-center gap-3" aria-label="Proof of Purpose home">
+          <img src={popMark} alt="POP" className="h-9 w-auto" />
+          <span className="sr-only sm:not-sr-only font-display text-lg leading-none sm:text-xl">
             PROOF<br className="hidden sm:inline" /> OF PURPOSE
           </span>
         </Link>
