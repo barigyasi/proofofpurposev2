@@ -72,11 +72,8 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 border-b-2 border-foreground bg-background">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6">
-        <Link to="/" className="flex items-center gap-3" aria-label="Proof of Purpose home">
-          <img src={popMark} alt="POP" className="h-9 w-auto" />
-          <span className="sr-only sm:not-sr-only font-display text-lg leading-none sm:text-xl">
-            PROOF<br className="hidden sm:inline" /> OF PURPOSE
-          </span>
+        <Link to="/" className="flex items-center" aria-label="Proof of Purpose home">
+          <img src={popMark} alt="Proof of Purpose" className="h-14 w-auto sm:h-16" />
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">
