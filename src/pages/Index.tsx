@@ -46,6 +46,15 @@ const Index = () => {
         </div>
       </section>
 
+      <section className="mt-12">
+        <WaitlistForm />
+      </section>
+
+      {/*
+        WAITLIST MODE: CTA buttons hidden until v2 contracts ship.
+        To restore, delete the <WaitlistForm /> section above and
+        un-comment this block.
+
       <section className="mt-12 flex flex-wrap items-center gap-4">
         <Link
           to="/login"
@@ -66,6 +75,7 @@ const Index = () => {
           PARTNER WITH US
         </Link>
       </section>
+      */}
     </main>
   );
 };
