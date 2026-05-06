@@ -18,10 +18,25 @@ export default function About() {
         <h1 className="mt-2 font-display text-5xl">PROOF<br /><span className="text-primary">OF PURPOSE</span></h1>
       </div>
       <section className="prose prose-invert mt-8 max-w-none space-y-5 text-sm">
+        <p className="font-mono text-[11px] uppercase tracking-widest text-primary">
+          // an on-chain nonprofit · first of its kind
+        </p>
         <p>
           Proof of Purpose is an on-chain rewards system for youth in the community. Champions
           complete real-world bounties posted by trusted partner orgs (Catalysts) and earn
           $PURPOSE — a soulbound token redeemable only at approved local vendors.
+        </p>
+        <p>
+          Built by <span className="text-foreground">MetaPhysical LLC</span>. We believe Proof of
+          Purpose is the first nonprofit to operate end-to-end on-chain — treasury, governance,
+          rewards, and redemptions all verifiable on Base.
+        </p>
+        <h2 className="font-display text-2xl text-foreground">A NOTE ON TAX-DEDUCTIBILITY</h2>
+        <p>
+          Federal frameworks for on-chain charitable entities are still being written. Pending
+          legislation like the <span className="text-foreground">CLARITY Act</span> is expected
+          to define how protocols like ours can offer donors formal tax-deductible status. Until
+          that clears, donations to the Treasury should not be treated as tax-deductible.
         </p>
         <h2 className="font-display text-2xl text-foreground">HOW IT WORKS</h2>
         <ol className="list-decimal pl-6 text-muted-foreground">
@@ -39,6 +54,9 @@ export default function About() {
             </li>
           ))}
         </ul>
+        <p className="mt-10 border-t-2 border-foreground pt-4 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+          // built by MetaPhysical LLC · © {new Date().getFullYear()}
+        </p>
       </section>
     </main>
   );
