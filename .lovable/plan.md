@@ -1,61 +1,59 @@
+# Waitlist Mode for Landing Page
 
-## Goal
+Temporarily replace the three CTA buttons on the home page with a "Join the Waitlist" flow that captures name, city, and email into a new `waitlist_signups` table. Existing buttons stay in code (commented/flagged) so we can flip them back on later when v2 contracts ship.
 
-Make catalyst and vendor onboarding mirror the champion flow:
+## 1. Database
 
-```text
-sign up → smart wallet (auto) → /onboarding role pick → /apply/{role} → role dashboard (locked, "pending approval") → admin approves → role dashboard fully active
+New table `public.waitlist_signups`:
+
+- `id` uuid PK default `gen_random_uuid()`
+- `name` text not null
+- `city` text not null
+- `email` text not null
+- `created_at` timestamptz not null default `now()`
+- unique index on `lower(email)` to prevent dupes
+
+RLS:
+- Enable RLS
+- `waitlist_insert_anyone` — INSERT, `with check (true)` (public signup, like `donations_insert_anyone`)
+- `waitlist_admin_select` — SELECT, `using (has_role(auth.uid(), 'admin'))` (only admins read the list; emails are PII)
+- No update/delete policies (admins still get full access via the standard admin pattern if needed — we'll add an admin-only ALL policy too)
+
+## 2. Landing page (`src/pages/Index.tsx`)
+
+Replace the third `<section>` (the GET STARTED / DONATE / PARTNER WITH US buttons) with a `<WaitlistForm />` component. Leave the old buttons in the file inside an `{/* WAITLIST MODE: hide CTAs until v2 launch — restore this block to re-enable */}` comment block so flipping back is a 30-second edit.
+
+Above the form, a short headline like:
+
+```
+JOIN THE WAITLIST
+Be first in line when Proof of Purpose opens to donors,
+champions, and vendors. v2 launching soon.
 ```
 
-Today the sign-in + smart-wallet + role pick steps already exist (Login → Onboarding). The gaps:
+## 3. New component `src/components/WaitlistForm.tsx`
 
-1. After submitting an application, users get bounced back to `/dashboard` and have nowhere to land — the role dashboards block anyone without the granted role.
-2. There's no "pending approval" state on the vendor or catalyst dashboard.
-3. `Dashboard.tsx` doesn't know about pending vendor/catalyst applications, so it sends them to `/onboarding` again.
+- Brutalist styling matching existing `brutal` / `brutal-primary` classes
+- Three inputs: Name, City, Email (all required)
+- Zod validation client-side:
+  - name: trimmed, 1–100 chars
+  - city: trimmed, 1–100 chars
+  - email: valid email, ≤255 chars
+- On submit: insert into `waitlist_signups` via supabase client
+- Handle unique-violation (code `23505`) with a friendly "You're already on the list ✓" toast
+- Success state: replace form with a "YOU'RE ON THE LIST" confirmation block
+- Uses existing `useToast`, `Input`, `Button`, `Label`
 
-## Changes
+## 4. Header
 
-### 1. `src/hooks/useApplicationStatus.ts` (new)
-Tiny hook that returns `{ vendor: 'none'|'pending'|'approved', catalyst: 'none'|'pending'|'approved' }` for the current user, derived from `vendors` and `catalyst_orgs` rows (matched by `user_id` for catalyst; for vendors, by `wallet_address` of the active account, since `vendors` has no `user_id`).
+No change. The `ENTER` button stays so existing users (admins, testers) can still log in.
 
-Note: `vendors` table has no `user_id` column. We'll match by the connected smart-wallet address, which is what the apply form already writes. (Long-term we should add `vendors.user_id`, but not required for this change.)
+## Out of scope / preserved
 
-### 2. `src/pages/ApplyVendor.tsx` & `src/pages/ApplyCatalyst.tsx`
-- After successful submit, redirect to `/vendor` (or `/catalyst`) instead of `/dashboard`.
-- Keep the existing wallet/auth guards.
+- All routes in `App.tsx` stay registered (`/donate`, `/login`, `/onboarding`, etc.)
+- No nav changes
+- No admin UI for viewing the waitlist yet — admins can read the table directly via the backend if needed; we can add a simple `/admin/waitlist` page later if you want
 
-### 3. `src/pages/VendorDashboard.tsx`
-- Replace the strict `roles.includes("vendor")` redirect with: allow access if either `roles.includes("vendor")` OR a `vendors` row exists for the connected wallet.
-- If the row exists but `approved === false` (or no role yet), render a **locked state**:
-  - Same page shell (header, branding) so they recognize it as their dashboard.
-  - Big "PENDING APPROVAL" card explaining the team is reviewing their application; show submitted business name.
-  - Disable the "SCAN CHAMPION QR" button (greyed, with tooltip "Available once approved").
-- Approved vendors get the existing terminal UI.
+## Re-enabling later
 
-### 4. `src/pages/CatalystDashboard.tsx`
-- Same pattern: allow access if a `catalyst_orgs` row exists for `user_id`.
-- Locked state: show org name + "Awaiting admin approval. You can't propose bounties yet." Disable the NEW DRAFT form (inputs + button).
-- Approved catalysts get the full draft form.
-
-### 5. `src/pages/Dashboard.tsx` routing
-After loading roles, also peek at `vendors`/`catalyst_orgs` for the signed-in user:
-- pending vendor row → `navigate('/vendor')`
-- pending catalyst row → `navigate('/catalyst')`
-This way a returning pending applicant lands on their role dashboard, not `/onboarding`.
-
-### 6. Onboarding copy (`src/pages/Onboarding.tsx`)
-Minor: tweak the vendor/catalyst card descriptions to set expectations ("Apply → review → unlock dashboard").
-
-## Out of scope
-- No DB schema changes. (We can add `vendors.user_id` later for cleaner ownership.)
-- No changes to admin approval flow — `AdminVendors` and `AdminCatalysts` already grant the role on approval, which auto-unlocks the dashboard on next load.
-- No changes to the V2 contract work in `contracts/`.
-
-## Files touched
-- new: `src/hooks/useApplicationStatus.ts`
-- edit: `src/pages/ApplyVendor.tsx`
-- edit: `src/pages/ApplyCatalyst.tsx`
-- edit: `src/pages/VendorDashboard.tsx`
-- edit: `src/pages/CatalystDashboard.tsx`
-- edit: `src/pages/Dashboard.tsx`
-- edit: `src/pages/Onboarding.tsx` (copy only)
+When ready: open `src/pages/Index.tsx`, swap the `<WaitlistForm />` back for the commented-out CTA section. The waitlist table and component can stay (useful for future launches).

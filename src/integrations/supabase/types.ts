@@ -843,6 +843,30 @@ export type Database = {
           },
         ]
       }
+      waitlist_signups: {
+        Row: {
+          city: string
+          created_at: string
+          email: string
+          id: string
+          name: string
+        }
+        Insert: {
+          city: string
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+        }
+        Update: {
+          city?: string
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       wallet_auth_nonces: {
         Row: {
           created_at: string
