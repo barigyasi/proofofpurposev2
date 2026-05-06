@@ -1,12 +1,11 @@
 import { CONTRACTS } from "@/config/contracts";
 
 const LINKS = [
-  ["PURPOSE Token", CONTRACTS.PURPOSE_TOKEN],
-  ["Bounty Manager", CONTRACTS.BOUNTY_MANAGER],
-  ["Vendor Redemption", CONTRACTS.VENDOR_REDEMPTION],
   ["Treasury", CONTRACTS.TREASURY],
   ["Donation Split", CONTRACTS.DONATION_SPLIT],
 ] as const;
+
+const COMING_SOON = ["PURPOSE Token", "Bounty Manager", "Vendor Redemption"] as const;
 
 export default function About() {
   return (
@@ -51,6 +50,12 @@ export default function About() {
             <li key={addr}>
               <span className="text-muted-foreground">{label}:</span>{" "}
               <a className="text-primary underline" target="_blank" rel="noreferrer" href={`https://basescan.org/address/${addr}`}>{addr}</a>
+            </li>
+          ))}
+          {COMING_SOON.map((label) => (
+            <li key={label}>
+              <span className="text-muted-foreground">{label}:</span>{" "}
+              <span className="text-primary">v2 contract · coming soon</span>
             </li>
           ))}
         </ul>
