@@ -121,8 +121,13 @@ export function Header() {
               {busy ? "BYE…" : "LOGOUT"}
             </Button>
           ) : (
-            <Button asChild className="hidden font-display brutal-primary brutal-hover sm:inline-flex">
-              <Link to="/login">ENTER</Link>
+            // WAITLIST MODE: ENTER disabled until v2 launch. Restore <Link to="/login">ENTER</Link> to re-enable.
+            <Button
+              disabled
+              className="hidden font-display brutal-primary sm:inline-flex opacity-60 cursor-not-allowed"
+              title="Join the waitlist — entry opens with v2"
+            >
+              ENTER SOON
             </Button>
           )}
           <Button
@@ -192,13 +197,13 @@ export function Header() {
                 {busy ? "BYE…" : "LOGOUT"}
               </button>
             ) : (
-              <Link
-                to="/login"
-                onClick={() => setOpen(false)}
-                className="bg-primary px-4 py-3 font-display text-base text-primary-foreground"
+              // WAITLIST MODE: ENTER disabled until v2 launch.
+              <span
+                aria-disabled="true"
+                className="bg-primary/60 px-4 py-3 font-display text-base text-primary-foreground cursor-not-allowed"
               >
-                ENTER
-              </Link>
+                ENTER SOON
+              </span>
             )}
           </nav>
         </div>
