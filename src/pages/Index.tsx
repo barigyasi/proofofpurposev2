@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { TreasuryStat } from "@/components/TreasuryStat";
+import { WaitlistForm } from "@/components/WaitlistForm";
 
 const Index = () => {
   return (
