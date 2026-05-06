@@ -54,6 +54,9 @@ export default function About() {
             </li>
           ))}
         </ul>
+        <p className="mt-10 border-t-2 border-foreground pt-4 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+          // built by MetaPhysical LLC · © {new Date().getFullYear()}
+        </p>
       </section>
     </main>
   );
