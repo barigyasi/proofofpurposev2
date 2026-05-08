@@ -247,9 +247,9 @@ export default function Whitepaper() {
             <ol className="list-decimal space-y-1 pl-6">
               <li>Catalyst proposes a bounty (title, reward, description, image, quota).</li>
               <li>Bounty is approved (currently admin-gated; moving to on-chain governance).</li>
-              <li>Champion applies → Catalyst reviews and approves.</li>
-              <li>Champion completes the task and submits proof (image / QR check-in).</li>
-              <li>Catalyst confirms completion; Bounty Manager mints $PURPOSE to the Champion.</li>
+              <li>Champion applies and is approved into the participant pool.</li>
+              <li>At the event, the Catalyst scans each Champion's wallet QR code in person; the scan calls <code className="text-foreground">addParticipant</code> on the Bounty Manager contract, marking attendance on-chain. Champions never upload proof themselves.</li>
+              <li>When the Catalyst ends the bounty, the Bounty Manager mints $PURPOSE to every verified participant in a single on-chain settlement.</li>
             </ol>
 
             <h3 className="font-display text-xl text-foreground">REDEMPTION</h3>
