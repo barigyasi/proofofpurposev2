@@ -180,18 +180,24 @@ export default function Whitepaper() {
                   </tr>
                 </thead>
                 <tbody>
-                  {CONTRACT_ROWS.map(([label, addr, desc]) => (
+                  {CONTRACT_ROWS.map(({ label, addr, desc, pending }) => (
                     <tr key={label} className="border-t border-foreground/30 align-top">
                       <td className="px-3 py-2 font-display text-foreground">{label}</td>
                       <td className="px-3 py-2 font-mono">
-                        <a
-                          className="text-primary underline break-all"
-                          target="_blank"
-                          rel="noreferrer"
-                          href={`https://basescan.org/address/${addr}`}
-                        >
-                          {addr}
-                        </a>
+                        {pending || !addr ? (
+                          <span className="rounded border border-primary/60 px-2 py-0.5 text-[10px] uppercase tracking-widest text-primary">
+                            Not yet deployed
+                          </span>
+                        ) : (
+                          <a
+                            className="text-primary underline break-all"
+                            target="_blank"
+                            rel="noreferrer"
+                            href={`https://basescan.org/address/${addr}`}
+                          >
+                            {addr}
+                          </a>
+                        )}
                       </td>
                       <td className="px-3 py-2">{desc}</td>
                     </tr>
@@ -199,6 +205,13 @@ export default function Whitepaper() {
                 </tbody>
               </table>
             </div>
+
+            <p className="text-xs">
+              <span className="text-foreground">Note:</span> the V2 contracts (PURPOSE Token,
+              Bounty Manager, Vendor Redemption) are finalized but not yet deployed to Base
+              mainnet. Earlier V1 addresses have been retired and are intentionally omitted to
+              avoid ambiguity. Addresses will be published here on the day of redeploy.
+            </p>
 
             <h3 className="mt-4 font-display text-xl text-foreground">REVENUE SPLIT</h3>
             <ul className="list-disc space-y-1 pl-6">
