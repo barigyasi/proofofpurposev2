@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useSessionRoles } from "@/hooks/useSessionRoles";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { AddressLabel } from "@/components/AddressLabel";
 
 type Applicant = {
   id: string;
@@ -166,7 +167,7 @@ export default function AdminApplicants() {
                 <div>
                   <p className="font-mono text-[10px] uppercase text-primary">{a.requested_role}</p>
                   <p className="font-display text-lg">{a.name ?? "—"}</p>
-                  <p className="font-mono text-[10px] text-muted-foreground break-all">{a.wallet_address}</p>
+                  <AddressLabel address={a.wallet_address} className="break-all" />
                   {a.email && <p className="text-xs text-muted-foreground">{a.email}</p>}
                 </div>
                 <div className="flex gap-2">

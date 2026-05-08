@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useSessionRoles } from "@/hooks/useSessionRoles";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { AddressLabel } from "@/components/AddressLabel";
 
 type App = {
   id: string;
@@ -87,7 +88,7 @@ export default function AdminChampions() {
                 <p className="font-mono text-[10px] uppercase text-primary">champion</p>
                 <p className="font-display text-xl">{a.champion_name}</p>
                 <p className="text-xs text-muted-foreground">DOB: {a.date_of_birth} · School: {a.school}</p>
-                <p className="font-mono text-[10px] text-muted-foreground break-all">{a.wallet_address}</p>
+                <AddressLabel address={a.wallet_address} className="break-all" />
               </div>
               <div className="flex gap-2">
                 <Button variant="ghost" disabled={busy === a.id} onClick={() => reject(a)}>REJECT</Button>

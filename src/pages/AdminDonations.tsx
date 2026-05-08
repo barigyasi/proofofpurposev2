@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSessionRoles } from "@/hooks/useSessionRoles";
 import { supabase } from "@/integrations/supabase/client";
+import { AddressLabel } from "@/components/AddressLabel";
 
 type Donation = {
   id: string;
@@ -43,7 +44,7 @@ export default function AdminDonations() {
           <div key={d.id} className="brutal flex flex-wrap items-center justify-between gap-3 p-3">
             <div>
               <p className="font-display text-lg text-primary">${Number(d.amount_usdc).toFixed(2)}</p>
-              <p className="font-mono text-[10px] text-muted-foreground">{d.donor_wallet}</p>
+              <AddressLabel address={d.donor_wallet} />
             </div>
             <div className="text-right">
               <p className="font-mono text-[10px]">{d.source}</p>

@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useSessionRoles } from "@/hooks/useSessionRoles";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { AddressLabel } from "@/components/AddressLabel";
 
 type Org = {
   id: string;
@@ -68,7 +69,7 @@ export default function AdminCatalysts() {
                   {o.approved ? "approved" : "pending"}
                 </p>
                 <p className="font-display text-lg">{o.org_name}</p>
-                <p className="font-mono text-[10px] text-muted-foreground">{o.wallet_address}</p>
+                <AddressLabel address={o.wallet_address} />
                 {o.mission && <p className="mt-1 max-w-md text-xs text-muted-foreground">{o.mission}</p>}
               </div>
             </div>
