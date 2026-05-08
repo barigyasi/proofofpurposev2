@@ -489,19 +489,6 @@ export default function Whitepaper() {
             </ul>
           </section>
 
-          <div className="border-t-2 border-foreground pt-6">
-            <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-              // canonical docs
-            </p>
-            <a
-              className="mt-2 inline-block text-primary underline"
-              href="https://docs.popmgm.org"
-              target="_blank"
-              rel="noreferrer"
-            >
-              docs.popmgm.org →
-            </a>
-          </div>
         </article>
       </div>
     </main>
