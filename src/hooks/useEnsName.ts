@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { createPublicClient, http, isAddress, normalize } from "viem";
+import { createPublicClient, http, isAddress } from "viem";
+import { normalize } from "viem/ens";
 import { mainnet } from "viem/chains";
 
 const mainnetClient = createPublicClient({ chain: mainnet, transport: http() });
