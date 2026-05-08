@@ -292,14 +292,22 @@ export default function Whitepaper() {
             <p>
               Voting power is membership-based, not token-weighted:{" "}
               <span className="text-foreground">1 active monthly membership NFT = 1 vote</span>.
-              This protects against capture by large $PURPOSE holders and aligns governance with
-              ongoing community participation.
+              $PURPOSE balances confer <span className="text-foreground">no voting power at all</span> —
+              by design. Champions (youth) are the largest $PURPOSE holders in the system, and
+              $PURPOSE is a soulbound community credit, not a governance asset.
+            </p>
+            <p>
+              The membership-NFT model also caps influence at the per-wallet level: even a
+              well-funded actor who acquired many memberships would still need each one tied to
+              a real, active monthly subscription, with rate-limits and review on issuance. This
+              keeps governance proportional to ongoing community participation rather than
+              capital.
             </p>
             <p>
               Long-term, votes are tallied on-chain via a thirdweb prebuilt Vote contract fed by
               a <code className="text-foreground">vPURPOSE</code> shadow ERC20Votes token kept
-              1:1 in sync with active memberships by the protocol's backend. The current
-              in-app tally is an interim snapshot until the on-chain Vote contract is deployed.
+              1:1 in sync with active memberships by the protocol's backend. The current in-app
+              tally is an interim snapshot until the on-chain Vote contract is deployed.
             </p>
             <p>
               See <Link to="/governance" className="text-primary underline">/governance</Link>{" "}
