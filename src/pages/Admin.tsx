@@ -12,6 +12,7 @@ const TILES = [
   { to: "/admin/treasury", label: "TREASURY", desc: "USDC + PURPOSE positions" },
   { to: "/governance", label: "GOVERNANCE", desc: "DAO proposals + votes" },
   { to: "/admin/audit", label: "AUDIT LOG", desc: "Every admin action, on-chain + off" },
+  { to: "/admin/waitlist", label: "WAITLIST", desc: "Pre-launch signups" },
 ];
 
 export default function Admin() {

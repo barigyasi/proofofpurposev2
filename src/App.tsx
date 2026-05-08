@@ -19,6 +19,7 @@ import AdminVendors from "./pages/AdminVendors.tsx";
 import AdminDonations from "./pages/AdminDonations.tsx";
 import AdminTreasury from "./pages/AdminTreasury.tsx";
 import AdminAudit from "./pages/AdminAudit.tsx";
+import AdminWaitlist from "./pages/AdminWaitlist.tsx";
 import CatalystDashboard from "./pages/CatalystDashboard.tsx";
 import VendorDashboard from "./pages/VendorDashboard.tsx";
 import ApplyCatalyst from "./pages/ApplyCatalyst.tsx";
@@ -70,6 +71,7 @@ const App = () => (
               <Route path="/admin/donations" element={<AdminDonations />} />
               <Route path="/admin/treasury" element={<AdminTreasury />} />
               <Route path="/admin/audit" element={<AdminAudit />} />
+              <Route path="/admin/waitlist" element={<AdminWaitlist />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             </RoleViewProvider>
