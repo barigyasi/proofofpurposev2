@@ -158,6 +158,8 @@ Deno.serve(async (req) => {
       inserted,
       scanned: rows.length,
       head: head.toString(),
+      lastScannedBlock: lastScanned.toString(),
+      done: lastScanned >= head,
     });
   } catch (e) {
     console.error("sync-donations error", e);
