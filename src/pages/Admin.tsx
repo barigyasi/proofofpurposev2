@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useActiveAccount } from "thirdweb/react";
 import { useSessionRoles } from "@/hooks/useSessionRoles";
+import { AddressLabel } from "@/components/AddressLabel";
 
 const TILES = [
   { to: "/admin/bounties", label: "BOUNTIES", desc: "Create, fund, complete bounties" },
@@ -39,7 +40,9 @@ export default function Admin() {
           <span className="text-primary">CONTROL</span>
         </h1>
         {account && (
-          <p className="mt-3 font-mono text-xs text-muted-foreground">{account.address}</p>
+          <div className="mt-3">
+            <AddressLabel address={account.address} link={false} className="text-xs" />
+          </div>
         )}
       </div>
 
