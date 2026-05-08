@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { CONTRACTS } from "@/config/contracts";
 
 const LINKS = [
@@ -18,18 +19,21 @@ export default function About() {
       </div>
       <section className="prose prose-invert mt-8 max-w-none space-y-5 text-sm">
         <p className="font-mono text-[11px] uppercase tracking-widest text-primary">
-          // an on-chain nonprofit · first of its kind
+          // an on-chain nonprofit
         </p>
         <p>
           Proof of Purpose is an on-chain rewards system for youth in the community. Champions
           complete real-world bounties posted by trusted partner orgs (Catalysts) and earn
           $PURPOSE — a soulbound token redeemable only at approved local vendors.
         </p>
-        <p>
-          Built by <span className="text-foreground">MetaPhysical LLC</span>. We believe Proof of
-          Purpose is the first nonprofit to operate end-to-end on-chain — treasury, governance,
-          rewards, and redemptions all verifiable on Base.
-        </p>
+
+        <Link
+          to="/about/whitepaper"
+          className="brutal brutal-hover not-prose mt-2 inline-flex items-center px-6 py-4 font-display text-lg"
+        >
+          READ THE FULL WHITEPAPER →
+        </Link>
+
         <h2 className="font-display text-2xl text-foreground">A NOTE ON TAX-DEDUCTIBILITY</h2>
         <p>
           Federal frameworks for on-chain charitable entities are still being written. Pending
@@ -59,9 +63,15 @@ export default function About() {
             </li>
           ))}
         </ul>
-        <p className="mt-10 border-t-2 border-foreground pt-4 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-          // built by MetaPhysical LLC · © {new Date().getFullYear()}
-        </p>
+
+        <div className="not-prose mt-10 border-t-2 border-foreground pt-6">
+          <Link
+            to="/about/whitepaper"
+            className="brutal-primary brutal-hover inline-flex items-center px-6 py-4 font-display text-lg"
+          >
+            READ THE FULL WHITEPAPER →
+          </Link>
+        </div>
       </section>
     </main>
   );
