@@ -16,21 +16,32 @@ const TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a
 // USDC on Base launched ~Aug 2023; pick a recent-ish floor so first sync is fast.
 // Adjust if you need to backfill earlier.
 const DEFAULT_START_BLOCK = 19_000_000n;
-const CHUNK = 9000n;
+const CHUNK = 2000n;
 
 function pad32(addr: string) {
   return "0x" + addr.replace(/^0x/, "").toLowerCase().padStart(64, "0");
 }
 
 async function rpc<T>(method: string, params: unknown[]): Promise<T> {
-  const res = await fetch(RPC, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
-  });
-  const json = await res.json();
-  if (json.error) throw new Error(`${method}: ${json.error.message ?? JSON.stringify(json.error)}`);
-  return json.result as T;
+  let attempt = 0;
+  while (true) {
+    const res = await fetch(RPC, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+    });
+    const json = await res.json().catch(() => ({}));
+    const errMsg: string = json?.error?.message ?? "";
+    const isRateLimit =
+      res.status === 429 || /rate limit|too many requests/i.test(errMsg);
+    if (isRateLimit && attempt < 5) {
+      attempt++;
+      await new Promise((r) => setTimeout(r, 500 * 2 ** attempt));
+      continue;
+    }
+    if (json.error) throw new Error(`${method}: ${errMsg || JSON.stringify(json.error)}`);
+    return json.result as T;
+  }
 }
 
 function json(body: unknown, status = 200) {
