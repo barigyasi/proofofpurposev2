@@ -56,16 +56,18 @@ export default function Whitepaper() {
     <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
       <div className="border-b-2 border-foreground pb-6">
         <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
-          // whitepaper · v1
+          // whitepaper · v1 · open-source under AGPL-3.0
         </p>
         <h1 className="mt-2 font-display text-[12vw] leading-[0.9] sm:text-7xl">
           PROOF OF<br /><span className="text-primary">PURPOSE</span>
         </h1>
         <p className="mt-4 max-w-2xl text-sm text-muted-foreground">
           A wallet-primary, on-chain youth impact protocol on Base. Donors fund a transparent
-          treasury in USDC. Catalysts propose bounties. Champions complete them and earn
-          $PURPOSE — a soulbound community credit redeemable only at approved local vendors at
-          1:1 USDC.
+          USDC treasury. Catalysts propose real-world bounties. Champions show up and do the
+          work — a Catalyst verifies attendance in person via QR scan, and that scan is the
+          on-chain proof. $PURPOSE is minted directly to the Champion's wallet and redeemable
+          1:1 USDC at approved local vendors. Every step — donation, bounty, verification,
+          mint, redemption — is publicly auditable on-chain in real time.
         </p>
       </div>
 
