@@ -9,14 +9,19 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const RPC = "https://mainnet.base.org";
+// Use thirdweb's Base RPC (same one the frontend uses) — far more generous
+// rate limits than the public mainnet.base.org endpoint.
+const THIRDWEB_CLIENT_ID = "0f6689ee21b2280f8ec05ad7986716e2";
+const RPC = `https://8453.rpc.thirdweb.com/${THIRDWEB_CLIENT_ID}`;
 const USDC = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913".toLowerCase();
 const DONATION_SPLIT = "0x214aF142ff6D9f150EF994e0ea32Ba1f8db9C8dC".toLowerCase();
 const TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
-// USDC on Base launched ~Aug 2023; pick a recent-ish floor so first sync is fast.
-// Adjust if you need to backfill earlier.
-const DEFAULT_START_BLOCK = 19_000_000n;
-const CHUNK = 2000n;
+// Donation Split contract was deployed recently; start near current head so
+// first sync is fast. Override per-request via { fromBlock } if backfill needed.
+const DEFAULT_START_BLOCK = 25_500_000n;
+const CHUNK = 5000n;
+// Cap work per invocation so we never hit the edge function timeout.
+const MAX_CHUNKS_PER_RUN = 40n;
 
 function pad32(addr: string) {
   return "0x" + addr.replace(/^0x/, "").toLowerCase().padStart(64, "0");
