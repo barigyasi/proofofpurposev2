@@ -454,33 +454,39 @@ export type Database = {
       donations: {
         Row: {
           amount_usdc: number
+          block_number: number | null
           champion_referral: string | null
           charge_id: string | null
           created_at: string
           donor_wallet: string
           id: string
+          log_index: number | null
           source: string
           status: string
           tx_hash: string | null
         }
         Insert: {
           amount_usdc: number
+          block_number?: number | null
           champion_referral?: string | null
           charge_id?: string | null
           created_at?: string
           donor_wallet: string
           id?: string
+          log_index?: number | null
           source: string
           status?: string
           tx_hash?: string | null
         }
         Update: {
           amount_usdc?: number
+          block_number?: number | null
           champion_referral?: string | null
           charge_id?: string | null
           created_at?: string
           donor_wallet?: string
           id?: string
+          log_index?: number | null
           source?: string
           status?: string
           tx_hash?: string | null
