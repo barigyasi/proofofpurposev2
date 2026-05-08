@@ -1,35 +1,37 @@
-## Why /admin/donations shows $0.00
+## Show participant names on the bounties admin page
 
-The page is correct — the `donations` table in the database is **empty (0 rows)**. Your $4.50 donation hit the on-chain split contract (`0x214a…C8dC`) but was never written to Supabase. That happens when:
+Right now `/admin/bounties` lists each signup as a raw `0x…` wallet. Replace it with the person's name, falling back to ENS, then a shortened address.
 
-- the donation was sent directly on-chain (e.g. from Basescan / a wallet) instead of through `/donate`, or
-- the insert from `/donate` failed after the tx confirmed, or
-- it pre-dates the recording code.
+### Where names come from
 
-We need a way to pull donations **from the chain** instead of relying on the app to write them.
+For any bounty signup we have `user_id` and `wallet_address`. Resolve the friendly name in this priority order:
 
-## Plan
+1. `champion_applications.champion_name` where `user_id` matches and status is `approved` (most signups will be champions).
+2. `profiles.display_name` or `profiles.username` for the same `user_id`.
+3. Verified ENS name for the wallet (already wired via `AddressLabel`).
+4. Shortened address `0x1234…abcd` as last resort.
 
-### 1. New edge function `sync-donations`
-- Reads all `Transfer(from, to=DONATION_SPLIT, value)` events on Base USDC (`0x8335…2913`) since the most recent `tx_hash` already in `donations` (or from a configurable start block on first run).
-- For each new transfer, upserts a row into `donations` keyed by `tx_hash`:
-  - `donor_wallet` = `from`
-  - `amount_usdc` = value / 1e6
-  - `source` = `"onchain"` (so we can distinguish from `"wallet"` rows the app writes)
-  - `status` = `"confirmed"`
-  - `tx_hash` = the transfer hash
-- Uses an Alchemy / public Base RPC via `fetch` (no new secrets needed if we use a public Base RPC; if rate-limited we can add `BASE_RPC_URL` later).
-- Admin-only: verifies the caller's JWT and `has_role(uid, 'admin')` before running.
-- DB constraint: add `UNIQUE (tx_hash) WHERE tx_hash IS NOT NULL` so the upsert is safe and re-running can't create duplicates.
+### Changes
 
-### 2. New "SYNC FROM CHAIN" button on `/admin/donations`
-- Sits next to the heading.
-- Calls the edge function, shows toast with how many rows were inserted, then refetches the list.
-- Running it now will backfill the $4.50 and any other historical donation.
+1. **New hook `src/hooks/useParticipantNames.ts`**
+   - Takes an array of `{ user_id?: string; wallet_address: string }`.
+   - One batched query each to `champion_applications` (filter by user_ids, status=approved) and `profiles` (filter by user_ids).
+   - Returns a `Map<walletLower, string | null>` of resolved names (null = no friendly name found).
+   - Cached in component state; re-runs when the input set changes.
 
-### 3. Small UI tweak on `/admin/donations`
-- Add a `tx ↗` Basescan link (already there) and label rows by `source` so on-chain-synced ones are visibly tagged.
+2. **`src/components/ParticipantLabel.tsx`**
+   - Props: `userId?`, `wallet`, optional `nameOverride`.
+   - Renders the resolved name (bold) on top, with the existing `AddressLabel` (ENS / shortened addr, basescan link) as a tiny secondary line so admins can still verify on-chain identity.
+   - If no name is found, just renders `AddressLabel` directly (so ENS still wins over raw 0x).
 
-### Out of scope for this pass
-- Automatic cron (we can add a scheduled trigger later once we confirm sync works).
-- Champion referral attribution for direct on-chain donations (no way to recover that off-chain context — only `/donate` flow can capture it).
+3. **`src/pages/AdminBounties.tsx`**
+   - Call `useParticipantNames(allSignups)` once per render.
+   - Swap the `<code>{s.wallet_address}</code>` block (line 117) for `<ParticipantLabel userId={s.user_id} wallet={s.wallet_address} nameOverride={names.get(...)} />`.
+   - Add `user_id` to the `Signup` type and SELECT.
+
+4. **`src/pages/AdminBountyScan.tsx`**
+   - When a scan / manual entry confirms a wallet, look up the name (single query to `champion_applications` then `profiles` by wallet_address). Show "Checked in: **{name}**" with the address as smaller secondary text.
+
+### Out of scope
+- Bulletin / Governance / public-facing name display (separate concerns; user only mentioned the bounties page).
+- Editing names. Names come from existing `champion_applications` / `profiles` rows.
