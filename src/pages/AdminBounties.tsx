@@ -9,12 +9,15 @@ import { TreasuryHeadroomCard } from "@/components/admin/TreasuryHeadroomCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { useParticipantNames } from "@/hooks/useParticipantNames";
+import { ParticipantLabel } from "@/components/ParticipantLabel";
 
 type Signup = {
   id: string;
   bounty_id: string;
   on_chain_bounty_id: number | null;
   wallet_address: string;
+  user_id: string | null;
   status: string;
   created_at: string;
 };
@@ -32,7 +35,7 @@ export default function AdminBounties() {
   async function loadSignups() {
     const { data } = await supabase
       .from("bounty_signups")
-      .select("id,bounty_id,on_chain_bounty_id,wallet_address,status,created_at")
+      .select("id,bounty_id,on_chain_bounty_id,wallet_address,user_id,status,created_at")
       .order("created_at", { ascending: true });
     setSignups((data ?? []) as Signup[]);
   }
