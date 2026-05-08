@@ -93,6 +93,5 @@ Full deploy guide in [`contracts/DEPLOYMENT.md`](./contracts/DEPLOYMENT.md).
 
 ## Contact
 
-- General: hello@popmgm.org
-- Security: security@popmgm.org (see [`SECURITY.md`](./SECURITY.md))
-- Docs: [docs.popmgm.org](https://docs.popmgm.org)
+- General: admin@popmgm.org
+
