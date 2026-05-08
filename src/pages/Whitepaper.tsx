@@ -112,8 +112,12 @@ export default function Whitepaper() {
               <h3 className="mt-2 font-display text-2xl text-foreground">YOUTH PARTICIPANTS</h3>
               <p className="mt-2">
                 Sign up by email (a smart wallet is auto-created with sponsored gas). Apply for
-                bounties posted by Catalysts, complete tasks, submit proof, receive $PURPOSE,
-                and spend at approved local vendors via QR code.
+                bounties posted by Catalysts and show up to do the work. Champions never submit
+                proof themselves — a Catalyst verifies attendance in person by scanning the
+                Champion's QR code, which calls the Bounty Manager contract on-chain and adds
+                the Champion as a verified participant. When the Catalyst ends the bounty,
+                $PURPOSE is minted directly to each verified Champion's wallet, redeemable at
+                approved local vendors via QR code.
               </p>
             </div>
 
