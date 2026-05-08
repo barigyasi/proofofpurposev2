@@ -104,7 +104,9 @@ Deno.serve(async (req) => {
       status: string;
     }> = [];
 
-    while (from <= head) {
+    let chunks = 0n;
+    let lastScanned = from;
+    while (from <= head && chunks < MAX_CHUNKS_PER_RUN) {
       const to = from + CHUNK - 1n > head ? head : from + CHUNK - 1n;
       const logs = await rpc<Array<{
         address: string;
@@ -135,9 +137,11 @@ Deno.serve(async (req) => {
         });
       }
 
+      lastScanned = to;
       from = to + 1n;
-      // Pace requests to stay under public RPC rate limits.
-      await new Promise((r) => setTimeout(r, 120));
+      chunks++;
+      // Light pacing.
+      await new Promise((r) => setTimeout(r, 60));
     }
 
     let inserted = 0;
