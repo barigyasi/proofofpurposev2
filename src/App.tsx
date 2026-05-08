@@ -29,6 +29,7 @@ import AdminChampions from "./pages/AdminChampions.tsx";
 import Vendors from "./pages/Vendors.tsx";
 import Donate from "./pages/Donate.tsx";
 import About from "./pages/About.tsx";
+import Whitepaper from "./pages/Whitepaper.tsx";
 import Governance from "./pages/Governance.tsx";
 import Bulletin from "./pages/Bulletin.tsx";
 import NotFound from "./pages/NotFound.tsx";
@@ -60,6 +61,7 @@ const App = () => (
               <Route path="/vendors" element={<Vendors />} />
               <Route path="/donate" element={<Donate />} />
               <Route path="/about" element={<About />} />
+              <Route path="/about/whitepaper" element={<Whitepaper />} />
               <Route path="/governance" element={<Governance />} />
               <Route path="/bulletin" element={<Bulletin />} />
               <Route path="/admin" element={<Admin />} />
