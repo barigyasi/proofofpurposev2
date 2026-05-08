@@ -131,6 +131,8 @@ Deno.serve(async (req) => {
       }
 
       from = to + 1n;
+      // Pace requests to stay under public RPC rate limits.
+      await new Promise((r) => setTimeout(r, 120));
     }
 
     let inserted = 0;
