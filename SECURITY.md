@@ -4,7 +4,7 @@
 
 Please **do not** open a public GitHub issue for security reports.
 
-Email: **security@popmgm.org** (PGP key on request).
+Email: **admin@popmgm.org** (PGP key on request).
 
 We aim to acknowledge within 48 hours and ship a fix or mitigation within 14
 days for high-severity issues. Coordinated disclosure preferred.
