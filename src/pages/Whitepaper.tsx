@@ -17,12 +17,14 @@ const TOC = [
   ["roadmap", "Roadmap"],
 ] as const;
 
-const CONTRACT_ROWS: Array<[string, string, string]> = [
-  ["Treasury", CONTRACTS.TREASURY, "USDC reserve backing every $PURPOSE in circulation."],
-  ["Donation Split", CONTRACTS.DONATION_SPLIT, "Routes incoming USDC: 90% Treasury, 8% admin multisig, 2% founder."],
-  ["PURPOSE Token", CONTRACTS.PURPOSE_TOKEN, "Soulbound community credit minted to Champions, burned at redemption."],
-  ["Bounty Manager", CONTRACTS.BOUNTY_MANAGER, "On-chain registry for bounty payouts and proofs."],
-  ["Vendor Redemption", CONTRACTS.VENDOR_REDEMPTION, "Burns $PURPOSE and pays vendors 1:1 in USDC."],
+type ContractRow = { label: string; addr: string | null; desc: string; pending?: boolean };
+
+const CONTRACT_ROWS: ContractRow[] = [
+  { label: "Treasury", addr: CONTRACTS.TREASURY, desc: "USDC reserve backing every $PURPOSE in circulation." },
+  { label: "Donation Split", addr: CONTRACTS.DONATION_SPLIT, desc: "Routes incoming USDC: 90% Treasury, 8% admin multisig, 2% founder." },
+  { label: "PURPOSE Token (V2)", addr: null, desc: "Soulbound community credit minted to Champions, burned at redemption.", pending: true },
+  { label: "Bounty Manager (V2)", addr: null, desc: "On-chain registry for bounty payouts and on-chain check-ins.", pending: true },
+  { label: "Vendor Redemption (V2)", addr: null, desc: "Burns $PURPOSE and pays vendors 1:1 in USDC.", pending: true },
 ];
 
 function Anchor({ id, label }: { id: string; label: string }) {
