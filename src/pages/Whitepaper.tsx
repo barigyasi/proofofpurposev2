@@ -17,12 +17,14 @@ const TOC = [
   ["roadmap", "Roadmap"],
 ] as const;
 
-const CONTRACT_ROWS: Array<[string, string, string]> = [
-  ["Treasury", CONTRACTS.TREASURY, "USDC reserve backing every $PURPOSE in circulation."],
-  ["Donation Split", CONTRACTS.DONATION_SPLIT, "Routes incoming USDC: 90% Treasury, 8% admin multisig, 2% founder."],
-  ["PURPOSE Token", CONTRACTS.PURPOSE_TOKEN, "Soulbound community credit minted to Champions, burned at redemption."],
-  ["Bounty Manager", CONTRACTS.BOUNTY_MANAGER, "On-chain registry for bounty payouts and proofs."],
-  ["Vendor Redemption", CONTRACTS.VENDOR_REDEMPTION, "Burns $PURPOSE and pays vendors 1:1 in USDC."],
+type ContractRow = { label: string; addr: string | null; desc: string; pending?: boolean };
+
+const CONTRACT_ROWS: ContractRow[] = [
+  { label: "Treasury", addr: CONTRACTS.TREASURY, desc: "USDC reserve backing every $PURPOSE in circulation." },
+  { label: "Donation Split", addr: CONTRACTS.DONATION_SPLIT, desc: "Routes incoming USDC: 90% Treasury, 8% admin multisig, 2% founder." },
+  { label: "PURPOSE Token (V2)", addr: null, desc: "Soulbound community credit minted to Champions, burned at redemption.", pending: true },
+  { label: "Bounty Manager (V2)", addr: null, desc: "On-chain registry for bounty payouts and on-chain check-ins.", pending: true },
+  { label: "Vendor Redemption (V2)", addr: null, desc: "Burns $PURPOSE and pays vendors 1:1 in USDC.", pending: true },
 ];
 
 function Anchor({ id, label }: { id: string; label: string }) {
@@ -110,8 +112,12 @@ export default function Whitepaper() {
               <h3 className="mt-2 font-display text-2xl text-foreground">YOUTH PARTICIPANTS</h3>
               <p className="mt-2">
                 Sign up by email (a smart wallet is auto-created with sponsored gas). Apply for
-                bounties posted by Catalysts, complete tasks, submit proof, receive $PURPOSE,
-                and spend at approved local vendors via QR code.
+                bounties posted by Catalysts and show up to do the work. Champions never submit
+                proof themselves — a Catalyst verifies attendance in person by scanning the
+                Champion's QR code, which calls the Bounty Manager contract on-chain and adds
+                the Champion as a verified participant. When the Catalyst ends the bounty,
+                $PURPOSE is minted directly to each verified Champion's wallet, redeemable at
+                approved local vendors via QR code.
               </p>
             </div>
 
@@ -178,18 +184,24 @@ export default function Whitepaper() {
                   </tr>
                 </thead>
                 <tbody>
-                  {CONTRACT_ROWS.map(([label, addr, desc]) => (
+                  {CONTRACT_ROWS.map(({ label, addr, desc, pending }) => (
                     <tr key={label} className="border-t border-foreground/30 align-top">
                       <td className="px-3 py-2 font-display text-foreground">{label}</td>
                       <td className="px-3 py-2 font-mono">
-                        <a
-                          className="text-primary underline break-all"
-                          target="_blank"
-                          rel="noreferrer"
-                          href={`https://basescan.org/address/${addr}`}
-                        >
-                          {addr}
-                        </a>
+                        {pending || !addr ? (
+                          <span className="rounded border border-primary/60 px-2 py-0.5 text-[10px] uppercase tracking-widest text-primary">
+                            Not yet deployed
+                          </span>
+                        ) : (
+                          <a
+                            className="text-primary underline break-all"
+                            target="_blank"
+                            rel="noreferrer"
+                            href={`https://basescan.org/address/${addr}`}
+                          >
+                            {addr}
+                          </a>
+                        )}
                       </td>
                       <td className="px-3 py-2">{desc}</td>
                     </tr>
@@ -197,6 +209,13 @@ export default function Whitepaper() {
                 </tbody>
               </table>
             </div>
+
+            <p className="text-xs">
+              <span className="text-foreground">Note:</span> the V2 contracts (PURPOSE Token,
+              Bounty Manager, Vendor Redemption) are finalized but not yet deployed to Base
+              mainnet. Earlier V1 addresses have been retired and are intentionally omitted to
+              avoid ambiguity. Addresses will be published here on the day of redeploy.
+            </p>
 
             <h3 className="mt-4 font-display text-xl text-foreground">REVENUE SPLIT</h3>
             <ul className="list-disc space-y-1 pl-6">
@@ -228,9 +247,9 @@ export default function Whitepaper() {
             <ol className="list-decimal space-y-1 pl-6">
               <li>Catalyst proposes a bounty (title, reward, description, image, quota).</li>
               <li>Bounty is approved (currently admin-gated; moving to on-chain governance).</li>
-              <li>Champion applies → Catalyst reviews and approves.</li>
-              <li>Champion completes the task and submits proof (image / QR check-in).</li>
-              <li>Catalyst confirms completion; Bounty Manager mints $PURPOSE to the Champion.</li>
+              <li>Champion applies and is approved into the participant pool.</li>
+              <li>At the event, the Catalyst scans each Champion's wallet QR code in person; the scan calls <code className="text-foreground">addParticipant</code> on the Bounty Manager contract, marking attendance on-chain. Champions never upload proof themselves.</li>
+              <li>When the Catalyst ends the bounty, the Bounty Manager mints $PURPOSE to every verified participant in a single on-chain settlement.</li>
             </ol>
 
             <h3 className="font-display text-xl text-foreground">REDEMPTION</h3>
@@ -273,14 +292,22 @@ export default function Whitepaper() {
             <p>
               Voting power is membership-based, not token-weighted:{" "}
               <span className="text-foreground">1 active monthly membership NFT = 1 vote</span>.
-              This protects against capture by large $PURPOSE holders and aligns governance with
-              ongoing community participation.
+              $PURPOSE balances confer <span className="text-foreground">no voting power at all</span> —
+              by design. Champions (youth) are the largest $PURPOSE holders in the system, and
+              $PURPOSE is a soulbound community credit, not a governance asset.
+            </p>
+            <p>
+              The membership-NFT model also caps influence at the per-wallet level: even a
+              well-funded actor who acquired many memberships would still need each one tied to
+              a real, active monthly subscription, with rate-limits and review on issuance. This
+              keeps governance proportional to ongoing community participation rather than
+              capital.
             </p>
             <p>
               Long-term, votes are tallied on-chain via a thirdweb prebuilt Vote contract fed by
               a <code className="text-foreground">vPURPOSE</code> shadow ERC20Votes token kept
-              1:1 in sync with active memberships by the protocol's backend. The current
-              in-app tally is an interim snapshot until the on-chain Vote contract is deployed.
+              1:1 in sync with active memberships by the protocol's backend. The current in-app
+              tally is an interim snapshot until the on-chain Vote contract is deployed.
             </p>
             <p>
               See <Link to="/governance" className="text-primary underline">/governance</Link>{" "}
