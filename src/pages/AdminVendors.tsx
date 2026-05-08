@@ -10,6 +10,7 @@ import { thirdwebClient, baseChain } from "@/lib/thirdweb";
 import { CONTRACTS } from "@/config/contracts";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { AddressLabel } from "@/components/AddressLabel";
 
 type Vendor = {
   id: string;
@@ -89,7 +90,7 @@ export default function AdminVendors() {
                 {v.approved ? "approved" : "pending"} · {v.category ?? "—"}
               </p>
               <p className="font-display text-lg">{v.business_name}</p>
-              <p className="font-mono text-[10px] text-muted-foreground">{v.wallet_address}</p>
+              <AddressLabel address={v.wallet_address} />
             </div>
             {!v.approved && (
               <Button disabled={busy === v.id} onClick={() => approve(v)} className="brutal-primary brutal-hover font-display">
