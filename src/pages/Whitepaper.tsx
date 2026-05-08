@@ -329,6 +329,28 @@ export default function Whitepaper() {
             </ul>
           </section>
 
+          {/* Open Source */}
+          <section className="space-y-4">
+            <Anchor id="open-source" label="OPEN SOURCE" />
+            <p>
+              Proof of Purpose is licensed under{" "}
+              <span className="text-foreground">AGPL-3.0</span>. The full
+              codebase — frontend, edge functions, smart contracts, and database
+              migrations — is public. Any community can fork it, redeploy the
+              contracts, and run the same protocol in their own city.
+            </p>
+            <ul className="list-disc space-y-1 pl-6">
+              <li><span className="text-foreground">Forks must stay open-source.</span> AGPL requires that any modifications shipped publicly are released under the same license — protecting the mission against closed-source extraction.</li>
+              <li><span className="text-foreground">Brand is not licensed.</span> The "Proof of Purpose" name, $PURPOSE wordmark, and visual identity are reserved. Forks must rebrand before launching.</li>
+              <li><span className="text-foreground">Secrets stay yours.</span> Wallet keys, signer keys, and service-role tokens never live in the repo — only in your secret manager. See <code className="text-foreground">SECURITY.md</code>.</li>
+              <li><span className="text-foreground">One file to swap.</span> Every contract address lives in <code className="text-foreground">src/config/contracts.ts</code>. Redeploy the six contracts, paste the addresses, and your fork is live on Base.</li>
+            </ul>
+            <p>
+              Full deploy walkthrough in <code className="text-foreground">contracts/DEPLOYMENT.md</code> and{" "}
+              <code className="text-foreground">FORKING.md</code> in the repo root.
+            </p>
+          </section>
+
           {/* Getting started */}
           <section className="space-y-4">
             <Anchor id="getting-started" label="GETTING STARTED BY ROLE" />
