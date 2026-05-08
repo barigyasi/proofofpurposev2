@@ -50,6 +50,8 @@ export default function AdminBounties() {
     else if (!roles.includes("admin")) navigate("/dashboard", { replace: true });
   }, [isLoading, session, roles, navigate]);
 
+  const names = useParticipantNames(signups);
+
   if (isLoading || !roles.includes("admin")) return null;
 
   return (
@@ -116,8 +118,11 @@ export default function AdminBounties() {
                         <div className="mt-2 space-y-2">
                           {all.map((s) => (
                             <div key={s.id} className="flex flex-wrap items-center justify-between gap-2 bg-muted/30 p-2">
-                              <div className="flex flex-col">
-                                <code className="font-mono text-[11px]">{s.wallet_address}</code>
+                              <div className="flex flex-col gap-0.5">
+                                <ParticipantLabel
+                                  wallet={s.wallet_address}
+                                  name={names.get(s.wallet_address.toLowerCase())}
+                                />
                                 <span className="font-mono text-[9px] uppercase text-muted-foreground">{s.status}</span>
                               </div>
                               {s.status === "pending" && b.status === "running" && b.onChainId !== null && (
