@@ -11,6 +11,7 @@ const TOC = [
   ["tokenomics", "Tokenomics"],
   ["governance", "Governance"],
   ["security", "Security"],
+  ["open-source", "Open Source"],
   ["getting-started", "Getting Started by Role"],
   ["conduct", "Code of Conduct"],
   ["audit", "Audit & Oversight"],
