@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useParticipantNames } from "@/hooks/useParticipantNames";
+import { ParticipantLabel } from "@/components/ParticipantLabel";
 
 export default function AdminBountyScan() {
   const { id } = useParams<{ id: string }>();
@@ -32,7 +34,7 @@ export default function AdminBountyScan() {
     queryFn: async () => {
       const { data } = await supabase
         .from("bounty_signups")
-        .select("id,wallet_address,status,checked_in_at")
+        .select("id,wallet_address,user_id,status,checked_in_at")
         .eq("bounty_id", id!)
         .order("created_at", { ascending: true });
       return data ?? [];
@@ -43,6 +45,7 @@ export default function AdminBountyScan() {
     (s) => s.status === "checked_in" || s.status === "added",
   ).length;
   const totalCount = signups?.length ?? 0;
+  const names = useParticipantNames(signups ?? []);
 
   useEffect(() => {
     if (isLoading) return;
@@ -128,7 +131,10 @@ export default function AdminBountyScan() {
       {confirmed && Date.now() - confirmed.at < 8000 && (
         <div className="mt-4 border-2 border-primary bg-primary/10 p-3">
           <p className="font-display text-lg text-primary">✓ CHECKED IN</p>
-          <code className="break-all font-mono text-[11px] text-foreground">{confirmed.wallet}</code>
+          <ParticipantLabel
+            wallet={confirmed.wallet}
+            name={names.get(confirmed.wallet.toLowerCase())}
+          />
         </div>
       )}
 
