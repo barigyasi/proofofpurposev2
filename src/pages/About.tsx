@@ -71,6 +71,17 @@ export default function About() {
           >
             READ THE FULL WHITEPAPER →
           </Link>
+          <p className="mt-6 font-mono text-xs text-muted-foreground">
+            Canonical docs:{" "}
+            <a
+              href="https://docs.popmgm.org"
+              target="_blank"
+              rel="noreferrer"
+              className="text-primary underline"
+            >
+              docs.popmgm.org
+            </a>
+          </p>
         </div>
       </section>
     </main>
