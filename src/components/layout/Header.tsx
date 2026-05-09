@@ -15,11 +15,11 @@ import popMark from "@/assets/pop-mark.png";
 const NAV = [
   { to: "/vendors", label: "Vendors" },
   { to: "/dashboard", label: "Dashboard" },
-  { to: "/governance", label: "Governance" },
+  { to: "/governance", label: "Governance", hideForChampion: true },
   { to: "/bulletin", label: "Bulletin" },
   { to: "/about", label: "About" },
   { to: "/donate", label: "Donate" },
-];
+] as const;
 
 export function Header() {
   const { pathname } = useLocation();
