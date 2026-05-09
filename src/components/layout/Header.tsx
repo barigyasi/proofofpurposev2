@@ -12,10 +12,11 @@ import { useSessionRoles } from "@/hooks/useSessionRoles";
 import { useRoleView, type ViewAs } from "@/context/RoleViewContext";
 import popMark from "@/assets/pop-mark.png";
 
-const NAV = [
+type NavItem = { to: string; label: string; hideForChampion?: boolean };
+const NAV: NavItem[] = [
   { to: "/vendors", label: "Vendors" },
   { to: "/dashboard", label: "Dashboard" },
-  { to: "/governance", label: "Governance" },
+  { to: "/governance", label: "Governance", hideForChampion: true },
   { to: "/bulletin", label: "Bulletin" },
   { to: "/about", label: "About" },
   { to: "/donate", label: "Donate" },
@@ -34,6 +35,13 @@ export function Header() {
   const { viewAs, setViewAs } = useRoleView();
   const isAdmin = roles.includes("admin");
   const isPreview = isAdmin && viewAs !== "admin";
+  // Champions don't vote (voting power comes from donor membership NFTs), so hide governance for champion-only users.
+  const effectiveRole: string = isAdmin && viewAs !== "admin" ? viewAs : (roles[0] ?? "");
+  const isChampionOnly = isAdmin
+    ? viewAs === "champion"
+    : roles.length > 0 && roles.every((r) => r === "champion");
+  const visibleNav = NAV.filter((n) => !(n.hideForChampion && isChampionOnly));
+  void effectiveRole;
 
   function handleViewChange(v: ViewAs) {
     setViewAs(v);
@@ -77,7 +85,7 @@ export function Header() {
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">
-          {NAV.map((n) => {
+          {visibleNav.map((n) => {
             const active = pathname.startsWith(n.to);
             return (
               <Link
@@ -161,7 +169,7 @@ export function Header() {
       {open && (
         <div className="border-t-2 border-foreground md:hidden">
           <nav className="flex flex-col">
-            {NAV.map((n) => (
+            {visibleNav.map((n) => (
               <Link
                 key={n.to}
                 to={n.to}
