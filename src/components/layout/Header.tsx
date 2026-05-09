@@ -34,6 +34,13 @@ export function Header() {
   const { viewAs, setViewAs } = useRoleView();
   const isAdmin = roles.includes("admin");
   const isPreview = isAdmin && viewAs !== "admin";
+  // Champions don't vote (voting power comes from donor membership NFTs), so hide governance for champion-only users.
+  const effectiveRole: string = isAdmin && viewAs !== "admin" ? viewAs : (roles[0] ?? "");
+  const isChampionOnly = isAdmin
+    ? viewAs === "champion"
+    : roles.length > 0 && roles.every((r) => r === "champion");
+  const visibleNav = NAV.filter((n) => !(n.hideForChampion && isChampionOnly));
+  void effectiveRole;
 
   function handleViewChange(v: ViewAs) {
     setViewAs(v);
