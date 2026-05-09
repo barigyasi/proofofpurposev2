@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useActiveAccount } from "thirdweb/react";
 import { toast } from "sonner";
 import { useEffectiveRoles } from "@/hooks/useEffectiveRoles";
@@ -6,12 +6,44 @@ import { useDraftVotes, type DraftWithVotes, type VoteChoice } from "@/hooks/use
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 
-function timeLeft(closesAt: string) {
-  const ms = new Date(closesAt).getTime() - Date.now();
-  if (ms <= 0) return "closed";
-  const h = Math.floor(ms / 3_600_000);
+// Cool vote labels — matches the "ignite movements" theme
+const VOTE_LABEL: Record<VoteChoice, string> = {
+  yes: "FUEL",
+  no: "STALL",
+  abstain: "PASS",
+};
+
+function Countdown({ closesAt }: { closesAt: string }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const ms = new Date(closesAt).getTime() - now;
+  if (ms <= 0) {
+    return <span className="font-mono text-[10px] uppercase tracking-widest text-destructive">// voting closed</span>;
+  }
+  const d = Math.floor(ms / 86_400_000);
+  const h = Math.floor((ms % 86_400_000) / 3_600_000);
   const m = Math.floor((ms % 3_600_000) / 60_000);
-  return h > 0 ? `${h}h ${m}m left` : `${m}m left`;
+  const s = Math.floor((ms % 60_000) / 1000);
+  const parts: Array<[string, string]> = [];
+  if (d > 0) parts.push([String(d), "d"]);
+  parts.push([String(h).padStart(2, "0"), "h"]);
+  parts.push([String(m).padStart(2, "0"), "m"]);
+  parts.push([String(s).padStart(2, "0"), "s"]);
+  return (
+    <div className="flex items-end gap-1.5 font-mono">
+      {parts.map(([v, u], i) => (
+        <div key={i} className="flex items-baseline gap-0.5">
+          <span className="brutal bg-background px-1.5 py-0.5 font-display text-base leading-none text-primary tabular-nums">
+            {v}
+          </span>
+          <span className="text-[9px] uppercase text-muted-foreground">{u}</span>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function outcome(d: DraftWithVotes) {
