@@ -37,6 +37,7 @@ import NotFound from "./pages/NotFound.tsx";
 import { RoleViewProvider } from "@/context/RoleViewContext";
 import { AdminGuard } from "@/components/auth/AdminGuard";
 import { AuthGuard } from "@/components/auth/AuthGuard";
+import { Footer } from "@/components/layout/Footer";
 
 const queryClient = new QueryClient();
 
@@ -79,6 +80,7 @@ const App = () => (
               <Route path="/admin/waitlist" element={<AdminGuard><AdminWaitlist /></AdminGuard>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
+            <Footer />
             </RoleViewProvider>
           </BrowserRouter>
           <Analytics />

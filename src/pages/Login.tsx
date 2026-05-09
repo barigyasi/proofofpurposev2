@@ -10,7 +10,6 @@ export default function Login() {
   const redirectTo = params.get("redirect");
   const [session, setSession] = useState<Session | null>(null);
   const [redirecting, setRedirecting] = useState(false);
-  const [adminMode, setAdminMode] = useState(false);
 
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
@@ -47,23 +46,12 @@ export default function Login() {
           <span className="text-primary">IN.</span>
         </h1>
         <p className="mt-4 max-w-md text-sm text-muted-foreground">
-          {adminMode
-            ? "Connect your admin wallet (MetaMask / Coinbase / WalletConnect) to access mission control."
-            : "Enter with email, Google, Apple, or passkey. New here? Your account is created automatically. No setup, no fees."}
+          Enter with email, Google, Apple, or passkey. New here? Your account is created automatically. No setup, no fees.
         </p>
       </div>
 
       <div className="mt-8">
-        <ConnectWalletButton mode={adminMode ? "admin" : "default"} />
-      </div>
-
-      <div className="mt-10 text-center">
-        <button
-          onClick={() => setAdminMode((v) => !v)}
-          className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
-        >
-          {adminMode ? "← back to standard entry" : "admin entry →"}
-        </button>
+        <ConnectWalletButton mode="default" />
       </div>
     </main>
   );
