@@ -32,8 +32,12 @@ export default function Governance() {
   const isAdmin = roles.includes("admin");
 
   async function vote(draftId: string, choice: VoteChoice) {
+    if (!account?.address) {
+      toast.error("Connect your wallet to vote — votes are tied to a wallet address for the on-chain DAO.");
+      return;
+    }
     try {
-      await castVote(draftId, choice, account?.address);
+      await castVote(draftId, choice, account.address);
       toast.success(`Vote recorded: ${choice}`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");

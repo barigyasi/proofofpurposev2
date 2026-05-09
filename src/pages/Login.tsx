@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { ConnectWalletButton } from "@/components/auth/ConnectWalletButton";
 
 export default function Login() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const redirectTo = params.get("redirect");
   const [session, setSession] = useState<Session | null>(null);
   const [redirecting, setRedirecting] = useState(false);
   const [adminMode, setAdminMode] = useState(false);
@@ -20,6 +22,10 @@ export default function Login() {
     if (!session || redirecting) return;
     setRedirecting(true);
     (async () => {
+      if (redirectTo && redirectTo.startsWith("/")) {
+        navigate(redirectTo, { replace: true });
+        return;
+      }
       const { data } = await supabase
         .from("user_roles")
         .select("role")
@@ -28,7 +34,7 @@ export default function Login() {
       if (roles.includes("admin")) navigate("/admin", { replace: true });
       else navigate("/dashboard", { replace: true });
     })();
-  }, [session, redirecting, navigate]);
+  }, [session, redirecting, navigate, redirectTo]);
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-12 sm:px-6 sm:py-20">
