@@ -35,6 +35,7 @@ import Governance from "./pages/Governance.tsx";
 import Bulletin from "./pages/Bulletin.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import { RoleViewProvider } from "@/context/RoleViewContext";
+import { AdminGuard } from "@/components/auth/AdminGuard";
 
 const queryClient = new QueryClient();
 
@@ -58,23 +59,23 @@ const App = () => (
               <Route path="/apply/catalyst" element={<ApplyCatalyst />} />
               <Route path="/apply/vendor" element={<ApplyVendor />} />
               <Route path="/apply/champion" element={<ApplyChampion />} />
-              <Route path="/admin/champions" element={<AdminChampions />} />
+              <Route path="/admin/champions" element={<AdminGuard><AdminChampions /></AdminGuard>} />
               <Route path="/vendors" element={<Vendors />} />
               <Route path="/donate" element={<Donate />} />
               <Route path="/about" element={<About />} />
               <Route path="/about/whitepaper" element={<Whitepaper />} />
               <Route path="/governance" element={<Governance />} />
               <Route path="/bulletin" element={<Bulletin />} />
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/admin/bounties" element={<AdminBounties />} />
-              <Route path="/admin/bounties/:id/scan" element={<AdminBountyScan />} />
-              <Route path="/admin/applicants" element={<AdminApplicants />} />
-              <Route path="/admin/catalysts" element={<AdminCatalysts />} />
-              <Route path="/admin/vendors" element={<AdminVendors />} />
-              <Route path="/admin/donations" element={<AdminDonations />} />
-              <Route path="/admin/treasury" element={<AdminTreasury />} />
-              <Route path="/admin/audit" element={<AdminAudit />} />
-              <Route path="/admin/waitlist" element={<AdminWaitlist />} />
+              <Route path="/admin" element={<AdminGuard><Admin /></AdminGuard>} />
+              <Route path="/admin/bounties" element={<AdminGuard><AdminBounties /></AdminGuard>} />
+              <Route path="/admin/bounties/:id/scan" element={<AdminGuard><AdminBountyScan /></AdminGuard>} />
+              <Route path="/admin/applicants" element={<AdminGuard><AdminApplicants /></AdminGuard>} />
+              <Route path="/admin/catalysts" element={<AdminGuard><AdminCatalysts /></AdminGuard>} />
+              <Route path="/admin/vendors" element={<AdminGuard><AdminVendors /></AdminGuard>} />
+              <Route path="/admin/donations" element={<AdminGuard><AdminDonations /></AdminGuard>} />
+              <Route path="/admin/treasury" element={<AdminGuard><AdminTreasury /></AdminGuard>} />
+              <Route path="/admin/audit" element={<AdminGuard><AdminAudit /></AdminGuard>} />
+              <Route path="/admin/waitlist" element={<AdminGuard><AdminWaitlist /></AdminGuard>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             </RoleViewProvider>
