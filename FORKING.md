@@ -157,4 +157,4 @@ gotchas** section in `contracts/DEPLOYMENT.md`.
 ## Questions
 
 Open a GitHub Discussion on the upstream repo, or email
-hello@popmgm.org. We're happy to help new cities launch.
+admin@popmgm.org. We're happy to help new cities launch.
