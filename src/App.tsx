@@ -53,20 +53,20 @@ const App = () => (
               <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/onboarding" element={<Onboarding />} />
-              <Route path="/catalyst" element={<CatalystDashboard />} />
-              <Route path="/vendor" element={<VendorDashboard />} />
-              <Route path="/apply/catalyst" element={<ApplyCatalyst />} />
-              <Route path="/apply/vendor" element={<ApplyVendor />} />
-              <Route path="/apply/champion" element={<ApplyChampion />} />
+              <Route path="/dashboard" element={<AuthGuard><Dashboard /></AuthGuard>} />
+              <Route path="/onboarding" element={<AuthGuard><Onboarding /></AuthGuard>} />
+              <Route path="/catalyst" element={<AuthGuard><CatalystDashboard /></AuthGuard>} />
+              <Route path="/vendor" element={<AuthGuard><VendorDashboard /></AuthGuard>} />
+              <Route path="/apply/catalyst" element={<AuthGuard><ApplyCatalyst /></AuthGuard>} />
+              <Route path="/apply/vendor" element={<AuthGuard><ApplyVendor /></AuthGuard>} />
+              <Route path="/apply/champion" element={<AuthGuard><ApplyChampion /></AuthGuard>} />
               <Route path="/admin/champions" element={<AdminGuard><AdminChampions /></AdminGuard>} />
               <Route path="/vendors" element={<Vendors />} />
               <Route path="/donate" element={<Donate />} />
               <Route path="/about" element={<About />} />
               <Route path="/about/whitepaper" element={<Whitepaper />} />
-              <Route path="/governance" element={<Governance />} />
-              <Route path="/bulletin" element={<Bulletin />} />
+              <Route path="/governance" element={<AuthGuard><Governance /></AuthGuard>} />
+              <Route path="/bulletin" element={<AuthGuard><Bulletin /></AuthGuard>} />
               <Route path="/admin" element={<AdminGuard><Admin /></AdminGuard>} />
               <Route path="/admin/bounties" element={<AdminGuard><AdminBounties /></AdminGuard>} />
               <Route path="/admin/bounties/:id/scan" element={<AdminGuard><AdminBountyScan /></AdminGuard>} />
