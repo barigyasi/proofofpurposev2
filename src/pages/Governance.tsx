@@ -126,77 +126,135 @@ export default function Governance() {
             const my = myVotes[d.id];
 
             return (
-              <div key={d.id} className="brutal p-5">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="font-mono text-[10px] uppercase text-primary">
-                      {result ?? d.status}{!closed && d.status === "pending_vote" ? ` · ${timeLeft(d.vote_closes_at)}` : ""}
-                    </p>
-                    <h3 className="mt-1 font-display text-xl">{d.name}</h3>
-                    {d.description && (
-                      <p className="mt-1 text-sm text-muted-foreground">{d.description}</p>
-                    )}
-                    {(d.image_urls?.length || d.video_url || d.deck_url) && (
-                      <div className="mt-3 space-y-2">
-                        {d.image_urls && d.image_urls.length > 0 && (
-                          <div className="flex gap-2 overflow-x-auto">
-                            {d.image_urls.map((u) => (
-                              <img key={u} src={u} alt="" className="brutal h-20 w-20 shrink-0 object-cover" />
-                            ))}
-                          </div>
-                        )}
-                        {d.video_url && (
-                          <video src={d.video_url} controls className="brutal w-full max-w-md" />
-                        )}
-                        {d.deck_url && (
-                          <a
-                            href={d.deck_url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="brutal brutal-hover inline-flex items-center px-3 py-2 font-mono text-[11px] uppercase tracking-widest text-primary"
-                          >
-                            📊 View slide deck{d.deck_filename ? ` · ${d.deck_filename}` : ""} ↗
-                          </a>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <p className="shrink-0 font-display text-lg text-primary">
-                    {d.reward_purpose}<span className="text-muted-foreground">×{d.max_participants}</span>
+              <div key={d.id} className="brutal relative p-0">
+                {/* status ribbon */}
+                <div className="flex items-center justify-between gap-3 border-b-2 border-foreground bg-secondary px-4 py-2">
+                  <p className="font-mono text-[10px] uppercase tracking-widest text-primary">
+                    // {result ?? d.status.replace("_", " ")}
                   </p>
+                  {!closed && d.status === "pending_vote" ? (
+                    <Countdown closesAt={d.vote_closes_at} />
+                  ) : (
+                    <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                      {result === "passed" ? "✓ passed" : result === "failed" ? "✗ failed" : result === "on-chain" ? "⛓ on-chain" : "closed"}
+                    </span>
+                  )}
                 </div>
 
-                <div className="mt-4 flex h-2 overflow-hidden border-2 border-foreground">
-                  <div className="bg-primary" style={{ width: `${yesPct}%` }} />
-                  <div className="bg-destructive" style={{ width: `${total ? (d.no_count / total) * 100 : 0}%` }} />
-                </div>
-                <p className="mt-2 font-mono text-[10px] text-muted-foreground">
-                  yes {d.yes_count} · no {d.no_count} · abstain {d.abstain_count}
-                </p>
+                <div className="p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="font-display text-2xl sm:text-3xl">{d.name}</h3>
+                      {d.description && (
+                        <p className="mt-2 text-sm text-muted-foreground">{d.description}</p>
+                      )}
+                    </div>
+                    <div className="brutal-primary shrink-0 px-3 py-2 text-right">
+                      <p className="font-display text-xl leading-none">{d.reward_purpose}</p>
+                      <p className="mt-1 font-mono text-[9px] uppercase tracking-widest">
+                        purpose × {d.max_participants}
+                      </p>
+                    </div>
+                  </div>
 
-                {canVote && d.status === "pending_vote" && !closed && (
-                  <div className="mt-4 grid grid-cols-3 gap-2">
-                    {(["yes", "no", "abstain"] as VoteChoice[]).map((c) => (
-                      <Button
-                        key={c}
-                        variant={my === c ? "default" : "outline"}
-                        onClick={() => vote(d.id, c)}
-                        className="font-display"
-                      >
-                        {c.toUpperCase()}
+                  {(d.image_urls?.length || d.video_url || d.deck_url) && (
+                    <div className="mt-4 space-y-2">
+                      {d.image_urls && d.image_urls.length > 0 && (
+                        <div className="flex gap-2 overflow-x-auto">
+                          {d.image_urls.map((u) => (
+                            <img key={u} src={u} alt="" className="brutal h-20 w-20 shrink-0 object-cover" />
+                          ))}
+                        </div>
+                      )}
+                      {d.video_url && (
+                        <video src={d.video_url} controls className="brutal w-full max-w-md" />
+                      )}
+                      {d.deck_url && (
+                        <a
+                          href={d.deck_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="brutal brutal-hover inline-flex items-center px-3 py-2 font-mono text-[11px] uppercase tracking-widest text-primary"
+                        >
+                          📊 View slide deck{d.deck_filename ? ` · ${d.deck_filename}` : ""} ↗
+                        </a>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Vote tally widget */}
+                  <div className="mt-5 border-t-2 border-foreground pt-4">
+                    <div className="mb-2 flex items-center justify-between font-mono text-[10px] uppercase tracking-widest">
+                      <span className="text-primary">FUEL · {d.yes_count}</span>
+                      <span className="text-muted-foreground">PASS · {d.abstain_count}</span>
+                      <span className="text-destructive">STALL · {d.no_count}</span>
+                    </div>
+                    <div className="flex h-5 overflow-hidden border-2 border-foreground bg-secondary">
+                      {total > 0 ? (
+                        <>
+                          <div
+                            className="flex items-center justify-center bg-primary text-[9px] font-display text-primary-foreground"
+                            style={{ width: `${(d.yes_count / total) * 100}%` }}
+                          >
+                            {d.yes_count > 0 && `${Math.round((d.yes_count / total) * 100)}%`}
+                          </div>
+                          <div
+                            className="bg-muted-foreground/40"
+                            style={{ width: `${(d.abstain_count / total) * 100}%` }}
+                          />
+                          <div
+                            className="flex items-center justify-center bg-destructive text-[9px] font-display text-destructive-foreground"
+                            style={{ width: `${(d.no_count / total) * 100}%` }}
+                          >
+                            {d.no_count > 0 && `${Math.round((d.no_count / total) * 100)}%`}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex w-full items-center justify-center font-mono text-[9px] uppercase text-muted-foreground">
+                          no votes yet
+                        </div>
+                      )}
+                    </div>
+                    <p className="mt-2 text-center font-mono text-[10px] text-muted-foreground">
+                      {total} {total === 1 ? "vote" : "votes"} cast
+                    </p>
+                  </div>
+
+                  {canVote && d.status === "pending_vote" && !closed && (
+                    <div className="mt-4 grid grid-cols-3 gap-2">
+                      {(["yes", "abstain", "no"] as VoteChoice[]).map((c) => {
+                        const active = my === c;
+                        const base = "brutal brutal-hover px-3 py-3 font-display text-sm transition-colors";
+                        const cls =
+                          c === "yes"
+                            ? active ? "brutal-primary" : `${base} hover:bg-primary hover:text-primary-foreground`
+                            : c === "no"
+                            ? active ? "brutal bg-destructive text-destructive-foreground" : `${base} hover:bg-destructive hover:text-destructive-foreground`
+                            : active ? "brutal bg-secondary" : base;
+                        return (
+                          <button key={c} onClick={() => vote(d.id, c)} className={c === "yes" || c === "no" ? (active ? cls : cls) : cls}>
+                            {VOTE_LABEL[c]}
+                            {active && <span className="ml-1">✓</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {my && (
+                    <p className="mt-2 text-center font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
+                      // your vote: {VOTE_LABEL[my]}
+                    </p>
+                  )}
+
+                  {isAdmin && closed && d.status === "pending_vote" && (
+                    <div className="mt-4 flex gap-2 border-t-2 border-foreground pt-4">
+                      <Button onClick={() => adminApprove(d)} className="brutal-primary brutal-hover flex-1 font-display">
+                        EXECUTE (queue on-chain)
                       </Button>
-                    ))}
-                  </div>
-                )}
-
-                {isAdmin && closed && d.status === "pending_vote" && (
-                  <div className="mt-4 flex gap-2">
-                    <Button onClick={() => adminApprove(d)} className="brutal-primary brutal-hover flex-1 font-display">
-                      EXECUTE (queue on-chain)
-                    </Button>
-                    <Button variant="ghost" onClick={() => adminReject(d)}>Reject</Button>
-                  </div>
-                )}
+                      <Button variant="ghost" onClick={() => adminReject(d)}>Reject</Button>
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })}
