@@ -12,14 +12,15 @@ import { useSessionRoles } from "@/hooks/useSessionRoles";
 import { useRoleView, type ViewAs } from "@/context/RoleViewContext";
 import popMark from "@/assets/pop-mark.png";
 
-const NAV = [
+type NavItem = { to: string; label: string; hideForChampion?: boolean };
+const NAV: NavItem[] = [
   { to: "/vendors", label: "Vendors" },
   { to: "/dashboard", label: "Dashboard" },
   { to: "/governance", label: "Governance", hideForChampion: true },
   { to: "/bulletin", label: "Bulletin" },
   { to: "/about", label: "About" },
   { to: "/donate", label: "Donate" },
-] as const;
+];
 
 export function Header() {
   const { pathname } = useLocation();
