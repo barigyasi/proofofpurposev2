@@ -66,10 +66,10 @@ export default function CatalystDashboard() {
     if (!user) return;
     const { data } = await supabase
       .from("bounty_drafts")
-      .select("id,name,description,reward_purpose,max_participants,status,dao_proposal_id,on_chain_bounty_id,created_at")
+      .select("id,name,description,reward_purpose,max_participants,status,dao_proposal_id,on_chain_bounty_id,created_at,image_urls,video_url,deck_url,deck_filename")
       .eq("proposer_id", user.id)
       .order("created_at", { ascending: false });
-    setDrafts(data ?? []);
+    setDrafts((data ?? []) as Draft[]);
   }
   useEffect(() => { load(); }, [session]);
 
@@ -93,10 +93,15 @@ export default function CatalystDashboard() {
         reward_purpose: Number(reward),
         max_participants: Number(maxP),
         status: gov?.vote_contract_address ? "pending_vote" : "queued",
+        image_urls: media.imageUrls,
+        video_url: media.videoUrl,
+        deck_url: media.deckUrl,
+        deck_filename: media.deckFilename,
       });
       if (error) throw error;
       toast.success("Draft saved — awaiting DAO vote");
       setName(""); setDescription(""); setReward(""); setMaxP("");
+      setMedia(EMPTY_MEDIA);
       load();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
