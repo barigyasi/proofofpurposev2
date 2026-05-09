@@ -36,6 +36,7 @@ import Bulletin from "./pages/Bulletin.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import { RoleViewProvider } from "@/context/RoleViewContext";
 import { AdminGuard } from "@/components/auth/AdminGuard";
+import { AuthGuard } from "@/components/auth/AuthGuard";
 
 const queryClient = new QueryClient();
 
