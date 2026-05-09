@@ -35,6 +35,10 @@ export default function Admin() {
         )}
       </div>
 
+      <div className="mt-8">
+        <SplitsDistributeCard />
+      </div>
+
       <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {TILES.map((t) => (
           <Link key={t.label} to={t.to} className="brutal brutal-hover block p-6">
