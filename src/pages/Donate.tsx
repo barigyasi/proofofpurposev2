@@ -49,7 +49,7 @@ export default function Donate() {
 
       const { data: donationRow, error: insErr } = await supabase.from("donations").insert({
         donor_wallet: account.address,
-        source: "wallet",
+        source: "direct",
         amount_usdc: Number(amount),
         tx_hash: transactionHash,
         status: "confirmed",
