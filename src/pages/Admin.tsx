@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useActiveAccount } from "thirdweb/react";
 import { AddressLabel } from "@/components/AddressLabel";
+import { SplitsDistributeCard } from "@/components/admin/SplitsDistributeCard";
 
 const TILES = [
   { to: "/admin/bounties", label: "BOUNTIES", desc: "Create, fund, complete bounties" },
@@ -33,6 +34,10 @@ export default function Admin() {
             <AddressLabel address={account.address} link={false} className="text-xs" />
           </div>
         )}
+      </div>
+
+      <div className="mt-8">
+        <SplitsDistributeCard />
       </div>
 
       <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

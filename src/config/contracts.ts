@@ -10,7 +10,12 @@ export const CONTRACTS = {
   TREASURY: "0xB452b6A36954fafB0342220B2C7a6c47925Eec44",
   USDC_BASE: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
   DONATION_SPLIT: "0x214aF142ff6D9f150EF994e0ea32Ba1f8db9C8dC",
+  TEAM_SPLIT: "0xa0FA4787921f9A9253810D27333031Ae2D62E334",
 } as const;
+
+// 0xSplits sentinel address used to represent native ETH in distribute(token).
+export const NATIVE_TOKEN_SENTINEL =
+  "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE" as const;
 
 /**
  * V2 contract addresses — populate after redeploying PurposeTokenV2 / BountyManagerV2 /
