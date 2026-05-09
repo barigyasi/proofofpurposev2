@@ -85,7 +85,7 @@ export function Header() {
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">
-          {NAV.map((n) => {
+          {visibleNav.map((n) => {
             const active = pathname.startsWith(n.to);
             return (
               <Link
@@ -169,7 +169,7 @@ export function Header() {
       {open && (
         <div className="border-t-2 border-foreground md:hidden">
           <nav className="flex flex-col">
-            {NAV.map((n) => (
+            {visibleNav.map((n) => (
               <Link
                 key={n.to}
                 to={n.to}
