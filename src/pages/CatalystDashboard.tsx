@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { DraftMediaUploader, type DraftMedia } from "@/components/bounties/DraftMediaUploader";
 
 type Draft = {
   id: string;
@@ -22,7 +23,13 @@ type Draft = {
   dao_proposal_id: number | null;
   on_chain_bounty_id: number | null;
   created_at: string;
+  image_urls: string[] | null;
+  video_url: string | null;
+  deck_url: string | null;
+  deck_filename: string | null;
 };
+
+const EMPTY_MEDIA: DraftMedia = { imageUrls: [], videoUrl: null, deckUrl: null, deckFilename: null };
 
 export default function CatalystDashboard() {
   const account = useActiveAccount();
@@ -35,6 +42,8 @@ export default function CatalystDashboard() {
   const [description, setDescription] = useState("");
   const [reward, setReward] = useState("");
   const [maxP, setMaxP] = useState("");
+  const [media, setMedia] = useState<DraftMedia>(EMPTY_MEDIA);
+  const [draftKey] = useState(() => crypto.randomUUID());
   const [busy, setBusy] = useState(false);
 
   const isApproved = roles.includes("catalyst");
