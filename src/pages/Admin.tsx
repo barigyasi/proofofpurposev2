@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useActiveAccount } from "thirdweb/react";
 import { AddressLabel } from "@/components/AddressLabel";
+import { SplitsDistributeCard } from "@/components/admin/SplitsDistributeCard";
 
 const TILES = [
   { to: "/admin/bounties", label: "BOUNTIES", desc: "Create, fund, complete bounties" },
