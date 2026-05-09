@@ -124,12 +124,15 @@ export type Database = {
           catalyst_id: string | null
           created_at: string
           dao_proposal_id: number | null
+          deck_filename: string | null
+          deck_url: string | null
           description: string | null
           executed_at: string | null
           executed_by: string | null
           expires_at: string | null
           id: string
           image_url: string | null
+          image_urls: string[]
           location: string | null
           max_participants: number
           name: string
@@ -140,6 +143,7 @@ export type Database = {
           reward_purpose: number
           status: string
           updated_at: string
+          video_url: string | null
           vote_closes_at: string
           vote_opens_at: string
           yes_count: number
@@ -149,12 +153,15 @@ export type Database = {
           catalyst_id?: string | null
           created_at?: string
           dao_proposal_id?: number | null
+          deck_filename?: string | null
+          deck_url?: string | null
           description?: string | null
           executed_at?: string | null
           executed_by?: string | null
           expires_at?: string | null
           id?: string
           image_url?: string | null
+          image_urls?: string[]
           location?: string | null
           max_participants: number
           name: string
@@ -165,6 +172,7 @@ export type Database = {
           reward_purpose: number
           status?: string
           updated_at?: string
+          video_url?: string | null
           vote_closes_at?: string
           vote_opens_at?: string
           yes_count?: number
@@ -174,12 +182,15 @@ export type Database = {
           catalyst_id?: string | null
           created_at?: string
           dao_proposal_id?: number | null
+          deck_filename?: string | null
+          deck_url?: string | null
           description?: string | null
           executed_at?: string | null
           executed_by?: string | null
           expires_at?: string | null
           id?: string
           image_url?: string | null
+          image_urls?: string[]
           location?: string | null
           max_participants?: number
           name?: string
@@ -190,6 +201,7 @@ export type Database = {
           reward_purpose?: number
           status?: string
           updated_at?: string
+          video_url?: string | null
           vote_closes_at?: string
           vote_opens_at?: string
           yes_count?: number

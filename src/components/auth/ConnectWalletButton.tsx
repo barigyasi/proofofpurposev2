@@ -64,7 +64,7 @@ export function ConnectWalletButton({ mode = "default", label }: Props) {
         body: { walletAddress, signature, message },
       });
       if (authRes.error) throw authRes.error;
-      const { session } = authRes.data as {
+      const { userId, session } = authRes.data as {
         userId: string;
         session: { access_token: string; refresh_token: string };
       };
@@ -74,6 +74,21 @@ export function ConnectWalletButton({ mode = "default", label }: Props) {
         refresh_token: session.refresh_token,
       });
       if (error) throw error;
+
+      // Friendly rejection: admin entry requires an admin role
+      if (mode === "admin") {
+        const { data: roleRow } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", userId)
+          .eq("role", "admin")
+          .maybeSingle();
+        if (!roleRow) {
+          await fullDisconnect();
+          toast.error("This wallet isn't on the admin allowlist. Use standard ENTER instead.");
+          return;
+        }
+      }
 
       setAuthedWallet(walletAddress.toLowerCase());
       toast.success("Signed in");

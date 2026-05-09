@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { DraftMediaUploader, type DraftMedia } from "@/components/bounties/DraftMediaUploader";
 
 type Draft = {
   id: string;
@@ -22,7 +23,13 @@ type Draft = {
   dao_proposal_id: number | null;
   on_chain_bounty_id: number | null;
   created_at: string;
+  image_urls: string[] | null;
+  video_url: string | null;
+  deck_url: string | null;
+  deck_filename: string | null;
 };
+
+const EMPTY_MEDIA: DraftMedia = { imageUrls: [], videoUrl: null, deckUrl: null, deckFilename: null };
 
 export default function CatalystDashboard() {
   const account = useActiveAccount();
@@ -35,6 +42,8 @@ export default function CatalystDashboard() {
   const [description, setDescription] = useState("");
   const [reward, setReward] = useState("");
   const [maxP, setMaxP] = useState("");
+  const [media, setMedia] = useState<DraftMedia>(EMPTY_MEDIA);
+  const [draftKey] = useState(() => crypto.randomUUID());
   const [busy, setBusy] = useState(false);
 
   const isApproved = roles.includes("catalyst");
@@ -57,10 +66,10 @@ export default function CatalystDashboard() {
     if (!user) return;
     const { data } = await supabase
       .from("bounty_drafts")
-      .select("id,name,description,reward_purpose,max_participants,status,dao_proposal_id,on_chain_bounty_id,created_at")
+      .select("id,name,description,reward_purpose,max_participants,status,dao_proposal_id,on_chain_bounty_id,created_at,image_urls,video_url,deck_url,deck_filename")
       .eq("proposer_id", user.id)
       .order("created_at", { ascending: false });
-    setDrafts(data ?? []);
+    setDrafts((data ?? []) as Draft[]);
   }
   useEffect(() => { load(); }, [session]);
 
@@ -84,10 +93,15 @@ export default function CatalystDashboard() {
         reward_purpose: Number(reward),
         max_participants: Number(maxP),
         status: gov?.vote_contract_address ? "pending_vote" : "queued",
+        image_urls: media.imageUrls,
+        video_url: media.videoUrl,
+        deck_url: media.deckUrl,
+        deck_filename: media.deckFilename,
       });
       if (error) throw error;
       toast.success("Draft saved — awaiting DAO vote");
       setName(""); setDescription(""); setReward(""); setMaxP("");
+      setMedia(EMPTY_MEDIA);
       load();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
@@ -132,6 +146,19 @@ export default function CatalystDashboard() {
           <div className="mt-4 space-y-3">
             <div><Label>Bounty name *</Label><Input value={name} onChange={(e) => setName(e.target.value)} maxLength={120} /></div>
             <div><Label>Description</Label><Textarea rows={4} value={description} onChange={(e) => setDescription(e.target.value)} maxLength={2000} /></div>
+            <div className="border-t border-foreground pt-4">
+              <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                // mission media (optional but boosts your vote)
+              </p>
+              {session && (
+                <DraftMediaUploader
+                  userId={session.user.id}
+                  draftKey={draftKey}
+                  value={media}
+                  onChange={setMedia}
+                />
+              )}
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Reward (PURPOSE) *</Label>
@@ -155,18 +182,28 @@ export default function CatalystDashboard() {
           {drafts.length === 0 ? (
             <p className="font-mono text-xs text-muted-foreground">// no drafts yet</p>
           ) : (
-            drafts.map((d) => (
-              <div key={d.id} className="brutal p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-mono text-[10px] uppercase text-primary">{d.status}</p>
-                    <h3 className="mt-1 font-display text-xl">{d.name}</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">{d.description}</p>
+            drafts.map((d) => {
+              const imgs = d.image_urls ?? [];
+              return (
+                <div key={d.id} className="brutal p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-mono text-[10px] uppercase text-primary">{d.status}</p>
+                      <h3 className="mt-1 font-display text-xl">{d.name}</h3>
+                      <p className="mt-1 text-sm text-muted-foreground">{d.description}</p>
+                      {(imgs.length > 0 || d.video_url || d.deck_url) && (
+                        <p className="mt-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                          {imgs.length > 0 && <>📷 {imgs.length} </>}
+                          {d.video_url && <>🎞️ </>}
+                          {d.deck_url && <>📊 </>}
+                        </p>
+                      )}
+                    </div>
+                    <p className="font-display text-lg text-primary">{d.reward_purpose} ⨯ {d.max_participants}</p>
                   </div>
-                  <p className="font-display text-lg text-primary">{d.reward_purpose} ⨯ {d.max_participants}</p>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
         <p className="mt-4 text-xs text-muted-foreground">

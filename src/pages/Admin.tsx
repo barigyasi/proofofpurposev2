@@ -1,7 +1,5 @@
-import { useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useActiveAccount } from "thirdweb/react";
-import { useSessionRoles } from "@/hooks/useSessionRoles";
 import { AddressLabel } from "@/components/AddressLabel";
 
 const TILES = [
@@ -18,16 +16,7 @@ const TILES = [
 
 export default function Admin() {
   const account = useActiveAccount();
-  const navigate = useNavigate();
-  const { session, roles, isLoading } = useSessionRoles();
 
-  useEffect(() => {
-    if (isLoading) return;
-    if (!session) navigate("/login", { replace: true });
-    else if (!roles.includes("admin")) navigate("/dashboard", { replace: true });
-  }, [isLoading, session, roles, navigate]);
-
-  if (isLoading || !session || !roles.includes("admin")) return null;
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">

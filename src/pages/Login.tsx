@@ -19,7 +19,15 @@ export default function Login() {
   useEffect(() => {
     if (!session || redirecting) return;
     setRedirecting(true);
-    navigate("/dashboard", { replace: true });
+    (async () => {
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session.user.id);
+      const roles = (data ?? []).map((r) => r.role as string);
+      if (roles.includes("admin")) navigate("/admin", { replace: true });
+      else navigate("/dashboard", { replace: true });
+    })();
   }, [session, redirecting, navigate]);
 
   return (

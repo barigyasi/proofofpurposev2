@@ -100,6 +100,30 @@ export default function Governance() {
                     {d.description && (
                       <p className="mt-1 text-sm text-muted-foreground">{d.description}</p>
                     )}
+                    {(d.image_urls?.length || d.video_url || d.deck_url) && (
+                      <div className="mt-3 space-y-2">
+                        {d.image_urls && d.image_urls.length > 0 && (
+                          <div className="flex gap-2 overflow-x-auto">
+                            {d.image_urls.map((u) => (
+                              <img key={u} src={u} alt="" className="brutal h-20 w-20 shrink-0 object-cover" />
+                            ))}
+                          </div>
+                        )}
+                        {d.video_url && (
+                          <video src={d.video_url} controls className="brutal w-full max-w-md" />
+                        )}
+                        {d.deck_url && (
+                          <a
+                            href={d.deck_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="brutal brutal-hover inline-flex items-center px-3 py-2 font-mono text-[11px] uppercase tracking-widest text-primary"
+                          >
+                            📊 View slide deck{d.deck_filename ? ` · ${d.deck_filename}` : ""} ↗
+                          </a>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <p className="shrink-0 font-display text-lg text-primary">
                     {d.reward_purpose}<span className="text-muted-foreground">×{d.max_participants}</span>
