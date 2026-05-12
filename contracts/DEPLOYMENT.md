@@ -55,15 +55,22 @@ every step in Remix / thirdweb dashboard, then repeat on **Base mainnet**.
                     └────────────────────────────┘
 ```
 
-Seven contracts total:
+Eight contracts total:
 
 1. **PurposeTokenV2** — soulbound community credit (PURPOSE)
 2. **BountyManagerV2** — mints PURPOSE on bounty completion
 3. **VendorRedemptionV2** — escrow state machine (Lock→Capture→Settle/Cancel/Refund/Sweep)
 4. **RefundPool** — USDC vault that backs vendor refunds
-5. **PurposeGovToken** — separate ERC20Votes token used **only** for governance weight
-6. **VoteERC20 (thirdweb)** — the governor itself
-7. *(optional v2)* **Timelock** — execution delay for governor; recommended on mainnet
+5. **ReceiptNFT** — soulbound on-chain SVG receipts minted on settle (champion side)
+6. **PurposeGovToken** — separate ERC20Votes token used **only** for governance weight
+7. **VoteERC20 (thirdweb)** — the governor itself
+8. *(optional v2)* **Timelock** — execution delay for governor; recommended on mainnet
+
+After deploying ReceiptNFT, also run:
+- `receiptNFT.grantRole(MINTER_ROLE, VENDOR_REDEMPTION_V2)`
+- `receiptNFT.grantRole(MINTER_ROLE, BACKEND_SIGNER_ADDRESS)` *(for receipt-mint-retry)*
+- `vendorRedemptionV2.setReceiptNFT(RECEIPT_NFT_ADDRESS)`
+- Add `RECEIPT_NFT_ADDRESS` to Lovable Cloud secrets.
 
 USDC is **not** deployed — you reuse the canonical address per chain.
 
