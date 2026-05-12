@@ -1,7 +1,6 @@
-// vendor-redeem-settle (cron-driven)
-// Finds Captured charges whose auth window has elapsed and calls
-// VendorRedemptionV2.settle() from the backend signer. USDC is paid to the vendor;
-// PURPOSE stays in escrow until the refund window expires (vendor-redeem-sweep).
+// vendor-redeem-sweep (cron)
+// After the refund window expires on a Settled charge, burns the held PURPOSE
+// by calling VendorRedemptionV2.sweep().
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { createPublicClient, createWalletClient, http } from "https://esm.sh/viem@2.21.45";
@@ -14,7 +13,7 @@ const corsHeaders = {
 };
 
 const REDEMPTION_ABI = [
-  { inputs: [{ name: "chargeId", type: "bytes32" }], name: "settle",
+  { inputs: [{ name: "chargeId", type: "bytes32" }], name: "sweep",
     outputs: [], stateMutability: "nonpayable", type: "function" },
 ] as const;
 
@@ -37,61 +36,44 @@ Deno.serve(async (req) => {
     if (!pk) return json({ error: "Signer key missing" }, 500);
 
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-
-    // Allow targeted single-id call too (admin override).
-    let body: { chargeId?: string; force?: boolean } = {};
-    try { body = await req.json(); } catch { /* empty body for cron */ }
-
-    let query = supabase.from("vendor_charges").select("*").eq("status", "captured");
-    if (body.chargeId) query = query.eq("id", body.chargeId);
-    const { data: rows, error } = await query.limit(50);
+    const { data: rows, error } = await supabase
+      .from("vendor_charges").select("*").eq("status", "settled").limit(50);
     if (error) throw error;
 
     const account = privateKeyToAccount(pk as `0x${string}`);
     const walletClient = createWalletClient({ account, chain: base, transport: http(rpc) });
 
-    const settled: { id: string; tx_hash: string }[] = [];
+    const swept: string[] = [];
     const skipped: { id: string; reason: string }[] = [];
-
     for (const c of rows ?? []) {
       try {
-        const auth = c.auth_window_seconds ?? 24 * 3600;
-        const ready = new Date(c.captured_at).getTime() + auth * 1000 <= Date.now();
-        if (!ready && !body.force) {
+        const refundWindow = c.refund_window_seconds ?? 7 * 24 * 3600;
+        const settledMs = new Date(c.settled_at ?? c.captured_at).getTime();
+        if (Date.now() < settledMs + refundWindow * 1000) {
           skipped.push({ id: c.id, reason: "window not elapsed" });
           continue;
         }
         const cidBytes32 = chargeIdToBytes32(c.id);
         const txHash = await walletClient.writeContract({
           address: VENDOR_REDEMPTION_V2 as `0x${string}`,
-          abi: REDEMPTION_ABI, functionName: "settle", args: [cidBytes32],
+          abi: REDEMPTION_ABI, functionName: "sweep", args: [cidBytes32],
         });
         const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
         if (receipt.status !== "success") {
-          await supabase.from("vendor_charges")
-            .update({ error: "Settle tx reverted", tx_hash: txHash }).eq("id", c.id);
           skipped.push({ id: c.id, reason: "reverted" });
           continue;
         }
         await supabase.from("vendor_charges").update({
-          status: "settled", settled_at: new Date().toISOString(), tx_hash: txHash,
+          swept_at: new Date().toISOString(), sweep_tx_hash: txHash,
         }).eq("id", c.id);
-        await supabase.from("vendor_redemptions").insert({
-          vendor_wallet: c.vendor_wallet,
-          champion_wallet: c.champion_wallet,
-          purpose_amount_wei: c.purpose_amount_wei,
-          usdc_payout: c.usdc_payout ?? 0,
-          tx_hash: txHash,
-        });
-        settled.push({ id: c.id, tx_hash: txHash });
+        swept.push(c.id);
       } catch (e) {
-        console.error("settle failed", c.id, e);
         skipped.push({ id: c.id, reason: e instanceof Error ? e.message : String(e) });
       }
     }
-    return json({ ok: true, settled, skipped });
+    return json({ ok: true, swept, skipped });
   } catch (e) {
-    console.error("vendor-redeem-settle error", e);
+    console.error("vendor-redeem-sweep error", e);
     return json({ error: e instanceof Error ? e.message : String(e) }, 500);
   }
 });
