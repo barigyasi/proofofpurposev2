@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { cancelCharge, refundCharge } from "@/lib/vendorCharges";
+import { ReceiptDialog } from "@/components/receipts/ReceiptDialog";
 
 type Charge = {
   id: string;
@@ -23,6 +24,7 @@ type Charge = {
   refund_window_seconds: number | null;
   refund_source: string | null;
   refund_tx_hash: string | null;
+  receipt_token_id: number | null;
 };
 
 function statusPill(c: Charge) {
@@ -57,11 +59,12 @@ export function VendorChargesHistory({ vendorWallet }: { vendorWallet: string })
   const [reason, setReason] = useState("");
   const [source, setSource] = useState<"vendor" | "pool">("pool");
   const [busy, setBusy] = useState(false);
+  const [openReceipt, setOpenReceipt] = useState<number | null>(null);
 
   async function load() {
     const { data } = await supabase
       .from("vendor_charges")
-      .select("id,status,champion_wallet,purpose_amount_wei,usdc_payout,memo,created_at,settled_at,captured_at,refund_window_seconds,refund_source,refund_tx_hash")
+      .select("id,status,champion_wallet,purpose_amount_wei,usdc_payout,memo,created_at,settled_at,captured_at,refund_window_seconds,refund_source,refund_tx_hash,receipt_token_id")
       .ilike("vendor_wallet", vendorWallet)
       .order("created_at", { ascending: false })
       .limit(20);
@@ -125,10 +128,19 @@ export function VendorChargesHistory({ vendorWallet }: { vendorWallet: string })
                 <a className="font-mono text-[10px] text-primary underline"
                    href={`https://basescan.org/tx/${c.refund_tx_hash}`} target="_blank" rel="noreferrer">tx</a>
               )}
+              {c.receipt_token_id && (
+                <button
+                  className="rounded border-2 border-primary px-2 py-0.5 font-mono text-[10px] uppercase text-primary"
+                  onClick={() => setOpenReceipt(c.receipt_token_id)}
+                >receipt #{c.receipt_token_id}</button>
+              )}
             </li>
           );
         })}
       </ul>
+
+      <ReceiptDialog tokenId={openReceipt} open={openReceipt !== null}
+                     onOpenChange={(o) => { if (!o) setOpenReceipt(null); }} />
 
       <Dialog open={!!refundingFor} onOpenChange={(o) => { if (!o) setRefundingFor(null); }}>
         <DialogContent>

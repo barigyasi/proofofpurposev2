@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBounties, type Bounty } from "@/hooks/useBounties";
 import { ChampionChargeWatcher } from "@/components/champion/ChampionChargeWatcher";
+import { ChampionReceiptsStrip } from "@/components/champion/ChampionReceiptsStrip";
 
 type SignupRow = { bounty_id: string; status: string };
 
@@ -174,6 +175,8 @@ export function ChampionDashboard() {
       </div>
 
       <MembershipsStrip wallet={account?.address} />
+
+      {account?.address && <ChampionReceiptsStrip wallet={account.address} />}
 
       <RedeemQRDialog open={qrOpen} onOpenChange={setQrOpen} />
       {checkInBounty && account && (
