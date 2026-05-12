@@ -264,7 +264,7 @@ contract VendorRedemptionV2 is AccessControl, ReentrancyGuard, Pausable {
      * @notice Cancel a Locked or (within auth window) Captured charge.
      *         Returns PURPOSE to champion + USDC to treasury.
      */
-    function cancel(bytes32 chargeId) external nonReentrant onlyRole(SETTLEMENT_ROLE) {
+    function cancel(bytes32 chargeId) external nonReentrant whenNotPaused onlyRole(SETTLEMENT_ROLE) {
         Charge storage c = charges[chargeId];
         if (c.state == State.None) revert UnknownCharge();
         if (c.state != State.Locked && c.state != State.Captured) revert WrongState(State.Locked, c.state);
@@ -342,7 +342,7 @@ contract VendorRedemptionV2 is AccessControl, ReentrancyGuard, Pausable {
      *         USDC is pulled from vendor (must have approved this contract for USDC)
      *         or from RefundPool. PURPOSE held in escrow is returned to champion.
      */
-    function refund(bytes32 chargeId, RefundSource source) external nonReentrant {
+    function refund(bytes32 chargeId, RefundSource source) external nonReentrant whenNotPaused {
         Charge storage c = charges[chargeId];
         if (c.state == State.None) revert UnknownCharge();
         if (c.state != State.Settled) revert WrongState(State.Settled, c.state);
@@ -376,7 +376,7 @@ contract VendorRedemptionV2 is AccessControl, ReentrancyGuard, Pausable {
      * @notice After the refund window expires on a Settled charge, anyone can
      *         finalize it: burn the held PURPOSE.
      */
-    function sweep(bytes32 chargeId) external nonReentrant {
+    function sweep(bytes32 chargeId) external nonReentrant whenNotPaused {
         Charge storage c = charges[chargeId];
         if (c.state == State.None) revert UnknownCharge();
         if (c.state != State.Settled) revert WrongState(State.Settled, c.state);
