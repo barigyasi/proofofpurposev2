@@ -1,134 +1,85 @@
+# Receipt NFT — Plan
 
-# V2 Redemption Escrow + Refund Pool
+A soulbound, fully on-chain ERC-721 receipt minted to the champion the moment a charge settles (after the auth window). The vendor receives a matching PDF + PNG by email and in their dashboard. The image and metadata live entirely on-chain as base64 SVG + JSON, so receipts survive forever with zero hosting dependency.
 
-Since V2 is **not yet deployed**, the escrow state machine ships *inside* `VendorRedemptionV2.sol` from day one. No live contracts are touched.
+## What gets built
 
----
+### 1. Smart contract — `contracts/ReceiptNFT.sol` (new)
 
-## Smart contracts
+ERC-721, soulbound (override `_update` to revert on transfer when `from != 0 && to != 0`). Roles via `AccessControl`:
 
-### 1. `VendorRedemptionV2.sol` (rewrite before deploy)
+- `DEFAULT_ADMIN_ROLE` → admin EOA
+- `MINTER_ROLE` → granted to `VendorRedemptionV2`
 
-State machine per `chargeId` (bytes32, supplied by backend = vendor_charges.id):
-
-```text
-                  cancel()
-        ┌─────────────────────┐
-        ▼                     │
-   ┌────────┐  capture()  ┌────────┐  settle()   ┌─────────┐
-──▶│ Locked │────────────▶│Captured│────────────▶│ Settled │──┐
-   └────────┘             └────────┘             └─────────┘  │
-                                                              │ refund()
-                                                              ▼
-                                                         ┌─────────┐
-                                                         │Refunded │
-                                                         └─────────┘
+Mint signature:
+```solidity
+function mintReceipt(
+  address champion,
+  address vendor,
+  uint256 usdcAmount,      // 6dp
+  uint256 purposeAmount,   // 18dp
+  bytes32 chargeId,
+  uint64  settledAt,
+  string calldata memo
+) external onlyRole(MINTER_ROLE) returns (uint256 tokenId);
 ```
 
-**Storage per charge:** `vendor`, `champion`, `purposeAmount`, `usdcAmount`, `lockedAt`, `capturedAt`, `state`, `authWindowOverride`, `refundWindowOverride`.
+Stores a packed `Receipt` struct per tokenId. `tokenURI(id)` returns `data:application/json;base64,...` with an embedded `data:image/svg+xml;base64,...` image — fully on-chain, no hosting.
 
-**Per-vendor config** (admin-set): `authWindow`, `refundWindow`, falls back to global defaults.
+SVG layout (square, brand navy bg + gold accents, no raster assets):
+- "PROOF OF PURPOSE — RECEIPT" header
+- Champion display name (passed in as `memo` slot 1) + truncated wallet
+- Vendor business name + truncated wallet
+- USDC amount (large) + PURPOSE amount
+- Charge ID (short) + settled-at timestamp
+- Token #N + small "soulbound" badge
 
-**Functions (all role-gated `SETTLEMENT_ROLE` = backend signer):**
-- `lock(chargeId, vendor, champion, purposeAmount)` — pulls PURPOSE from champion + USDC quote from treasury **into this contract**. State→Locked.
-- `capture(chargeId)` — marks fulfilled, starts auth countdown. State→Captured. (Optional shortcut: `lockAndCapture` for in-person POS where there's no separate fulfillment step.)
-- `cancel(chargeId)` — only while Locked or within auth window of Captured. Returns PURPOSE to champion + USDC to treasury. State→Cancelled.
-- `settle(chargeId)` — callable after auth window expires (or admin force). Pays USDC to vendor; **PURPOSE stays in escrow** until refund window closes. State→Settled.
-- `refund(chargeId, source)` — callable by vendor or admin within refund window. `source = Vendor | Pool`. Pulls USDC from chosen source back to treasury, returns the held PURPOSE to champion. State→Refunded.
-- `sweep(chargeId)` — anyone, after refund window expires on a Settled charge. Burns the held PURPOSE via `purposeToken.burnFrom(address(this), amount)`. State→Finalized.
+### 2. VendorRedemptionV2 hook
 
-**Admin setters:** `setDefaultWindows`, `setVendorWindows(vendor,...)`, `setTreasury`, `setRefundPool`, `pause/unpause`.
+Inside `settle(chargeId)`, after USDC transfers to vendor, call `receiptNFT.mintReceipt(...)`. Emits `ReceiptMinted(chargeId, tokenId, champion)`. Wrapped in `try/catch` so a receipt failure never blocks settlement; on failure the edge function logs and a manual admin retry exists.
 
-**Roles needed on `PurposeTokenV2`:** `BURNER_ROLE` granted to this contract at deploy (no mint role — refunds replay original tokens).
+### 3. Database
 
-### 2. `RefundPool.sol` (new, standalone)
+Migration adds to `vendor_charges`:
+- `receipt_token_id BIGINT NULL`
+- `receipt_tx_hash TEXT NULL`
+- `receipt_minted_at TIMESTAMPTZ NULL`
+- `receipt_emailed_at TIMESTAMPTZ NULL`
 
-Plain USDC vault. Functions:
-- `deposit(amount)` — anyone (admin manually tops up; later: 0xSplits sends here automatically).
-- `payRefund(chargeId, vendor, amount)` — only `REDEMPTION_ROLE` (granted to VendorRedemptionV2).
-- `withdraw(to, amount)` — admin only (treasury rebalance).
-- View: `available()`, total paid, per-vendor paid.
+### 4. Edge functions
 
-### 3. `PurposeTokenV2.sol`
+- **`vendor-redeem-settle`** (extend): after on-chain settle confirms, parse `ReceiptMinted` log, write `receipt_token_id` / `receipt_tx_hash` / `receipt_minted_at`, then enqueue email job.
+- **`receipt-email`** (new): given a charge id, reads `tokenURI`, decodes SVG, renders PNG (sharp/resvg via npm: specifier) + PDF (pdf-lib), sends to vendor email and champion email via existing email infra. Marks `receipt_emailed_at`.
+- **`receipt-mint-retry`** (new, admin-only): for the rare case `mintReceipt` reverted; re-issues mint via backend signer.
 
-Unchanged from the version already in `contracts/`. Just grant `BURNER_ROLE` to VendorRedemptionV2 at deploy.
+### 5. Frontend
 
----
+- **Champion dashboard** — new "Receipts" list: thumbnail (SVG fetched from `tokenURI`), amount, vendor, date, "View on BaseScan" + "Download PDF" buttons.
+- **VendorChargesHistory** — when `receipt_token_id` is set, show a small "Receipt #N" pill that opens a dialog with the SVG preview + Download PDF/PNG.
+- **Admin** — small `ReceiptOpsCard` on `/admin`: counts of minted vs failed mints, table of charges with `settled_at NOT NULL AND receipt_token_id IS NULL`, retry button per row.
+- **Public** — `/receipts/:tokenId` route renders the SVG from `tokenURI` for sharing (read-only, no auth).
 
-## Backend (Supabase)
+### 6. Config
 
-### Schema additions to `vendor_charges`
-
-New columns (nullable): `locked_at`, `captured_at`, `refunded_at`, `cancelled_at`, `swept_at`, `lock_tx_hash`, `capture_tx_hash`, `cancel_tx_hash`, `refund_tx_hash`, `refund_source` (`vendor`/`pool`), `auth_window_seconds`, `refund_window_seconds`.
-
-Status enum expands: `pending | confirmed | locked | captured | settled | refunded | cancelled | failed | expired`.
-
-### New table `vendor_refund_config`
-`vendor_wallet PK, auth_window_seconds, refund_window_seconds, updated_at`. Admin-managed mirror of on-chain per-vendor windows.
-
-### New table `refund_pool_ledger`
-`id, kind (deposit|payout|withdraw), amount_usdc, charge_id, tx_hash, actor, created_at`. Pure ledger for the admin pool card.
-
-### Edge functions
-
-- **`vendor-redeem-lock`** — replaces today's settle path. Verifies champion sig, calls `lock()` (or `lockAndCapture` for POS), writes `lock_tx_hash`, status→`locked`/`captured`.
-- **`vendor-redeem-capture`** — vendor "Mark fulfilled" (online shop). Calls `capture()`.
-- **`vendor-redeem-cancel`** — vendor or champion cancel within window.
-- **`vendor-redeem-settle`** — cron-driven; finds Captured charges past auth window, calls `settle()`.
-- **`vendor-redeem-refund`** — vendor or admin initiates. Picks source (vendor wallet via approval, or pool). Calls `refund()`.
-- **`vendor-redeem-sweep`** — cron; burns PURPOSE on Settled charges past refund window.
-- **`refund-pool-deposit`** — admin top-up (USDC transfer + ledger row).
-
-Two cron jobs (`pg_cron`): every minute auto-settle eligible captured charges; every 5 min sweep finalized.
-
----
-
-## Frontend
-
-### Vendor dashboard (`src/pages/VendorDashboard.tsx`)
-POS flow stays simple — scan QR, enter amount, champion confirms → backend calls `lockAndCapture` (auth window starts immediately). Charge row gains:
-- Status pill: `Awaiting settle (Xh left)` / `Settled` / `Refundable (Xd left)` / `Refunded`
-- **Issue Refund** button (visible while Settled & within refund window) → modal with reason + source selector (default: pool if funded, else vendor wallet).
-- **Cancel** button (visible while Locked/Captured pre-settle).
-
-### Champion (`ChampionChargeWatcher.tsx` + ChampionDashboard)
-- Confirm dialog copy clarifies "Funds held until vendor confirms — refundable for X days after."
-- New "Recent payments" list with status + refund link if applicable.
-
-### Admin
-- New `EscrowOpsCard` on `/admin`: counts in each state, force-settle / force-cancel / force-refund overrides.
-- New `RefundPoolCard`: pool balance, top-up button, ledger preview, link to full ledger page.
-- New `/admin/refunds` page: table of all refunds + filters.
-- Per-vendor windows editor in `AdminVendors.tsx`.
-
-### Config
-`src/config/contracts.ts` — populate `CONTRACTS_V2.{PURPOSE_TOKEN, VENDOR_REDEMPTION, BOUNTY_MANAGER}` + add `REFUND_POOL`. Flip `V2_LIVE` automatically.
-
----
+- Add `RECEIPT_NFT: ""` to `CONTRACTS_V2` in `src/config/contracts.ts`.
+- Add `RECEIPT_NFT_ADDRESS` env var for edge functions (used by `receipt-email` to call `tokenURI`).
+- ABI committed at `src/contracts/abis/ReceiptNFT.json`.
 
 ## Decisions locked in
+- Mint trigger: **on settle**, after auth window. Refunded charges never get a receipt. Cancelled charges never get one either.
+- Recipient: **soulbound to champion**. Vendor and champion both receive PDF + PNG by email.
+- Hosting: **fully on-chain SVG** via `tokenURI` data URI. Zero hosting dependency.
+- Contract: **separate `ReceiptNFT.sol`**, minted by `VendorRedemptionV2` via `MINTER_ROLE`.
 
-- **USDC custody:** pulled into VendorRedemptionV2 on `lock()`.
-- **Refund mechanics:** PURPOSE held in escrow until refund window closes, then burned by `sweep()`. No mint role needed.
-- **Windows:** global defaults (24h auth / 7d refund) **+ per-vendor overrides** stored on-chain and mirrored in `vendor_refund_config`.
-- **Refund Pool funding:** manual admin top-ups for v1; ledger built so future board vote can route a % of the 10% ops split here automatically. No 0xSplits reconfig now.
+## Out of scope (for this iteration)
+- Per-vendor branded receipt templates (single branded template v1).
+- Receipt for legacy V1 charges (V2 only — V1 keeps no-receipt behavior).
+- IPFS pinning fallback (not needed since metadata is on-chain).
+- Allowing champion to "burn" a receipt (soulbound + permanent).
 
----
-
-## Out of scope
-
-- Champion-initiated refunds (only vendor/admin in v1; champion cancel only pre-settle).
-- Multi-currency (USDC only).
-- Migrating in-flight V1 charges — V1 keeps running, V2 is for new charges only.
-- Automated refund-pool funding from donation split (deferred to post-board-formation vote).
-
----
-
-## Rollout order
-
-1. Write `RefundPool.sol` + rewrite `VendorRedemptionV2.sol`; update `contracts/DEPLOYMENT.md`.
-2. Migration: extend `vendor_charges`, create `vendor_refund_config` + `refund_pool_ledger`.
-3. New/updated edge functions + cron jobs.
-4. Admin UI (escrow ops + refund pool + per-vendor windows).
-5. Vendor + champion UI updates.
-6. After you deploy contracts on Base, paste addresses into `CONTRACTS_V2` + `REFUND_POOL` and grant `BURNER_ROLE` / `REDEMPTION_ROLE`.
+## Deployment checklist (when you're ready)
+1. Deploy `ReceiptNFT.sol`, save address.
+2. Deploy `VendorRedemptionV2` with `receiptNFT` constructor arg (or `setReceiptNFT(address)` admin setter — recommend the setter so we can deploy the receipt contract independently).
+3. `receiptNFT.grantRole(MINTER_ROLE, vendorRedemptionV2)`.
+4. Populate `CONTRACTS_V2.RECEIPT_NFT` + add `RECEIPT_NFT_ADDRESS` secret.
+5. Flip `V2_LIVE` once all V2 addresses are populated.

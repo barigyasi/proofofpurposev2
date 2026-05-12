@@ -27,6 +27,7 @@ export const CONTRACTS_V2 = {
   VENDOR_REDEMPTION: "" as `0x${string}` | "",
   BOUNTY_MANAGER: "" as `0x${string}` | "",
   REFUND_POOL: "" as `0x${string}` | "",
+  RECEIPT_NFT: "" as `0x${string}` | "",
 } as const;
 
 export const V2_LIVE = Boolean(CONTRACTS_V2.VENDOR_REDEMPTION) && Boolean(CONTRACTS_V2.PURPOSE_TOKEN);

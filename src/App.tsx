@@ -33,6 +33,7 @@ import About from "./pages/About.tsx";
 import Whitepaper from "./pages/Whitepaper.tsx";
 import Governance from "./pages/Governance.tsx";
 import Bulletin from "./pages/Bulletin.tsx";
+import Receipt from "./pages/Receipt.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import { RoleViewProvider } from "@/context/RoleViewContext";
 import { AdminGuard } from "@/components/auth/AdminGuard";
@@ -78,6 +79,7 @@ const App = () => (
               <Route path="/admin/treasury" element={<AdminGuard><AdminTreasury /></AdminGuard>} />
               <Route path="/admin/audit" element={<AdminGuard><AdminAudit /></AdminGuard>} />
               <Route path="/admin/waitlist" element={<AdminGuard><AdminWaitlist /></AdminGuard>} />
+              <Route path="/receipts/:tokenId" element={<Receipt />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             <Footer />

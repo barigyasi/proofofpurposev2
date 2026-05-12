@@ -742,6 +742,11 @@ export type Database = {
           memo: string | null
           nonce: string
           purpose_amount_wei: number
+          receipt_emailed_at: string | null
+          receipt_error: string | null
+          receipt_minted_at: string | null
+          receipt_token_id: number | null
+          receipt_tx_hash: string | null
           refund_reason: string | null
           refund_source: string | null
           refund_tx_hash: string | null
@@ -774,6 +779,11 @@ export type Database = {
           memo?: string | null
           nonce: string
           purpose_amount_wei: number
+          receipt_emailed_at?: string | null
+          receipt_error?: string | null
+          receipt_minted_at?: string | null
+          receipt_token_id?: number | null
+          receipt_tx_hash?: string | null
           refund_reason?: string | null
           refund_source?: string | null
           refund_tx_hash?: string | null
@@ -806,6 +816,11 @@ export type Database = {
           memo?: string | null
           nonce?: string
           purpose_amount_wei?: number
+          receipt_emailed_at?: string | null
+          receipt_error?: string | null
+          receipt_minted_at?: string | null
+          receipt_token_id?: number | null
+          receipt_tx_hash?: string | null
           refund_reason?: string | null
           refund_source?: string | null
           refund_tx_hash?: string | null
