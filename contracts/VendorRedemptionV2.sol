@@ -17,6 +17,19 @@ interface IRefundPool {
     function payRefund(bytes32 chargeId, address to, uint256 amount) external;
 }
 
+interface IReceiptNFT {
+    function mintReceipt(
+        address champion,
+        address vendor,
+        uint256 usdcAmount,
+        uint256 purposeAmount,
+        bytes32 chargeId,
+        uint64  settledAt,
+        string calldata championName,
+        string calldata vendorName
+    ) external returns (uint256);
+}
+
 /**
  * @title VendorRedemptionV2
  * @notice Escrow-based redemption: champions exchange PURPOSE for USDC at
@@ -84,6 +97,7 @@ contract VendorRedemptionV2 is AccessControl, ReentrancyGuard, Pausable {
     IERC20           public immutable usdc;
     address public treasury;
     IRefundPool public refundPool;
+    IReceiptNFT public receiptNFT;
 
     /// @notice USDC paid per 1 PURPOSE. payout = amountPurpose * num / denom
     uint256 public rateNumerator;
@@ -103,6 +117,8 @@ contract VendorRedemptionV2 is AccessControl, ReentrancyGuard, Pausable {
     event DefaultWindowsUpdated(uint32 authWindow, uint32 refundWindow);
     event TreasuryUpdated(address indexed treasury);
     event RefundPoolUpdated(address indexed pool);
+    event ReceiptNFTUpdated(address indexed nft);
+    event ReceiptMintFailed(bytes32 indexed chargeId, string reason);
     event RateUpdated(uint256 numerator, uint256 denominator);
 
     event ChargeLocked(bytes32 indexed chargeId, address indexed vendor, address indexed champion, uint256 purposeAmount, uint256 usdcAmount);
@@ -164,6 +180,11 @@ contract VendorRedemptionV2 is AccessControl, ReentrancyGuard, Pausable {
     function setRefundPool(address pool_) external onlyRole(DEFAULT_ADMIN_ROLE) {
         refundPool = IRefundPool(pool_); // allow zero to disable
         emit RefundPoolUpdated(pool_);
+    }
+
+    function setReceiptNFT(address nft_) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        receiptNFT = IReceiptNFT(nft_); // allow zero to disable
+        emit ReceiptNFTUpdated(nft_);
     }
 
     function setRate(uint256 numerator, uint256 denominator) external onlyRole(DEFAULT_ADMIN_ROLE) {
