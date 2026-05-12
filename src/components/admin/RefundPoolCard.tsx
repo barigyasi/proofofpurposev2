@@ -7,9 +7,8 @@ import { toast } from "sonner";
 import { useActiveAccount, useSendTransaction } from "thirdweb/react";
 import { getContract, prepareContractCall } from "thirdweb";
 import { base } from "thirdweb/chains";
-import { client } from "@/lib/thirdweb";
+import { thirdwebClient as client } from "@/lib/thirdweb";
 import { CONTRACTS, CONTRACTS_V2 } from "@/config/contracts";
-import refundPoolAbi from "@/contracts/abis/RefundPool.json";
 
 type LedgerRow = {
   id: string;
@@ -21,10 +20,6 @@ type LedgerRow = {
   created_at: string;
 };
 
-const ERC20_TRANSFER_ABI = [
-  { inputs: [{ name: "to", type: "address" }, { name: "amount", type: "uint256" }],
-    name: "transfer", outputs: [{ name: "", type: "bool" }], stateMutability: "nonpayable", type: "function" },
-] as const;
 
 export function RefundPoolCard() {
   const account = useActiveAccount();
@@ -61,9 +56,9 @@ export function RefundPoolCard() {
     if (!amount || amount <= 0) return;
     setBusy(true);
     try {
-      const usdc = getContract({ client, chain: base, address: CONTRACTS.USDC_BASE, abi: ERC20_TRANSFER_ABI as never });
+      const usdc = getContract({ client, chain: base, address: CONTRACTS.USDC_BASE });
       const tx = prepareContractCall({
-        contract: usdc, method: "transfer",
+        contract: usdc, method: "function transfer(address to, uint256 amount) returns (bool)",
         params: [poolAddress as `0x${string}`, BigInt(Math.floor(amount * 1e6))],
       });
       const result = await sendTx(tx);

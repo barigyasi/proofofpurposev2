@@ -65,7 +65,7 @@ export function VendorChargesHistory({ vendorWallet }: { vendorWallet: string })
       .ilike("vendor_wallet", vendorWallet)
       .order("created_at", { ascending: false })
       .limit(20);
-    setRows((data ?? []) as Charge[]);
+    setRows((data ?? []) as unknown as Charge[]);
   }
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [vendorWallet]);
