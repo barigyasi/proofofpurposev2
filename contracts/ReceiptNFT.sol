@@ -76,7 +76,9 @@ contract ReceiptNFT is ERC721, AccessControl {
             vendorName: vendorName
         });
         tokenIdForCharge[chargeId] = tokenId;
-        _safeMint(champion, tokenId);
+        // Use _mint (not _safeMint) so smart-account wallets without ERC721Receiver
+        // can still receive soulbound receipts. Tokens are non-transferable anyway.
+        _mint(champion, tokenId);
         emit ReceiptMinted(chargeId, tokenId, champion, vendor, usdcAmount, purposeAmount);
     }
 
@@ -201,14 +203,19 @@ contract ReceiptNFT is ERC721, AccessControl {
         return string(out);
     }
 
-    /// @dev minimal JSON-string escape; receipts only ever hold short names from approved profiles.
+    /// @dev JSON/SVG-safe escape: replaces structural chars (`"`, `\`, `<`, `>`),
+    ///      ASCII control bytes (0x00-0x1F) and DEL (0x7F) with spaces.
+    ///      Non-ASCII UTF-8 bytes pass through (valid in both JSON strings and SVG text).
     function _escape(string memory s) internal pure returns (string memory) {
         bytes memory b = bytes(s);
         bytes memory out = new bytes(b.length);
         uint256 j;
         for (uint256 i = 0; i < b.length; i++) {
             bytes1 c = b[i];
-            if (c == 0x22 || c == 0x5C || c == 0x3C || c == 0x3E) { out[j++] = ' '; }
+            if (
+                c == 0x22 || c == 0x5C || c == 0x3C || c == 0x3E ||
+                uint8(c) < 0x20 || c == 0x7F
+            ) { out[j++] = 0x20; }
             else { out[j++] = c; }
         }
         bytes memory trimmed = new bytes(j);

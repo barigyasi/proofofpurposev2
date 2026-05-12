@@ -64,6 +64,7 @@ Deno.serve(async (req) => {
           continue;
         }
         await supabase.from("vendor_charges").update({
+          status: "finalized",
           swept_at: new Date().toISOString(), sweep_tx_hash: txHash,
         }).eq("id", c.id);
         swept.push(c.id);

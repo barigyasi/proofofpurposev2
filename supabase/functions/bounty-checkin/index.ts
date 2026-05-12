@@ -9,7 +9,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-const BOUNTY_MANAGER = "0x7f54d4c8b2f0e75c8aef7e8efbd4a52a7a9a23b0"; // overridden below
 const ABI = parseAbi([
   "function addParticipant(uint256 bountyId, address participant)",
 ]);

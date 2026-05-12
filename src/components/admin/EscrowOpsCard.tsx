@@ -5,7 +5,7 @@ import { toast } from "sonner";
 
 type Row = { status: string; count: number };
 
-const STATES = ["locked", "captured", "settled", "refunded", "cancelled"] as const;
+const STATES = ["locked", "captured", "settled", "refunded", "cancelled", "finalized"] as const;
 
 export function EscrowOpsCard() {
   const [counts, setCounts] = useState<Record<string, number>>({});
@@ -46,7 +46,7 @@ export function EscrowOpsCard() {
       <p className="mt-1 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
         // vendor charge state machine
       </p>
-      <div className="mt-4 grid grid-cols-5 gap-2">
+      <div className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-6">
         {STATES.map((s) => (
           <div key={s} className="border-2 border-foreground p-2 text-center">
             <p className="font-mono text-[10px] uppercase text-muted-foreground">{s}</p>
