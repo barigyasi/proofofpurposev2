@@ -285,6 +285,29 @@ contract VendorRedemptionV2 is AccessControl, ReentrancyGuard, Pausable {
      *         REFUND_ADMIN_ROLE may force-settle before window expires.
      */
     function settle(bytes32 chargeId) external nonReentrant whenNotPaused {
+        _settle(chargeId, "", "", false);
+    }
+
+    /**
+     * @notice Same as settle(), but also mints a soulbound on-chain receipt NFT
+     *         to the champion via `receiptNFT`. Names are passed in by the
+     *         backend signer (off-chain profile data) and rendered into the SVG.
+     *         If receiptNFT is unset, behaves like settle().
+     */
+    function settleWithReceipt(
+        bytes32 chargeId,
+        string calldata championName,
+        string calldata vendorName
+    ) external nonReentrant whenNotPaused {
+        _settle(chargeId, championName, vendorName, true);
+    }
+
+    function _settle(
+        bytes32 chargeId,
+        string memory championName,
+        string memory vendorName,
+        bool mintReceipt
+    ) internal {
         if (!hasRole(SETTLEMENT_ROLE, msg.sender) && !hasRole(REFUND_ADMIN_ROLE, msg.sender)) {
             revert AccessControlUnauthorizedAccount(msg.sender, SETTLEMENT_ROLE);
         }
@@ -296,10 +319,22 @@ contract VendorRedemptionV2 is AccessControl, ReentrancyGuard, Pausable {
 
         c.state = State.Settled;
         // Snapshot capturedAt -> reuse field as settledAt for refund-window math.
-        c.capturedAt = uint64(block.timestamp);
+        uint64 settledAt = uint64(block.timestamp);
+        c.capturedAt = settledAt;
 
         usdc.safeTransfer(c.vendor, c.usdcAmount);
         emit ChargeSettled(chargeId, c.usdcAmount);
+
+        if (mintReceipt && address(receiptNFT) != address(0)) {
+            try receiptNFT.mintReceipt(
+                c.champion, c.vendor, c.usdcAmount, c.purposeAmount,
+                chargeId, settledAt, championName, vendorName
+            ) {} catch Error(string memory reason) {
+                emit ReceiptMintFailed(chargeId, reason);
+            } catch {
+                emit ReceiptMintFailed(chargeId, "unknown");
+            }
+        }
     }
 
     /**

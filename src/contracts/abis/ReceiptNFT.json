@@ -1,0 +1,41 @@
+{
+  "abi": [
+    {"type":"constructor","inputs":[{"name":"admin","type":"address"}],"stateMutability":"nonpayable"},
+    {"type":"function","name":"MINTER_ROLE","stateMutability":"view","inputs":[],"outputs":[{"type":"bytes32"}]},
+    {"type":"function","name":"DEFAULT_ADMIN_ROLE","stateMutability":"view","inputs":[],"outputs":[{"type":"bytes32"}]},
+    {"type":"function","name":"grantRole","stateMutability":"nonpayable","inputs":[{"name":"role","type":"bytes32"},{"name":"account","type":"address"}],"outputs":[]},
+    {"type":"function","name":"hasRole","stateMutability":"view","inputs":[{"name":"role","type":"bytes32"},{"name":"account","type":"address"}],"outputs":[{"type":"bool"}]},
+    {"type":"function","name":"nextTokenId","stateMutability":"view","inputs":[],"outputs":[{"type":"uint256"}]},
+    {"type":"function","name":"tokenIdForCharge","stateMutability":"view","inputs":[{"type":"bytes32"}],"outputs":[{"type":"uint256"}]},
+    {"type":"function","name":"ownerOf","stateMutability":"view","inputs":[{"name":"tokenId","type":"uint256"}],"outputs":[{"type":"address"}]},
+    {"type":"function","name":"tokenURI","stateMutability":"view","inputs":[{"name":"tokenId","type":"uint256"}],"outputs":[{"type":"string"}]},
+    {"type":"function","name":"receipts","stateMutability":"view","inputs":[{"type":"uint256"}],"outputs":[
+      {"name":"champion","type":"address"},
+      {"name":"vendor","type":"address"},
+      {"name":"usdcAmount","type":"uint256"},
+      {"name":"purposeAmount","type":"uint256"},
+      {"name":"chargeId","type":"bytes32"},
+      {"name":"settledAt","type":"uint64"},
+      {"name":"championName","type":"string"},
+      {"name":"vendorName","type":"string"}
+    ]},
+    {"type":"function","name":"mintReceipt","stateMutability":"nonpayable","inputs":[
+      {"name":"champion","type":"address"},
+      {"name":"vendor","type":"address"},
+      {"name":"usdcAmount","type":"uint256"},
+      {"name":"purposeAmount","type":"uint256"},
+      {"name":"chargeId","type":"bytes32"},
+      {"name":"settledAt","type":"uint64"},
+      {"name":"championName","type":"string"},
+      {"name":"vendorName","type":"string"}
+    ],"outputs":[{"type":"uint256"}]},
+    {"type":"event","name":"ReceiptMinted","inputs":[
+      {"name":"chargeId","type":"bytes32","indexed":true},
+      {"name":"tokenId","type":"uint256","indexed":true},
+      {"name":"champion","type":"address","indexed":true},
+      {"name":"vendor","type":"address","indexed":false},
+      {"name":"usdcAmount","type":"uint256","indexed":false},
+      {"name":"purposeAmount","type":"uint256","indexed":false}
+    ],"anonymous":false}
+  ]
+}
