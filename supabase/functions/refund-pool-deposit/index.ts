@@ -12,7 +12,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const rpc = "https://mainnet.base.org";
+const rpc = (Deno.env.get("CHAIN_RPC") ?? "https://mainnet.base.org");
 const publicClient = createPublicClient({ chain: base, transport: http(rpc) });
 
 Deno.serve(async (req) => {

@@ -19,7 +19,7 @@ const RECEIPT_ABI = parseAbi([
   "event ReceiptMinted(bytes32 indexed chargeId, uint256 indexed tokenId, address indexed champion, address vendor, uint256 usdcAmount, uint256 purposeAmount)",
 ]);
 
-const rpc = "https://mainnet.base.org";
+const rpc = (Deno.env.get("CHAIN_RPC") ?? "https://mainnet.base.org");
 const RECEIPT_NFT = (Deno.env.get("RECEIPT_NFT_ADDRESS") ?? "").toLowerCase();
 const publicClient = createPublicClient({ chain: base, transport: http(rpc) });
 
