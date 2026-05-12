@@ -103,7 +103,7 @@ export function ChampionChargeWatcher() {
         .eq("id", charge.id);
       if (updErr) throw updErr;
       const res = await settleCharge(charge.id);
-      toast.success(`Paid $${res.usdc_payout.toFixed(2)} to vendor`);
+      toast.success(`Authorized $${res.usdc_amount.toFixed(2)} — vendor will be paid after the hold period`);
       setCharge(null);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
