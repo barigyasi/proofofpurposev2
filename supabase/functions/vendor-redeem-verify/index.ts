@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 const WALLET_RE = /^0x[a-fA-F0-9]{40}$/;
 
-const client = createPublicClient({ chain: base, transport: http("https://mainnet.base.org") });
+const client = createPublicClient({ chain: base, transport: http((Deno.env.get("CHAIN_RPC") ?? "https://mainnet.base.org")) });
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });

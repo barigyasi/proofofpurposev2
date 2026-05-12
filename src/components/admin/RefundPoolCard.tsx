@@ -56,16 +56,28 @@ export function RefundPoolCard() {
     if (!amount || amount <= 0) return;
     setBusy(true);
     try {
+      const amountBaseUnits = BigInt(Math.floor(amount * 1e6));
       const usdc = getContract({ client, chain: base, address: CONTRACTS.USDC_BASE });
-      const tx = prepareContractCall({
-        contract: usdc, method: "function transfer(address to, uint256 amount) returns (bool)",
-        params: [poolAddress as `0x${string}`, BigInt(Math.floor(amount * 1e6))],
+      const pool = getContract({ client, chain: base, address: poolAddress as `0x${string}` });
+
+      // Step 1: approve the RefundPool to pull USDC.
+      const approveTx = prepareContractCall({
+        contract: usdc, method: "function approve(address spender, uint256 amount) returns (bool)",
+        params: [poolAddress as `0x${string}`, amountBaseUnits],
       });
-      const result = await sendTx(tx);
+      await sendTx(approveTx);
+
+      // Step 2: call deposit() so on-chain accounting (totalDeposited, Deposited event) updates.
+      const depositTx = prepareContractCall({
+        contract: pool, method: "function deposit(uint256 amount)",
+        params: [amountBaseUnits],
+      });
+      const result = await sendTx(depositTx);
+
       await supabase.functions.invoke("refund-pool-deposit", {
         body: { txHash: result.transactionHash, amountUsdc: amount, kind: "deposit" },
       });
-      toast.success(`Sent $${amount.toFixed(2)} to refund pool`);
+      toast.success(`Deposited $${amount.toFixed(2)} to refund pool`);
       setTopUp("");
       refresh();
     } catch (e) {

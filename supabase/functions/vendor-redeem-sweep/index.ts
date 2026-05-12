@@ -17,7 +17,7 @@ const REDEMPTION_ABI = [
     outputs: [], stateMutability: "nonpayable", type: "function" },
 ] as const;
 
-const rpc = "https://mainnet.base.org";
+const rpc = (Deno.env.get("CHAIN_RPC") ?? "https://mainnet.base.org");
 const VENDOR_REDEMPTION_V2 = (Deno.env.get("VENDOR_REDEMPTION_V2_ADDRESS") ?? "").toLowerCase();
 const publicClient = createPublicClient({ chain: base, transport: http(rpc) });
 
@@ -64,6 +64,7 @@ Deno.serve(async (req) => {
           continue;
         }
         await supabase.from("vendor_charges").update({
+          status: "finalized",
           swept_at: new Date().toISOString(), sweep_tx_hash: txHash,
         }).eq("id", c.id);
         swept.push(c.id);

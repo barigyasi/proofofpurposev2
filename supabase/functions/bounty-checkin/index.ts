@@ -9,7 +9,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-const BOUNTY_MANAGER = "0x7f54d4c8b2f0e75c8aef7e8efbd4a52a7a9a23b0"; // overridden below
 const ABI = parseAbi([
   "function addParticipant(uint256 bountyId, address participant)",
 ]);
@@ -88,7 +87,9 @@ Deno.serve(async (req) => {
     if (!pk) return json({ error: "Server missing BOUNTY_ADMIN_PRIVATE_KEY" }, 500);
     const account = privateKeyToAccount((pk.startsWith("0x") ? pk : `0x${pk}`) as `0x${string}`);
 
-    const bountyManagerAddr = (Deno.env.get("BOUNTY_MANAGER_ADDRESS") ??
+    // Prefer V2 if configured; fall back to V1.
+    const bountyManagerAddr = (Deno.env.get("BOUNTY_MANAGER_V2_ADDRESS") ??
+      Deno.env.get("BOUNTY_MANAGER_ADDRESS") ??
       "0x0F2Cf105534657b954169CeD15f3294E19350a51") as `0x${string}`;
 
     const publicClient = createPublicClient({ chain: base, transport: http() });
