@@ -101,11 +101,17 @@ USDC is **not** deployed — you reuse the canonical address per chain.
 | Admin EOA | your test wallet | `0xa5a484Af10FF67257A06DDbf8DdE6A99a483f098` |
 | Treasury wallet | a second test wallet you control | current treasury (multisig) |
 | USDC address | `0x036CbD53842c5426634e7929541eC2318f3dCF7e` | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` |
+| RPC URL (`CHAIN_RPC` secret) | `https://sepolia.base.org` | `https://mainnet.base.org` |
 | ETH for gas | from a Base Sepolia faucet | bridge a small amount |
 | Test USDC in treasury | `mint` on the testnet faucet, ≥ 100 USDC | already funded |
 | Solidity | `0.8.24+` | same |
 | OpenZeppelin | `@openzeppelin/contracts v5.0.2` | same |
 
+> **Edge function env vars to set per environment:**
+> - `CHAIN_RPC` — RPC URL for the target chain (above).
+> - `VENDOR_REDEMPTION_V2_ADDRESS`, `RECEIPT_NFT_ADDRESS`, `REFUND_POOL_ADDRESS`, `PURPOSE_TOKEN_V2_ADDRESS`, `BOUNTY_MANAGER_V2_ADDRESS`, `PURPOSE_GOV_ADDRESS`, `GOVERNOR_ADDRESS` — paste deployed addresses after each step.
+> - When `BOUNTY_MANAGER_V2_ADDRESS` is set, `bounty-checkin` automatically routes to V2; otherwise it uses the V1 address.
+>
 > **One change vs. the old V1 instructions:** the treasury USDC `approve()` step
 > is now toward `VendorRedemptionV2`, *not* the old `VendorRedemptionManager`.
 
