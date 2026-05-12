@@ -87,7 +87,9 @@ Deno.serve(async (req) => {
     if (!pk) return json({ error: "Server missing BOUNTY_ADMIN_PRIVATE_KEY" }, 500);
     const account = privateKeyToAccount((pk.startsWith("0x") ? pk : `0x${pk}`) as `0x${string}`);
 
-    const bountyManagerAddr = (Deno.env.get("BOUNTY_MANAGER_ADDRESS") ??
+    // Prefer V2 if configured; fall back to V1.
+    const bountyManagerAddr = (Deno.env.get("BOUNTY_MANAGER_V2_ADDRESS") ??
+      Deno.env.get("BOUNTY_MANAGER_ADDRESS") ??
       "0x0F2Cf105534657b954169CeD15f3294E19350a51") as `0x${string}`;
 
     const publicClient = createPublicClient({ chain: base, transport: http() });
