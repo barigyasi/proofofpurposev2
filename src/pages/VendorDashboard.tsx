@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useVendorApplication } from "@/hooks/useApplicationStatus";
+import { VendorChargesHistory } from "@/components/vendor/VendorChargesHistory";
 
 type Scanned = { wallet: string; expires_at: number; signature: string };
 

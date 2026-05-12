@@ -2,6 +2,8 @@ import { Link } from "react-router-dom";
 import { useActiveAccount } from "thirdweb/react";
 import { AddressLabel } from "@/components/AddressLabel";
 import { SplitsDistributeCard } from "@/components/admin/SplitsDistributeCard";
+import { EscrowOpsCard } from "@/components/admin/EscrowOpsCard";
+import { RefundPoolCard } from "@/components/admin/RefundPoolCard";
 
 const TILES = [
   { to: "/admin/bounties", label: "BOUNTIES", desc: "Create, fund, complete bounties" },
@@ -36,8 +38,10 @@ export default function Admin() {
         )}
       </div>
 
-      <div className="mt-8">
+      <div className="mt-8 space-y-6">
         <SplitsDistributeCard />
+        <EscrowOpsCard />
+        <RefundPoolCard />
       </div>
 
       <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
