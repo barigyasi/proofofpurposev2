@@ -1,39 +1,134 @@
-## Goal
-Give the super-admin a card on `/admin` that triggers `distribute(address token)` on the two 0xSplits contracts. No backend / secret key needed — the admin's already-connected EOA signs the tx (anyone can call `distribute` on a Split, but routing it through the admin wallet keeps gas + audit trail tied to mission control).
 
-## Contracts & tokens
-- Donation split: `0x214aF142ff6D9f150EF994e0ea32Ba1f8db9C8dC`
-- Team split: `0xa0FA4787921f9A9253810D27333031Ae2D62E334`
-- Tokens to distribute: **USDC** (`0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`) and **native ETH** (use the 0xSplits sentinel `0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE`)
+# V2 Redemption Escrow + Refund Pool
 
-## What I'll build
+Since V2 is **not yet deployed**, the escrow state machine ships *inside* `VendorRedemptionV2.sol` from day one. No live contracts are touched.
 
-### 1. Add team split to config
-`src/config/contracts.ts`:
-- Add `TEAM_SPLIT: "0xa0FA4787921f9A9253810D27333031Ae2D62E334"`
-- Add `NATIVE_TOKEN_SENTINEL: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"`
+---
 
-### 2. New component `SplitsDistributeCard`
-`src/components/admin/SplitsDistributeCard.tsx`
-- Reads each split's pending USDC + ETH balance via `balanceOf` (USDC) and `eth_getBalance` so the admin sees what's actually sitting there before distributing.
-- Two rows (Donation Split, Team Split). Each row has two buttons: `DISTRIBUTE USDC` and `DISTRIBUTE ETH`.
-- Disabled when balance < dust threshold (e.g. < 0.01 USDC / 0.00001 ETH) so we don't waste gas on empty splits.
-- On click: `prepareContractCall({ method: "function distribute(address token)", params: [token] })` → `sendTransaction({ account })` (uses the already-connected admin wallet) → `waitForReceipt` → toast with basescan link.
-- After success, refresh the displayed balances.
-- Brutalist styling matching `TreasuryHeadroomCard`.
+## Smart contracts
 
-### 3. Mount on `/admin`
-`src/pages/Admin.tsx` — drop the new card above the tile grid (full-width, two-column inside).
+### 1. `VendorRedemptionV2.sol` (rewrite before deploy)
 
-### 4. Audit row (off-chain)
-On successful tx, insert into the existing audit log path used by other admin actions (will check `AdminAudit.tsx` for the table — likely a generic admin event table — and write `{action: 'split_distribute', split, token, tx_hash}`). If no such table exists I'll skip this and just rely on the on-chain tx + toast; will confirm during build.
+State machine per `chargeId` (bytes32, supplied by backend = vendor_charges.id):
+
+```text
+                  cancel()
+        ┌─────────────────────┐
+        ▼                     │
+   ┌────────┐  capture()  ┌────────┐  settle()   ┌─────────┐
+──▶│ Locked │────────────▶│Captured│────────────▶│ Settled │──┐
+   └────────┘             └────────┘             └─────────┘  │
+                                                              │ refund()
+                                                              ▼
+                                                         ┌─────────┐
+                                                         │Refunded │
+                                                         └─────────┘
+```
+
+**Storage per charge:** `vendor`, `champion`, `purposeAmount`, `usdcAmount`, `lockedAt`, `capturedAt`, `state`, `authWindowOverride`, `refundWindowOverride`.
+
+**Per-vendor config** (admin-set): `authWindow`, `refundWindow`, falls back to global defaults.
+
+**Functions (all role-gated `SETTLEMENT_ROLE` = backend signer):**
+- `lock(chargeId, vendor, champion, purposeAmount)` — pulls PURPOSE from champion + USDC quote from treasury **into this contract**. State→Locked.
+- `capture(chargeId)` — marks fulfilled, starts auth countdown. State→Captured. (Optional shortcut: `lockAndCapture` for in-person POS where there's no separate fulfillment step.)
+- `cancel(chargeId)` — only while Locked or within auth window of Captured. Returns PURPOSE to champion + USDC to treasury. State→Cancelled.
+- `settle(chargeId)` — callable after auth window expires (or admin force). Pays USDC to vendor; **PURPOSE stays in escrow** until refund window closes. State→Settled.
+- `refund(chargeId, source)` — callable by vendor or admin within refund window. `source = Vendor | Pool`. Pulls USDC from chosen source back to treasury, returns the held PURPOSE to champion. State→Refunded.
+- `sweep(chargeId)` — anyone, after refund window expires on a Settled charge. Burns the held PURPOSE via `purposeToken.burnFrom(address(this), amount)`. State→Finalized.
+
+**Admin setters:** `setDefaultWindows`, `setVendorWindows(vendor,...)`, `setTreasury`, `setRefundPool`, `pause/unpause`.
+
+**Roles needed on `PurposeTokenV2`:** `BURNER_ROLE` granted to this contract at deploy (no mint role — refunds replay original tokens).
+
+### 2. `RefundPool.sol` (new, standalone)
+
+Plain USDC vault. Functions:
+- `deposit(amount)` — anyone (admin manually tops up; later: 0xSplits sends here automatically).
+- `payRefund(chargeId, vendor, amount)` — only `REDEMPTION_ROLE` (granted to VendorRedemptionV2).
+- `withdraw(to, amount)` — admin only (treasury rebalance).
+- View: `available()`, total paid, per-vendor paid.
+
+### 3. `PurposeTokenV2.sol`
+
+Unchanged from the version already in `contracts/`. Just grant `BURNER_ROLE` to VendorRedemptionV2 at deploy.
+
+---
+
+## Backend (Supabase)
+
+### Schema additions to `vendor_charges`
+
+New columns (nullable): `locked_at`, `captured_at`, `refunded_at`, `cancelled_at`, `swept_at`, `lock_tx_hash`, `capture_tx_hash`, `cancel_tx_hash`, `refund_tx_hash`, `refund_source` (`vendor`/`pool`), `auth_window_seconds`, `refund_window_seconds`.
+
+Status enum expands: `pending | confirmed | locked | captured | settled | refunded | cancelled | failed | expired`.
+
+### New table `vendor_refund_config`
+`vendor_wallet PK, auth_window_seconds, refund_window_seconds, updated_at`. Admin-managed mirror of on-chain per-vendor windows.
+
+### New table `refund_pool_ledger`
+`id, kind (deposit|payout|withdraw), amount_usdc, charge_id, tx_hash, actor, created_at`. Pure ledger for the admin pool card.
+
+### Edge functions
+
+- **`vendor-redeem-lock`** — replaces today's settle path. Verifies champion sig, calls `lock()` (or `lockAndCapture` for POS), writes `lock_tx_hash`, status→`locked`/`captured`.
+- **`vendor-redeem-capture`** — vendor "Mark fulfilled" (online shop). Calls `capture()`.
+- **`vendor-redeem-cancel`** — vendor or champion cancel within window.
+- **`vendor-redeem-settle`** — cron-driven; finds Captured charges past auth window, calls `settle()`.
+- **`vendor-redeem-refund`** — vendor or admin initiates. Picks source (vendor wallet via approval, or pool). Calls `refund()`.
+- **`vendor-redeem-sweep`** — cron; burns PURPOSE on Settled charges past refund window.
+- **`refund-pool-deposit`** — admin top-up (USDC transfer + ledger row).
+
+Two cron jobs (`pg_cron`): every minute auto-settle eligible captured charges; every 5 min sweep finalized.
+
+---
+
+## Frontend
+
+### Vendor dashboard (`src/pages/VendorDashboard.tsx`)
+POS flow stays simple — scan QR, enter amount, champion confirms → backend calls `lockAndCapture` (auth window starts immediately). Charge row gains:
+- Status pill: `Awaiting settle (Xh left)` / `Settled` / `Refundable (Xd left)` / `Refunded`
+- **Issue Refund** button (visible while Settled & within refund window) → modal with reason + source selector (default: pool if funded, else vendor wallet).
+- **Cancel** button (visible while Locked/Captured pre-settle).
+
+### Champion (`ChampionChargeWatcher.tsx` + ChampionDashboard)
+- Confirm dialog copy clarifies "Funds held until vendor confirms — refundable for X days after."
+- New "Recent payments" list with status + refund link if applicable.
+
+### Admin
+- New `EscrowOpsCard` on `/admin`: counts in each state, force-settle / force-cancel / force-refund overrides.
+- New `RefundPoolCard`: pool balance, top-up button, ledger preview, link to full ledger page.
+- New `/admin/refunds` page: table of all refunds + filters.
+- Per-vendor windows editor in `AdminVendors.tsx`.
+
+### Config
+`src/config/contracts.ts` — populate `CONTRACTS_V2.{PURPOSE_TOKEN, VENDOR_REDEMPTION, BOUNTY_MANAGER}` + add `REFUND_POOL`. Flip `V2_LIVE` automatically.
+
+---
+
+## Decisions locked in
+
+- **USDC custody:** pulled into VendorRedemptionV2 on `lock()`.
+- **Refund mechanics:** PURPOSE held in escrow until refund window closes, then burned by `sweep()`. No mint role needed.
+- **Windows:** global defaults (24h auth / 7d refund) **+ per-vendor overrides** stored on-chain and mirrored in `vendor_refund_config`.
+- **Refund Pool funding:** manual admin top-ups for v1; ledger built so future board vote can route a % of the 10% ops split here automatically. No 0xSplits reconfig now.
+
+---
 
 ## Out of scope
-- No thirdweb HTTP API / secret key path. The admin EOA is already connected via the MetaMask flow you set up — signing client-side is simpler and avoids storing a server signer for this.
-- No new role checks. `/admin` is already wrapped in `AdminGuard`.
-- No changes to the splits' recipient lists / contract URI / role grants.
 
-## Files touched
-- `src/config/contracts.ts` *(2 new constants)*
-- `src/components/admin/SplitsDistributeCard.tsx` *(new)*
-- `src/pages/Admin.tsx` *(mount card)*
+- Champion-initiated refunds (only vendor/admin in v1; champion cancel only pre-settle).
+- Multi-currency (USDC only).
+- Migrating in-flight V1 charges — V1 keeps running, V2 is for new charges only.
+- Automated refund-pool funding from donation split (deferred to post-board-formation vote).
+
+---
+
+## Rollout order
+
+1. Write `RefundPool.sol` + rewrite `VendorRedemptionV2.sol`; update `contracts/DEPLOYMENT.md`.
+2. Migration: extend `vendor_charges`, create `vendor_refund_config` + `refund_pool_ledger`.
+3. New/updated edge functions + cron jobs.
+4. Admin UI (escrow ops + refund pool + per-vendor windows).
+5. Vendor + champion UI updates.
+6. After you deploy contracts on Base, paste addresses into `CONTRACTS_V2` + `REFUND_POOL` and grant `BURNER_ROLE` / `REDEMPTION_ROLE`.
