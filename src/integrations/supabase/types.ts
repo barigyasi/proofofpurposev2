@@ -667,6 +667,39 @@ export type Database = {
         }
         Relationships: []
       }
+      refund_pool_ledger: {
+        Row: {
+          actor: string | null
+          amount_usdc: number
+          charge_id: string | null
+          created_at: string
+          id: string
+          kind: string
+          note: string | null
+          tx_hash: string | null
+        }
+        Insert: {
+          actor?: string | null
+          amount_usdc: number
+          charge_id?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          note?: string | null
+          tx_hash?: string | null
+        }
+        Update: {
+          actor?: string | null
+          amount_usdc?: number
+          charge_id?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          note?: string | null
+          tx_hash?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           assigned_by: string | null
@@ -693,17 +726,31 @@ export type Database = {
       }
       vendor_charges: {
         Row: {
+          auth_window_seconds: number | null
+          cancel_tx_hash: string | null
+          cancelled_at: string | null
+          capture_tx_hash: string | null
+          captured_at: string | null
           champion_signature: string | null
           champion_wallet: string
           created_at: string
           error: string | null
           expires_at: string
           id: string
+          lock_tx_hash: string | null
+          locked_at: string | null
           memo: string | null
           nonce: string
           purpose_amount_wei: number
+          refund_reason: string | null
+          refund_source: string | null
+          refund_tx_hash: string | null
+          refund_window_seconds: number | null
+          refunded_at: string | null
           settled_at: string | null
           status: string
+          sweep_tx_hash: string | null
+          swept_at: string | null
           tx_hash: string | null
           updated_at: string
           usdc_payout: number | null
@@ -711,17 +758,31 @@ export type Database = {
           vendor_wallet: string
         }
         Insert: {
+          auth_window_seconds?: number | null
+          cancel_tx_hash?: string | null
+          cancelled_at?: string | null
+          capture_tx_hash?: string | null
+          captured_at?: string | null
           champion_signature?: string | null
           champion_wallet: string
           created_at?: string
           error?: string | null
           expires_at?: string
           id?: string
+          lock_tx_hash?: string | null
+          locked_at?: string | null
           memo?: string | null
           nonce: string
           purpose_amount_wei: number
+          refund_reason?: string | null
+          refund_source?: string | null
+          refund_tx_hash?: string | null
+          refund_window_seconds?: number | null
+          refunded_at?: string | null
           settled_at?: string | null
           status?: string
+          sweep_tx_hash?: string | null
+          swept_at?: string | null
           tx_hash?: string | null
           updated_at?: string
           usdc_payout?: number | null
@@ -729,17 +790,31 @@ export type Database = {
           vendor_wallet: string
         }
         Update: {
+          auth_window_seconds?: number | null
+          cancel_tx_hash?: string | null
+          cancelled_at?: string | null
+          capture_tx_hash?: string | null
+          captured_at?: string | null
           champion_signature?: string | null
           champion_wallet?: string
           created_at?: string
           error?: string | null
           expires_at?: string
           id?: string
+          lock_tx_hash?: string | null
+          locked_at?: string | null
           memo?: string | null
           nonce?: string
           purpose_amount_wei?: number
+          refund_reason?: string | null
+          refund_source?: string | null
+          refund_tx_hash?: string | null
+          refund_window_seconds?: number | null
+          refunded_at?: string | null
           settled_at?: string | null
           status?: string
+          sweep_tx_hash?: string | null
+          swept_at?: string | null
           tx_hash?: string | null
           updated_at?: string
           usdc_payout?: number | null
@@ -774,6 +849,30 @@ export type Database = {
           purpose_amount_wei?: number
           tx_hash?: string | null
           usdc_payout?: number
+          vendor_wallet?: string
+        }
+        Relationships: []
+      }
+      vendor_refund_config: {
+        Row: {
+          auth_window_seconds: number
+          refund_window_seconds: number
+          updated_at: string
+          updated_by: string | null
+          vendor_wallet: string
+        }
+        Insert: {
+          auth_window_seconds: number
+          refund_window_seconds: number
+          updated_at?: string
+          updated_by?: string | null
+          vendor_wallet: string
+        }
+        Update: {
+          auth_window_seconds?: number
+          refund_window_seconds?: number
+          updated_at?: string
+          updated_by?: string | null
           vendor_wallet?: string
         }
         Relationships: []

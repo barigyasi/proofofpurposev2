@@ -55,16 +55,34 @@ every step in Remix / thirdweb dashboard, then repeat on **Base mainnet**.
                     └────────────────────────────┘
 ```
 
-Six contracts total:
+Seven contracts total:
 
 1. **PurposeTokenV2** — soulbound community credit (PURPOSE)
 2. **BountyManagerV2** — mints PURPOSE on bounty completion
-3. **VendorRedemptionV2** — burns PURPOSE, pays USDC from treasury
-4. **PurposeGovToken** — separate ERC20Votes token used **only** for governance weight
-5. **VoteERC20 (thirdweb)** — the governor itself
-6. *(optional v2)* **Timelock** — execution delay for governor; recommended on mainnet
+3. **VendorRedemptionV2** — escrow state machine (Lock→Capture→Settle/Cancel/Refund/Sweep)
+4. **RefundPool** — USDC vault that backs vendor refunds
+5. **PurposeGovToken** — separate ERC20Votes token used **only** for governance weight
+6. **VoteERC20 (thirdweb)** — the governor itself
+7. *(optional v2)* **Timelock** — execution delay for governor; recommended on mainnet
 
 USDC is **not** deployed — you reuse the canonical address per chain.
+
+> **Escrow note:** in V2 the redemption contract holds both PURPOSE and USDC
+> between `lock()` and `sweep()`. Treasury must `approve(VendorRedemptionV2, max)`
+> for **USDC** at deploy time, and PurposeTokenV2 must whitelist the
+> redemption contract for **transfer** (so PURPOSE can move in/out of escrow).
+> Steps 5–7 below cover both. After deploy, also call:
+>
+> - `purposeV2.grantRole(BURNER_ROLE, VENDOR_REDEMPTION_V2)` *(if you add a
+>   BURNER_ROLE in the token; current contract uses public `burnFrom` via the
+>   ERC20Burnable extension which checks allowance — so the redemption contract
+>   must also `approve(itself, max)` against PURPOSE, OR call burnFrom on
+>   tokens it owns. The current escrow uses `burnFrom(address(this), ...)` and
+>   relies on ERC20Burnable's self-burn path which does NOT require an
+>   allowance, so no extra grant needed.)*
+> - `vendorRedemptionV2.setRefundPool(REFUND_POOL_ADDRESS)`
+> - `refundPool.grantRole(REDEMPTION_ROLE, VENDOR_REDEMPTION_V2)`
+> - Optionally `vendorRedemptionV2.setDefaultWindows(86400, 604800)` to confirm 24h auth / 7d refund.
 
 ---
 

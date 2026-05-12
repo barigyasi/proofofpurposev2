@@ -19,13 +19,14 @@ export const NATIVE_TOKEN_SENTINEL =
 
 /**
  * V2 contract addresses — populate after redeploying PurposeTokenV2 / BountyManagerV2 /
- * VendorRedemptionV2. While these are zero, the V2 settlement edge function and
- * silent-approve flow short-circuit and the app continues to use V1.
+ * VendorRedemptionV2 / RefundPool. While these are zero, the V2 settlement edge
+ * functions short-circuit (return 503) and the app continues to use V1.
  */
 export const CONTRACTS_V2 = {
   PURPOSE_TOKEN: "" as `0x${string}` | "",
   VENDOR_REDEMPTION: "" as `0x${string}` | "",
   BOUNTY_MANAGER: "" as `0x${string}` | "",
+  REFUND_POOL: "" as `0x${string}` | "",
 } as const;
 
 export const V2_LIVE = Boolean(CONTRACTS_V2.VENDOR_REDEMPTION) && Boolean(CONTRACTS_V2.PURPOSE_TOKEN);
