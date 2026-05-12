@@ -231,6 +231,8 @@ export default function VendorDashboard() {
           </div>
         </div>
       )}
+
+      {account && isApproved && <VendorChargesHistory vendorWallet={account.address} />}
     </main>
   );
 }
