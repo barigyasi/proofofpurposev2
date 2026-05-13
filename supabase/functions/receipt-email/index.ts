@@ -114,53 +114,65 @@ function renderHtml(p: {
 <html lang="en"><head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="color-scheme" content="light dark"/>
-<title>Purpose receipt #${p.tokenId}</title>
+<meta name="color-scheme" content="dark"/>
+<title>PROOF OF PURPOSE — RECEIPT #${p.tokenId}</title>
 </head>
-<body style="margin:0;padding:0;background:#0a1228;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#e8ecf5;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#0a1228;">
-  <tr><td align="center" style="padding:24px 12px;">
-    <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background:#0f1a3a;border:1px solid #1f2c54;border-radius:12px;overflow:hidden;">
-      <tr><td style="padding:28px 28px 8px 28px;">
-        <div style="font-family:Georgia,serif;font-weight:700;letter-spacing:0.18em;font-size:14px;color:#f5c542;">PURPOSE</div>
-        <div style="font-size:11px;color:#8a96b8;letter-spacing:0.1em;text-transform:uppercase;margin-top:4px;">Soulbound Receipt</div>
-      </td></tr>
-      <tr><td style="padding:8px 28px 0 28px;">
-        <h1 style="margin:12px 0 6px 0;font-size:26px;line-height:1.2;color:#ffffff;">${heading} <span style="color:#f5c542;">#${p.tokenId}</span></h1>
-        <p style="margin:0 0 16px 0;font-size:14px;line-height:1.55;color:#c2cbe3;">${sub}</p>
-      </td></tr>
-      <tr><td align="center" style="padding:8px 16px 16px 16px;">
-        <img src="cid:receipt-png" alt="Receipt #${p.tokenId}" style="display:block;width:100%;max-width:520px;height:auto;border-radius:8px;border:1px solid #1f2c54;"/>
-      </td></tr>
-      <tr><td style="padding:8px 28px 8px 28px;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size:14px;color:#e8ecf5;">
-          ${row("Champion", escapeHtml(p.championName))}
-          ${row("Vendor", escapeHtml(p.vendorName))}
-          ${row("Amount paid out", fmtUSD(p.usdc))}
-          ${row("PURPOSE redeemed", fmtPurpose(p.purposeWei))}
-          ${row("Settled", p.settledAt.toUTCString())}
-          ${row("Transaction", `<a href="https://basescan.org/tx/${p.txHash}" style="color:#f5c542;text-decoration:none;">${shortHash(p.txHash)}</a>`)}
-        </table>
-      </td></tr>
-      <tr><td align="center" style="padding:20px 28px 8px 28px;">
-        <a href="${p.receiptUrl}" style="display:inline-block;background:#f5c542;color:#0a1228;font-weight:700;text-decoration:none;padding:12px 22px;border-radius:8px;font-size:14px;letter-spacing:0.04em;">VIEW ON-CHAIN RECEIPT</a>
-      </td></tr>
-      <tr><td style="padding:18px 28px 28px 28px;">
-        <p style="margin:0;font-size:11px;line-height:1.6;color:#7d89ab;">
-          This NFT is soulbound — non-transferable proof of purchase, permanent on Base.
-          A printable PDF and PNG are attached.
-        </p>
-      </td></tr>
+<body style="margin:0;padding:0;background:#0a0a0a;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#fafafa;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#0a0a0a;">
+  <tr><td align="center" style="padding:32px 12px;">
+    <!-- Hard offset shadow wrapper -->
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;">
+      <tr>
+        <td style="padding:0;">
+          <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background:#141414;border:2px solid #fafafa;border-collapse:separate;">
+            <tr><td style="background:#ffff00;padding:18px 24px;border-bottom:2px solid #fafafa;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="font-family:'Archivo Black',Impact,'Arial Black',sans-serif;font-weight:900;letter-spacing:-0.04em;font-size:22px;color:#0a0a0a;text-transform:uppercase;line-height:0.9;">PROOF OF<br/>PURPOSE</td>
+                  <td align="right" style="font-family:'JetBrains Mono','Courier New',monospace;font-size:11px;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.1em;">SOULBOUND<br/>RECEIPT</td>
+                </tr>
+              </table>
+            </td></tr>
+            <tr><td style="padding:28px 28px 8px 28px;">
+              <h1 style="margin:0 0 8px 0;font-family:'Archivo Black',Impact,'Arial Black',sans-serif;font-weight:900;font-size:34px;line-height:0.95;letter-spacing:-0.04em;color:#fafafa;text-transform:uppercase;">${heading.toUpperCase()}</h1>
+              <div style="font-family:'JetBrains Mono','Courier New',monospace;font-size:18px;color:#ffff00;letter-spacing:0.02em;margin-bottom:14px;">#${p.tokenId}</div>
+              <p style="margin:0 0 16px 0;font-size:14px;line-height:1.55;color:#cccccc;">${sub}</p>
+            </td></tr>
+            <tr><td align="center" style="padding:8px 24px 16px 24px;">
+              <img src="cid:receipt-png" alt="Receipt #${p.tokenId}" style="display:block;width:100%;max-width:540px;height:auto;border:2px solid #fafafa;"/>
+            </td></tr>
+            <tr><td style="padding:8px 28px 8px 28px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size:14px;color:#fafafa;border-top:2px solid #fafafa;">
+                ${row("Champion", escapeHtml(p.championName))}
+                ${row("Vendor", escapeHtml(p.vendorName))}
+                ${row("Amount paid out", fmtUSD(p.usdc))}
+                ${row("PURPOSE redeemed", fmtPurpose(p.purposeWei))}
+                ${row("Settled", p.settledAt.toUTCString())}
+                ${row("Transaction", `<a href="https://basescan.org/tx/${p.txHash}" style="color:#ffff00;text-decoration:none;font-family:'JetBrains Mono','Courier New',monospace;">${shortHash(p.txHash)}</a>`)}
+              </table>
+            </td></tr>
+            <tr><td align="center" style="padding:24px 28px 28px 28px;">
+              <a href="${p.receiptUrl}" style="display:inline-block;background:#ffff00;color:#0a0a0a;font-family:'Archivo Black',Impact,'Arial Black',sans-serif;font-weight:900;text-decoration:none;padding:16px 28px;font-size:15px;letter-spacing:0.02em;text-transform:uppercase;border:2px solid #fafafa;">VIEW ON-CHAIN RECEIPT →</a>
+            </td></tr>
+            <tr><td style="padding:0 28px 24px 28px;">
+              <p style="margin:0;font-family:'JetBrains Mono','Courier New',monospace;font-size:11px;line-height:1.6;color:#888888;text-transform:uppercase;letter-spacing:0.06em;">
+                // Soulbound — non-transferable proof of purchase. Permanent on Base.<br/>
+                // Printable PDF + PNG attached.
+              </p>
+            </td></tr>
+          </table>
+        </td>
+      </tr>
     </table>
-    <p style="margin:14px 0 0 0;font-size:11px;color:#7d89ab;">Sent by Purpose · receipts@popmgm.org</p>
+    <p style="margin:18px 0 0 0;font-family:'JetBrains Mono','Courier New',monospace;font-size:10px;color:#666666;text-transform:uppercase;letter-spacing:0.1em;">PROOF OF PURPOSE · receipts@popmgm.org</p>
   </td></tr>
 </table>
 </body></html>`;
 }
 function row(label: string, value: string) {
   return `<tr>
-    <td style="padding:8px 0;border-bottom:1px solid #1f2c54;color:#8a96b8;font-size:12px;text-transform:uppercase;letter-spacing:0.08em;">${label}</td>
-    <td align="right" style="padding:8px 0;border-bottom:1px solid #1f2c54;color:#ffffff;font-size:14px;">${value}</td>
+    <td style="padding:12px 0;border-bottom:1px solid #2a2a2a;color:#888888;font-family:'JetBrains Mono','Courier New',monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;">${label}</td>
+    <td align="right" style="padding:12px 0;border-bottom:1px solid #2a2a2a;color:#fafafa;font-size:14px;font-weight:600;">${value}</td>
   </tr>`;
 }
 
