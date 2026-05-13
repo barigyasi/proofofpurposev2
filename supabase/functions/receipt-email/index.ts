@@ -152,7 +152,7 @@ function renderHtml(p: {
         </p>
       </td></tr>
     </table>
-    <p style="margin:14px 0 0 0;font-size:11px;color:#5b6party688aa;">Sent by Purpose · receipts@popmgm.org</p>
+    <p style="margin:14px 0 0 0;font-size:11px;color:#7d89ab;">Sent by Purpose · receipts@popmgm.org</p>
   </td></tr>
 </table>
 </body></html>`;
