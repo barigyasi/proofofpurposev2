@@ -60,6 +60,24 @@ export function VendorChargesHistory({ vendorWallet }: { vendorWallet: string })
   const [source, setSource] = useState<"vendor" | "pool">("pool");
   const [busy, setBusy] = useState(false);
   const [openReceipt, setOpenReceipt] = useState<number | null>(null);
+  const [emailing, setEmailing] = useState<number | null>(null);
+
+  async function emailReceipt(tokenId: number) {
+    setEmailing(tokenId);
+    try {
+      const { data, error } = await supabase.functions.invoke("receipt-email", {
+        body: { tokenId, recipients: ["vendor"], force: true },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      const r = (data?.results ?? [])[0];
+      if (r?.status === "sent") toast.success("Receipt emailed to your vendor address");
+      else if (r?.error?.includes("no email on file")) toast.error("No contact email on your vendor profile");
+      else toast.message(`Status: ${r?.status ?? "unknown"}`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed");
+    } finally { setEmailing(null); }
+  }
 
   async function load() {
     const { data } = await supabase
@@ -129,10 +147,17 @@ export function VendorChargesHistory({ vendorWallet }: { vendorWallet: string })
                    href={`https://basescan.org/tx/${c.refund_tx_hash}`} target="_blank" rel="noreferrer">tx</a>
               )}
               {c.receipt_token_id && (
-                <button
-                  className="rounded border-2 border-primary px-2 py-0.5 font-mono text-[10px] uppercase text-primary"
-                  onClick={() => setOpenReceipt(c.receipt_token_id)}
-                >receipt #{c.receipt_token_id}</button>
+                <>
+                  <button
+                    className="rounded border-2 border-primary px-2 py-0.5 font-mono text-[10px] uppercase text-primary"
+                    onClick={() => setOpenReceipt(c.receipt_token_id)}
+                  >receipt #{c.receipt_token_id}</button>
+                  <button
+                    className="rounded border-2 border-foreground px-2 py-0.5 font-mono text-[10px] uppercase disabled:opacity-50"
+                    disabled={emailing !== null}
+                    onClick={() => emailReceipt(c.receipt_token_id!)}
+                  >{emailing === c.receipt_token_id ? "sending…" : "email me"}</button>
+                </>
               )}
             </li>
           );

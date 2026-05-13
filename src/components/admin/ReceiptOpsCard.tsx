@@ -10,26 +10,35 @@ type Pending = {
   usdc_payout: number | null;
   settled_at: string | null;
   receipt_error: string | null;
+  receipt_token_id: number | null;
+  receipt_emailed_at: string | null;
 };
 
 export function ReceiptOpsCard() {
   const [stats, setStats] = useState({ minted: 0, missing: 0, failed: 0 });
   const [rows, setRows] = useState<Pending[]>([]);
+  const [recent, setRecent] = useState<Pending[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
+  const [emailing, setEmailing] = useState<string | null>(null);
 
   async function refresh() {
-    const [m, missing, failed, list] = await Promise.all([
+    const [m, missing, failed, list, recentList] = await Promise.all([
       supabase.from("vendor_charges").select("*", { count: "exact", head: true }).not("receipt_token_id", "is", null),
       supabase.from("vendor_charges").select("*", { count: "exact", head: true })
         .eq("status", "settled").is("receipt_token_id", null),
       supabase.from("vendor_charges").select("*", { count: "exact", head: true }).not("receipt_error", "is", null),
       supabase.from("vendor_charges")
-        .select("id,vendor_wallet,champion_wallet,usdc_payout,settled_at,receipt_error")
+        .select("id,vendor_wallet,champion_wallet,usdc_payout,settled_at,receipt_error,receipt_token_id,receipt_emailed_at")
         .eq("status", "settled").is("receipt_token_id", null)
         .order("settled_at", { ascending: false }).limit(20),
+      supabase.from("vendor_charges")
+        .select("id,vendor_wallet,champion_wallet,usdc_payout,settled_at,receipt_error,receipt_token_id,receipt_emailed_at")
+        .not("receipt_token_id", "is", null)
+        .order("settled_at", { ascending: false }).limit(10),
     ]);
     setStats({ minted: m.count ?? 0, missing: missing.count ?? 0, failed: failed.count ?? 0 });
     setRows((list.data ?? []) as Pending[]);
+    setRecent((recentList.data ?? []) as Pending[]);
   }
 
   useEffect(() => { refresh(); }, []);
@@ -45,6 +54,23 @@ export function ReceiptOpsCard() {
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
     } finally { setBusy(null); }
+  }
+
+  async function resendEmail(id: string, tokenId: number) {
+    setEmailing(id);
+    try {
+      const { data, error } = await supabase.functions.invoke("receipt-email", {
+        body: { tokenId, force: true },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      const sent = (data?.results ?? []).filter((r: any) => r.status === "sent").length;
+      const skipped = (data?.results ?? []).filter((r: any) => r.status !== "sent").length;
+      toast.success(`Receipt email — sent: ${sent}, other: ${skipped}`);
+      refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed");
+    } finally { setEmailing(null); }
   }
 
   return (
@@ -82,6 +108,28 @@ export function ReceiptOpsCard() {
             </li>
           ))}
         </ul>
+      )}
+
+      {recent.length > 0 && (
+        <div className="mt-6">
+          <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">// recent receipts — resend email</p>
+          <ul className="mt-2 divide-y divide-foreground/20">
+            {recent.map((r) => (
+              <li key={r.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2 text-sm">
+                <span className="font-mono text-[10px] text-primary">#{r.receipt_token_id}</span>
+                <span className="font-display text-primary">${(r.usdc_payout ?? 0).toFixed(2)}</span>
+                <span className="font-mono text-[10px] text-muted-foreground">
+                  {r.receipt_emailed_at ? "emailed" : "not yet emailed"}
+                </span>
+                <Button size="sm" variant="ghost" className="ml-auto"
+                        disabled={emailing !== null}
+                        onClick={() => resendEmail(r.id, r.receipt_token_id!)}>
+                  {emailing === r.id ? "Sending…" : "Resend email"}
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
 
       <div className="mt-3">

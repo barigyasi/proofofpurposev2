@@ -152,6 +152,19 @@ Deno.serve(async (req) => {
           tx_hash: txHash,
         });
         settled.push({ id: c.id, tx_hash: txHash, receipt_token_id: receiptTokenId ?? undefined });
+
+        // Fire-and-forget: send branded receipt email to champion + vendor.
+        if (receiptTokenId) {
+          (async () => {
+            try {
+              await supabase.functions.invoke("receipt-email", {
+                body: { tokenId: Number(receiptTokenId) },
+              });
+            } catch (err) {
+              console.warn("receipt-email dispatch failed", c.id, err);
+            }
+          })();
+        }
       } catch (e) {
         console.error("settle failed", c.id, e);
         skipped.push({ id: c.id, reason: e instanceof Error ? e.message : String(e) });
