@@ -356,3 +356,259 @@ Lovable will then:
 - **Don't deploy V2 contracts to overwrite V1 yet on mainnet** — V1 is still
   in production. `CONTRACTS_V2` in `src/config/contracts.ts` stays empty
   strings until you're ready to flip; the app auto-detects via `V2_LIVE`.
+
+---
+
+## 6. Remix testing playbook (do this BEFORE thirdweb deploy)
+
+Test every contract on **Base Sepolia** in Remix first. You'll need 3 EOAs
+loaded in MetaMask so you can switch roles:
+
+- **A — Admin** (deployer, holds DEFAULT_ADMIN_ROLE everywhere)
+- **B — Backend signer** (will get SETTLEMENT_ROLE on VendorRedemption + MINTER_ROLE on ReceiptNFT)
+- **C — Champion** (test user)
+- **D — Vendor** (test merchant)
+- **T — Treasury** (can be A for testing; just needs USDC + an `approve`)
+
+Get **Base Sepolia ETH** from the Base faucet and **test USDC** from
+Circle's faucet (`0x036CbD53842c5426634e7929541eC2318f3dCF7e` is USDC on
+Base Sepolia — note: 6 decimals, so `1 USDC = 1000000`).
+
+Remix setup:
+- Workspace → "Default" → drop the `.sol` files in `contracts/`
+- Compiler: **0.8.24** with optimizer **on, runs 200**
+- Deploy & Run → Environment: **"Injected Provider — MetaMask"** (Base Sepolia)
+- Switch MetaMask account A/B/C/D from the wallet UI; Remix auto-uses the active account
+
+> Tip: after each deploy, **pin** the contract instance in Remix (📌 icon) so
+> you don't lose it when you swap accounts.
+
+---
+
+### 6.1 — `PurposeTokenV2`
+
+**Deploy** (account A): constructor `admin = A`.
+
+**Test 1 — minting only works for MINTER_ROLE:**
+1. Account A: `mint(C, 1000000000000000000)` (1 PURPOSE) → ❌ should revert (`AccessControlUnauthorizedAccount`)
+2. Account A: `grantRole(MINTER_ROLE, A)` then retry `mint(C, ...)` → ✅ succeeds, `balanceOf(C) = 1e18`
+3. Revoke role at the end: `revokeRole(MINTER_ROLE, A)`
+
+**Test 2 — soulbound transfer rules:**
+1. Account A: `mint(C, 5e18)` (after granting yourself MINTER_ROLE again)
+2. Switch to **C**: `transfer(D, 1e18)` → ❌ revert `TransferRestricted` (neither side whitelisted)
+3. Account A: `setTransferAllowed(D, true)`
+4. Switch to **C**: `transfer(D, 1e18)` → ✅ succeeds (D is whitelisted)
+5. Switch to **D**: `transfer(C, 1e18)` → ✅ succeeds (D still whitelisted)
+6. Account A: `setTransferAllowed(D, false)`
+7. Switch to **D**: `transfer(C, 1e18)` → ❌ revert `TransferRestricted`
+
+**Test 3 — burnFrom path (used by VendorRedemption.sweep):**
+1. Account A grants `MINTER_ROLE` to A, mints 10e18 to **C**
+2. Switch to **C**: `approve(A, 10e18)`
+3. Switch to **A**: `burnFrom(C, 5e18)` → ✅, `balanceOf(C) = 5e18`, `totalSupply` drops by 5e18
+
+**Test 4 — batch whitelist:**
+1. Account A: `setTransferAllowedBatch([D, T], true)` → both flip to `true` in one tx
+2. Verify with `transferAllowed(D)` and `transferAllowed(T)`
+
+✅ **Pass criteria:** mint blocked without role, P2P blocked without whitelist, mint/burn/whitelisted-transfer all work, events emitted.
+
+---
+
+### 6.2 — `BountyManagerV2`
+
+**Deploy** (A): constructor `admin = A`, `token = <PurposeTokenV2 address>`.
+
+**Wiring step (critical):** on PurposeTokenV2 → `grantRole(MINTER_ROLE, <BountyManagerV2>)`. Without this, `endBounty` reverts.
+
+**Test 1 — happy path:**
+1. A: `createBounty(2000000000000000000, 2)` → returns id `0`, event `BountyCreated`
+2. A: `addParticipant(0, C)`, `addParticipant(0, D)`
+3. A: `checkIn(0, C)`, `checkIn(0, D)`
+4. A: `startBounty(0)`
+5. A: `endBounty(0)` → ✅ both C and D receive 2 PURPOSE; event `BountyEnded(id=0, totalMinted=4e18)`
+
+**Test 2 — guards (each should revert):**
+- `addParticipant(0, C)` again → `AlreadySignedUp` (after Test 1 you can use a new bounty id `1` for these — re-create one)
+- `checkIn(1, X)` for unsigned-up X → `NotSignedUp`
+- `endBounty(1)` without `startBounty` → `NotStarted`
+- New bounty with `minParticipants=5` but only 1 checked-in → `NotEnoughCheckedIn`
+- Re-call `endBounty(0)` → `AlreadyCompleted`
+
+**Test 3 — non-admin can't create:**
+- Switch to **C**: `createBounty(...)` → ❌ revert (no BOUNTY_ADMIN_ROLE)
+
+✅ **Pass criteria:** rewards minted only on success, guards trip in the right order, only admin can manage.
+
+---
+
+### 6.3 — `RefundPool`
+
+**Deploy** (A): `admin = A`, `usdc_ = 0x036CbD53842c5426634e7929541eC2318f3dCF7e` (Base Sepolia USDC).
+
+**Test 1 — deposit accounting:**
+1. A: on USDC contract, `approve(<RefundPool>, 100000000)` (100 USDC)
+2. A: `RefundPool.deposit(100000000)` → ✅, `totalDeposited = 100e6`, `available() = 100e6`, event `Deposited`
+3. A: `deposit(0)` → ❌ revert `amount=0`
+
+**Test 2 — payRefund role-gated:**
+1. A: `payRefund(0x...chargeId, T, 10000000)` → ❌ revert (no REDEMPTION_ROLE)
+2. A: `grantRole(REDEMPTION_ROLE, A)` (just for testing — in prod this goes to VendorRedemptionV2)
+3. A: `payRefund(0xabc..., T, 10000000)` → ✅; `totalPaidOut = 10e6`, `paidPerVendor[T] = 10e6`
+4. A: `payRefund(0xabc..., 0x0000..., 10000000)` → ❌ `to=0`
+
+**Test 3 — admin withdraw:**
+1. A: `withdraw(A, 5000000)` → ✅, contract balance drops by 5 USDC
+2. Switch to **C**: `withdraw(C, 1)` → ❌ revert (no admin role)
+
+✅ **Pass criteria:** deposit/withdraw track correctly, only REDEMPTION_ROLE pays refunds, only admin withdraws.
+
+---
+
+### 6.4 — `VendorRedemptionV2` *(the big one — full state-machine test)*
+
+**Deploy** (A): `admin = A`, `purpose_ = <PTv2>`, `usdc_ = <USDC>`, `treasury_ = T`.
+
+**Wiring (do all of these before testing flows):**
+1. PurposeTokenV2 (A): `setTransferAllowedBatch([<VR_V2>, T], true)`
+2. PurposeTokenV2 (A): `grantRole(MINTER_ROLE, A)` then `mint(C, 100e18)` (give champion test PURPOSE)
+3. USDC (T): `approve(<VR_V2>, 1000000000)` (1000 USDC)
+4. VR_V2 (A): `grantRole(SETTLEMENT_ROLE, B)` (backend signer)
+5. VR_V2 (A): `approveVendor(D)`
+6. VR_V2 (A): `setDefaultWindows(60, 120)` ← **shorten to 60s auth / 120s refund for testing**, otherwise you'll wait 24h
+7. VR_V2 (A): `setRefundPool(<RefundPool>)`, then on RefundPool: `grantRole(REDEMPTION_ROLE, <VR_V2>)`
+
+**Pre-flow check:** `quoteUSDC(1000000000000000000)` should return `1000000` (1 PURPOSE = 1 USDC).
+
+**Flow 1 — Lock → Capture → Settle (happy path):**
+1. Switch **C**: PurposeToken `approve(<VR_V2>, 10e18)`
+2. Switch **B** (backend): `lock(0x01..., D, C, 10000000000000000000)` → ✅ event `ChargeLocked`
+   - Verify: PURPOSE `balanceOf(<VR_V2>) = 10e18`, USDC `balanceOf(<VR_V2>) = 10e6`
+3. **B**: `capture(0x01...)` → ✅ event `ChargeCaptured`
+4. **B**: `settle(0x01...)` immediately → ❌ revert `AuthWindowActive`
+5. Wait 60+ seconds (use a clock; you can `pause()`/`unpause()` in between to confirm it doesn't reset)
+6. **B**: `settle(0x01...)` → ✅ event `ChargeSettled`; USDC `balanceOf(D) = 10e6`; PURPOSE still in escrow
+
+**Flow 2 — Sweep (after refund window):**
+1. Wait another 120+ seconds past the settle
+2. Anyone (try **C**): `sweep(0x01...)` → ✅ event `ChargeFinalized`; PURPOSE `totalSupply` dropped by 10e18; charge state = `Finalized`
+3. Re-call `sweep(0x01...)` → ❌ revert `WrongState`
+
+**Flow 3 — Cancel from Locked:**
+1. New chargeId `0x02...`. **C** approves another 5e18.
+2. **B**: `lock(0x02..., D, C, 5e18)`
+3. **B**: `cancel(0x02...)` → ✅ PURPOSE returned to C, USDC returned to T, state `Cancelled`
+
+**Flow 4 — Cancel from Captured (within auth window):**
+1. **C** approves 5e18. **B**: `lock(0x03..., D, C, 5e18)` → `capture(0x03...)`
+2. Within 60s: **B**: `cancel(0x03...)` → ✅ same as Flow 3
+3. Wait > 60s on a fresh charge `0x04...`, then `cancel` → ❌ `AuthWindowExpired`
+
+**Flow 5 — Refund from Vendor (within refund window):**
+1. Run a full lock/capture/settle on `0x05...` (5e18). Vendor D now holds 5 USDC.
+2. Switch **D**: USDC `approve(<VR_V2>, 5000000)`
+3. **B**: `refund(0x05..., 0)` *(0 = RefundSource.Vendor)* within 120s → ✅ USDC pulled from D back to T, PURPOSE returned to C, state `Refunded`
+
+**Flow 6 — Refund from Pool:**
+1. Pre-fund the pool: T does `RefundPool.deposit(20000000)` (20 USDC) [requires USDC approve to pool]
+2. Run lock/capture/settle on `0x06...` (5e18). D holds 5 USDC.
+3. **B**: `refund(0x06..., 1)` *(1 = RefundSource.Pool)* → ✅ Pool pays 5 USDC to T, PURPOSE returned to C
+
+**Flow 7 — Pause freezes everything:**
+1. **A**: `pause()`
+2. **B**: try `lock`, `capture`, `settle`, `cancel`, `refund`, `sweep` → all ❌ revert `EnforcedPause`
+3. **A**: `unpause()` — flows resume
+
+**Flow 8 — Vendor without VENDOR_ROLE:**
+1. **A**: `revokeVendor(D)` 
+2. **B**: `lock(0x07..., D, C, 1e18)` → ❌ `NotApprovedVendor`
+3. **A**: `approveVendor(D)` again to restore
+
+**Flow 9 — Per-vendor windows override default:**
+1. **A**: `setVendorWindows(D, 30, 60)`
+2. Run lock/capture on `0x08...` and verify `charges(0x08...).authWindow == 30`
+
+**Flow 10 — settleWithReceipt** *(only after ReceiptNFT is wired — see 6.5)*
+
+✅ **Pass criteria:** every state transition fires the right event, balances move correctly, role/window guards trip, pause freezes the contract.
+
+---
+
+### 6.5 — `ReceiptNFT` *(test standalone first, then wired into VR_V2)*
+
+**Deploy** (A): `admin = A`.
+
+**Test 1 — minter gating:**
+1. A: `mintReceipt(C, D, 5000000, 5e18, 0xabc..., 1700000000, "Alice", "Bob's Coffee")` → ❌ revert (no MINTER_ROLE)
+2. A: `grantRole(MINTER_ROLE, A)` then retry → ✅ returns tokenId `1`, event `ReceiptMinted`
+
+**Test 2 — soulbound:**
+1. Switch **C** (the owner): `transferFrom(C, D, 1)` → ❌ revert `TransfersDisabled`
+2. **C**: `approve(D, 1)` → ❌ revert `TransfersDisabled`
+3. **C**: `setApprovalForAll(D, true)` → ❌ revert `TransfersDisabled`
+
+**Test 3 — duplicate chargeId blocked:**
+1. A: `mintReceipt(C, D, 5e6, 5e18, 0xabc..., ...)` (same chargeId as Test 1) → ❌ revert `AlreadyMinted`
+
+**Test 4 — tokenURI renders:**
+1. A: `tokenURI(1)` → returns long `data:application/json;base64,...` string
+2. Decode (any base64 decoder): you should see `{"name":"POP Receipt #1", ..., "image":"data:image/svg+xml;base64,..."}`
+3. Decode the inner SVG and paste into a browser address bar (`data:image/svg+xml;base64,...`) → renders the navy/gold receipt card
+
+**Test 5 — escape safety:**
+1. Mint with `championName = 'Alice "Hacker" </script>'`
+2. `tokenURI` should still parse cleanly as JSON (quotes/angle brackets replaced with spaces)
+
+**Wiring into VendorRedemptionV2:**
+1. ReceiptNFT (A): `grantRole(MINTER_ROLE, <VR_V2>)`
+2. ReceiptNFT (A): `grantRole(MINTER_ROLE, B)` *(backend, for receipt-mint-retry)*
+3. VR_V2 (A): `setReceiptNFT(<ReceiptNFT>)`
+
+**Test 6 (continuing VR_V2 Flow 10):**
+1. Run lock + capture on `0x09...`, wait past auth window
+2. **B**: `settleWithReceipt(0x09..., "Alice", "Bob's Coffee")` → ✅ `ChargeSettled` + `ReceiptMinted` events
+3. ReceiptNFT `ownerOf(<newTokenId>) == C`, `tokenIdForCharge(0x09...) == newTokenId`
+
+**Test 7 — receipt mint failure doesn't break settle:**
+1. Temporarily revoke `MINTER_ROLE` from VR_V2: ReceiptNFT (A): `revokeRole(MINTER_ROLE, <VR_V2>)`
+2. Run another full flow + `settleWithReceipt` → ✅ `ChargeSettled` succeeds; `ReceiptMintFailed` event emitted; vendor still got USDC
+3. Re-grant role for normal flow.
+
+✅ **Pass criteria:** soulbound enforced, tokenURI renders valid JSON+SVG, receipt mint isolated from settle (failure ≠ revert).
+
+---
+
+### 6.6 — End-to-end smoke test (10 minutes, all contracts together)
+
+After everything above passes individually, run **one full champion journey**:
+
+1. **A** mints PURPOSE to **C** via BountyManagerV2 (create bounty, add C, check in, start, end)
+2. **C** approves VR_V2 for the PURPOSE balance
+3. **B** does `lockAndCapture(...)` for `(D, C, amount)`
+4. Wait auth window
+5. **B** does `settleWithReceipt(..., championName, vendorName)`
+6. **D** receives USDC, **C** receives ReceiptNFT, view `tokenURI` in browser
+7. Wait refund window
+8. Anyone calls `sweep(...)` — PURPOSE burned
+
+If all 8 steps pass on Base Sepolia, you're cleared to deploy on mainnet.
+
+---
+
+### 6.7 — Common Remix gotchas
+
+- **"Gas estimation failed"** with no clear reason → 99% of the time you forgot
+  a `grantRole` (most common: PurposeToken's MINTER_ROLE on BountyManager, or
+  VR_V2's SETTLEMENT_ROLE on the backend signer).
+- **`AccessControlUnauthorizedAccount(address, bytes32)`** → check the role
+  hash in the revert; it tells you exactly which role is missing.
+- **`safeTransferFrom` revert with no message** → an `approve` is missing. The
+  three approvals you'll forget at least once: champion → VR_V2 (PURPOSE),
+  treasury → VR_V2 (USDC), vendor → VR_V2 (USDC, only for `refund(Vendor)`).
+- **Auth/refund window math** — `effectiveWindows(vendor)` returns per-vendor
+  override if set, otherwise default. When testing, always shorten to 60s/120s
+  via `setDefaultWindows` first.
+- **`burnFrom` on PurposeTokenV2 from inside `sweep`** doesn't need an approve
+  because the contract is burning its **own** balance — the OZ implementation
+  uses the message sender (which is VR_V2) directly via `_burn`.
