@@ -667,6 +667,42 @@ export type Database = {
         }
         Relationships: []
       }
+      receipt_email_log: {
+        Row: {
+          charge_id: string | null
+          error: string | null
+          id: string
+          receipt_token_id: number
+          recipient_email: string
+          recipient_kind: string
+          resend_id: string | null
+          sent_at: string
+          status: string
+        }
+        Insert: {
+          charge_id?: string | null
+          error?: string | null
+          id?: string
+          receipt_token_id: number
+          recipient_email: string
+          recipient_kind: string
+          resend_id?: string | null
+          sent_at?: string
+          status: string
+        }
+        Update: {
+          charge_id?: string | null
+          error?: string | null
+          id?: string
+          receipt_token_id?: number
+          recipient_email?: string
+          recipient_kind?: string
+          resend_id?: string | null
+          sent_at?: string
+          status?: string
+        }
+        Relationships: []
+      }
       refund_pool_ledger: {
         Row: {
           actor: string | null
