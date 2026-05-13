@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ReceiptDialog } from "@/components/receipts/ReceiptDialog";
+import { toast } from "sonner";
 
 type Row = {
   id: string;
@@ -14,6 +15,24 @@ type Row = {
 export function ChampionReceiptsStrip({ wallet }: { wallet: string }) {
   const [rows, setRows] = useState<Row[]>([]);
   const [openId, setOpenId] = useState<number | null>(null);
+  const [emailing, setEmailing] = useState<number | null>(null);
+
+  async function emailMe(tokenId: number) {
+    setEmailing(tokenId);
+    try {
+      const { data, error } = await supabase.functions.invoke("receipt-email", {
+        body: { tokenId, recipients: ["champion"], force: true },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      const r = (data?.results ?? [])[0];
+      if (r?.status === "sent") toast.success("Receipt sent to your email");
+      else if (r?.error?.includes("no email on file")) toast.error("Add an email to your profile first");
+      else toast.message(`Status: ${r?.status ?? "unknown"}`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed");
+    } finally { setEmailing(null); }
+  }
 
   useEffect(() => {
     if (!wallet) return;
@@ -47,10 +66,15 @@ export function ChampionReceiptsStrip({ wallet }: { wallet: string }) {
             <p className="mt-1 font-mono text-[10px] text-muted-foreground">
               {r.settled_at ? new Date(r.settled_at).toLocaleDateString() : ""}
             </p>
-            <Button size="sm" variant="ghost" className="mt-3"
-                    onClick={() => setOpenId(r.receipt_token_id)}>
-              View receipt
-            </Button>
+            <div className="mt-3 flex gap-2">
+              <Button size="sm" variant="ghost" onClick={() => setOpenId(r.receipt_token_id)}>
+                View
+              </Button>
+              <Button size="sm" variant="ghost" disabled={emailing !== null}
+                      onClick={() => emailMe(r.receipt_token_id)}>
+                {emailing === r.receipt_token_id ? "Sending…" : "Email me"}
+              </Button>
+            </div>
           </li>
         ))}
       </ul>
