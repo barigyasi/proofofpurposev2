@@ -56,6 +56,23 @@ export function ReceiptOpsCard() {
     } finally { setBusy(null); }
   }
 
+  async function resendEmail(id: string, tokenId: number) {
+    setEmailing(id);
+    try {
+      const { data, error } = await supabase.functions.invoke("receipt-email", {
+        body: { tokenId, force: true },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      const sent = (data?.results ?? []).filter((r: any) => r.status === "sent").length;
+      const skipped = (data?.results ?? []).filter((r: any) => r.status !== "sent").length;
+      toast.success(`Receipt email — sent: ${sent}, other: ${skipped}`);
+      refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed");
+    } finally { setEmailing(null); }
+  }
+
   return (
     <div className="brutal p-6">
       <h3 className="font-display text-2xl">RECEIPT OPS</h3>
@@ -91,6 +108,28 @@ export function ReceiptOpsCard() {
             </li>
           ))}
         </ul>
+      )}
+
+      {recent.length > 0 && (
+        <div className="mt-6">
+          <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">// recent receipts — resend email</p>
+          <ul className="mt-2 divide-y divide-foreground/20">
+            {recent.map((r) => (
+              <li key={r.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2 text-sm">
+                <span className="font-mono text-[10px] text-primary">#{r.receipt_token_id}</span>
+                <span className="font-display text-primary">${(r.usdc_payout ?? 0).toFixed(2)}</span>
+                <span className="font-mono text-[10px] text-muted-foreground">
+                  {r.receipt_emailed_at ? "emailed" : "not yet emailed"}
+                </span>
+                <Button size="sm" variant="ghost" className="ml-auto"
+                        disabled={emailing !== null}
+                        onClick={() => resendEmail(r.id, r.receipt_token_id!)}>
+                  {emailing === r.id ? "Sending…" : "Resend email"}
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
 
       <div className="mt-3">
