@@ -22,18 +22,23 @@ export function ReceiptOpsCard() {
   const [emailing, setEmailing] = useState<string | null>(null);
 
   async function refresh() {
-    const [m, missing, failed, list] = await Promise.all([
+    const [m, missing, failed, list, recentList] = await Promise.all([
       supabase.from("vendor_charges").select("*", { count: "exact", head: true }).not("receipt_token_id", "is", null),
       supabase.from("vendor_charges").select("*", { count: "exact", head: true })
         .eq("status", "settled").is("receipt_token_id", null),
       supabase.from("vendor_charges").select("*", { count: "exact", head: true }).not("receipt_error", "is", null),
       supabase.from("vendor_charges")
-        .select("id,vendor_wallet,champion_wallet,usdc_payout,settled_at,receipt_error")
+        .select("id,vendor_wallet,champion_wallet,usdc_payout,settled_at,receipt_error,receipt_token_id,receipt_emailed_at")
         .eq("status", "settled").is("receipt_token_id", null)
         .order("settled_at", { ascending: false }).limit(20),
+      supabase.from("vendor_charges")
+        .select("id,vendor_wallet,champion_wallet,usdc_payout,settled_at,receipt_error,receipt_token_id,receipt_emailed_at")
+        .not("receipt_token_id", "is", null)
+        .order("settled_at", { ascending: false }).limit(10),
     ]);
     setStats({ minted: m.count ?? 0, missing: missing.count ?? 0, failed: failed.count ?? 0 });
     setRows((list.data ?? []) as Pending[]);
+    setRecent((recentList.data ?? []) as Pending[]);
   }
 
   useEffect(() => { refresh(); }, []);
