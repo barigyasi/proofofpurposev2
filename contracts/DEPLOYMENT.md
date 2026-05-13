@@ -111,6 +111,8 @@ USDC is **not** deployed — you reuse the canonical address per chain.
 > - `CHAIN_RPC` — RPC URL for the target chain (above).
 > - `VENDOR_REDEMPTION_V2_ADDRESS`, `RECEIPT_NFT_ADDRESS`, `REFUND_POOL_ADDRESS`, `PURPOSE_TOKEN_V2_ADDRESS`, `BOUNTY_MANAGER_V2_ADDRESS`, `PURPOSE_GOV_ADDRESS`, `GOVERNOR_ADDRESS` — paste deployed addresses after each step.
 > - When `BOUNTY_MANAGER_V2_ADDRESS` is set, `bounty-checkin` automatically routes to V2; otherwise it uses the V1 address.
+> - `RESEND_API_KEY` — Resend API key (used by `receipt-email` to send branded receipts from `receipts@popmgm.org`). Verify the `popmgm.org` sender domain in the Resend dashboard before sending.
+> - `APP_BASE_URL` — public origin used in receipt email CTAs (defaults to `https://popmgm.org`).
 >
 > **One change vs. the old V1 instructions:** the treasury USDC `approve()` step
 > is now toward `VendorRedemptionV2`, *not* the old `VendorRedemptionManager`.
