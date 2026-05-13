@@ -10,12 +10,16 @@ type Pending = {
   usdc_payout: number | null;
   settled_at: string | null;
   receipt_error: string | null;
+  receipt_token_id: number | null;
+  receipt_emailed_at: string | null;
 };
 
 export function ReceiptOpsCard() {
   const [stats, setStats] = useState({ minted: 0, missing: 0, failed: 0 });
   const [rows, setRows] = useState<Pending[]>([]);
+  const [recent, setRecent] = useState<Pending[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
+  const [emailing, setEmailing] = useState<string | null>(null);
 
   async function refresh() {
     const [m, missing, failed, list] = await Promise.all([
