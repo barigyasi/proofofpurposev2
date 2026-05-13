@@ -125,14 +125,17 @@ function renderHtml(p: {
       <tr>
         <td style="padding:0;">
           <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background:#141414;border:2px solid #fafafa;border-collapse:separate;">
-            <tr><td style="background:#ffff00;padding:18px 24px;border-bottom:2px solid #fafafa;">
+            <tr><td style="background:#0a0a0a;padding:24px 24px 20px 24px;border-bottom:2px solid #fafafa;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
-                  <td style="font-family:'Archivo Black',Impact,'Arial Black',sans-serif;font-weight:900;letter-spacing:-0.04em;font-size:22px;color:#0a0a0a;text-transform:uppercase;line-height:0.9;">PROOF OF<br/>PURPOSE</td>
-                  <td align="right" style="font-family:'JetBrains Mono','Courier New',monospace;font-size:11px;color:#0a0a0a;text-transform:uppercase;letter-spacing:0.1em;">SOULBOUND<br/>RECEIPT</td>
+                  <td valign="middle" style="vertical-align:middle;">
+                    <img src="https://szlnvjzluzplpvzigboo.supabase.co/storage/v1/object/public/email-assets/pop-logo.png" alt="Proof of Purpose" width="180" style="display:block;width:180px;height:auto;max-width:180px;border:0;outline:none;text-decoration:none;"/>
+                  </td>
+                  <td align="right" valign="top" style="vertical-align:top;font-family:'JetBrains Mono','Courier New',monospace;font-size:11px;color:#ffff00;text-transform:uppercase;letter-spacing:0.1em;">SOULBOUND<br/>RECEIPT</td>
                 </tr>
               </table>
             </td></tr>
+            <tr><td style="background:#ffff00;padding:0;line-height:0;font-size:0;height:6px;">&nbsp;</td></tr>
             <tr><td style="padding:28px 28px 8px 28px;">
               <h1 style="margin:0 0 8px 0;font-family:'Archivo Black',Impact,'Arial Black',sans-serif;font-weight:900;font-size:34px;line-height:0.95;letter-spacing:-0.04em;color:#fafafa;text-transform:uppercase;">${heading.toUpperCase()}</h1>
               <div style="font-family:'JetBrains Mono','Courier New',monospace;font-size:18px;color:#ffff00;letter-spacing:0.02em;margin-bottom:14px;">#${p.tokenId}</div>
