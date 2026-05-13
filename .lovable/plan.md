@@ -1,151 +1,99 @@
-# Pre-Mainnet Deployment Audit — V2 Contract Suite
+# Receipt Email Delivery (Resend)
 
-This is a complete audit of everything built for V2 before you test on Remix and deploy to Base mainnet. Items are grouped by severity. Fix the **Critical** and **High** items before deploy; **Medium** and **Low** can be addressed in the first patch after launch.
+Send a branded receipt email to both the **champion** and the **vendor** once a redemption settles, with the on-chain SVG rendered as a high-DPI PNG (inline + attached) and a PDF attachment for printing.
 
----
+From: `receipts@popmgm.org` (verified directly in Resend; no Lovable email-domain delegation, so no DNS conflict).
 
-## Critical — fix before mainnet deploy
+## What gets built
 
-### 1. `vendor-redeem-sweep` edge function never updates DB status to "finalized"
-**What:** After `sweep()` burns PURPOSE on-chain, the edge function only writes `swept_at` and `sweep_tx_hash`. The `status` column stays `"settled"` forever.
-**Impact:** DB and on-chain state permanently diverge. Admin dashboards, vendor views, and receipt logic all think the charge is still in the refund window.
-**Fix:** In `supabase/functions/vendor-redeem-sweep/index.ts`, add `status: "finalized"` to the update payload.
+### 1. New edge function: `receipt-email`
+`supabase/functions/receipt-email/index.ts`
 
-### 2. `RefundPoolCard` tops up via USDC `transfer()`, bypassing `RefundPool.deposit()`
-**What:** The frontend calls `usdc.transfer(poolAddress, amount)` directly. The `RefundPool` contract tracks `totalDeposited` and emits `Deposited` only via its own `deposit()` function (which uses `safeTransferFrom`).
-**Impact:** On-chain accounting (`totalDeposited`) under-reports reality. The DB ledger row gets written by the edge function, but anyone reading `RefundPool.totalDeposited()` on-chain sees a lower number.
-**Fix:** Change `RefundPoolCard` to (a) `approve(pool, amount)` then call `RefundPool.deposit(amount)`, or keep the direct transfer but add an admin-only `syncDeposit()` helper on the contract that bumps `totalDeposited` manually. Easiest fix: frontend does two-step `approve` + `deposit`.
+- Input: `{ tokenId, recipients?: ("champion"|"vendor")[] }` (defaults to both)
+- Loads the receipt row from `receipts` table (champion email/name, vendor email/name, amount, tx hash, redeemed_at, tokenId)
+- Reads on-chain `tokenURI(tokenId)` from `ReceiptNFT`, base64-decodes the JSON, extracts the SVG `image`
+- Rasterizes SVG → PNG @ 2x (1200×1600) using `@resvg/resvg-wasm` (Deno-compatible WASM, no native deps)
+- Generates a printable A4 PDF using `pdf-lib` (embeds the PNG)
+- Sends via Resend REST API (`POST https://api.resend.com/emails`) with:
+  - `from: "Purpose Receipts <receipts@popmgm.org>"`
+  - HTML body (responsive, brand-styled — navy bg, gold accent, mobile-first table layout used by every email client)
+  - Inline PNG (`cid:` reference) for in-body preview
+  - Attachments: `receipt-<tokenId>.png` + `receipt-<tokenId>.pdf`
+  - Plain-text fallback
+- Logs delivery to a new `receipt_email_log` table (status, provider id, error)
+- Idempotent: skips if already sent successfully to that recipient (unless `force: true`)
 
-### 3. `ReceiptNFT._safeMint` can revert on smart contract wallets
-**What:** `_safeMint` calls `onERC721Received` on the recipient. Many smart-account wallets (including thirdweb AA wallets) do NOT implement ERC721Receiver.
-**Impact:** Settlement succeeds, but the receipt mint reverts. The `try/catch` in `VendorRedemptionV2` catches it and emits `ReceiptMintFailed`, but the champion never gets their proof-of-purchase.
-**Fix:** In `ReceiptNFT.sol`, change `_safeMint(champion, tokenId)` to `_mint(champion, tokenId)`. Receipts are soulbound and non-transferable; safe-mint provides no value here.
+Uses the raw Resend API directly (not the gateway connector) since the user pasted a personal `RESEND_API_KEY`.
 
----
+### 2. Auto-trigger after settlement
+Edit `supabase/functions/vendor-redeem-settle/index.ts`:
+- After receipt mint + DB write succeeds, fire-and-forget invoke of `receipt-email` for both recipients
+- Wrapped in try/catch so email failure never blocks the settlement response
 
-## High — strongly recommend before deploy
+### 3. Manual retry from admin
+Edit `src/components/admin/ReceiptOpsCard.tsx`:
+- Add "Resend email" button per receipt row (champion / vendor / both)
+- Calls `receipt-email` with `force: true`
 
-### 4. `ReceiptNFT._escape` is too narrow for SVG/JSON safety
-**What:** The helper only strips `"`, `\`, `<`, `>`. Control characters (`\n`, `\t`, `\r`), backspace, and other bytes pass through and can break the base64 JSON/SVG payload.
-**Impact:** A champion or vendor name with a newline or tab corrupts the on-chain tokenURI, making the receipt unrenderable on OpenSea/BaseScan.
-**Fix:** Also strip/replace characters `0x00-0x1F` (control range) and `0x7F`. Convert newlines to spaces in `_escape`.
+### 4. Champion + vendor self-serve resend
+- `src/components/champion/ChampionReceiptsStrip.tsx`: "Email me a copy" button on each receipt
+- `src/components/vendor/VendorChargesHistory.tsx`: same button on settled rows
 
-### 5. No `receipt-email` edge function built
-**What:** The plan specified a `receipt-email` function that renders PNG + PDF and emails vendor + champion. The file does not exist in `supabase/functions/`.
-**Impact:** Vendors and champions never receive the promised email copy of the receipt. Only the on-chain SVG exists.
-**Fix:** Build `supabase/functions/receipt-email/index.ts` (or accept that v1 receipts are on-chain-only and email comes in a follow-up).
+### 5. Database
+New migration:
+```text
+receipt_email_log
+  - receipt_token_id  bigint
+  - recipient_kind    text  ('champion'|'vendor')
+  - recipient_email   text
+  - status            text  ('sent'|'failed')
+  - resend_id         text
+  - error             text
+  - sent_at           timestamptz
+RLS: admins full; champion sees rows where token belongs to them; vendor sees rows where token belongs to their vendor account
+```
 
-### 6. `EscrowOpsCard` missing "finalized" state
-**What:** The admin card counts `locked`, `captured`, `settled`, `refunded`, `cancelled` but omits `finalized`.
-**Impact:** After sweep, charges disappear from the admin mental model (they leave "settled" but never show up elsewhere).
-**Fix:** Add `"finalized"` to the `STATES` array in `EscrowOpsCard.tsx`.
+## Email design (responsive, all clients)
 
-### 7. `mint-monthly-membership` has a live TODO — no on-chain vPURPOSE minting
-**What:** The edge function records membership intent in DB but the on-chain mint is commented out with `TODO`. The vPURPOSE shadow token (which feeds the thirdweb Vote governor) never gets minted.
-**Impact:** Governance weight is still entirely off-chain (Supabase tally). The on-chain governor has zero voting power attached.
-**Fix:** When `PURPOSE_GOV_ADDRESS` is configured, call `vPURPOSE.mint(donorWallet, 1e18)` and `vPURPOSE.delegate(donorWallet)` in the same job. Also burn the previous month's vPURPOSE on rollover.
+- Single 600px centered table (Outlook-safe), stacks on mobile via `<meta viewport>` + media query
+- Header: gold "PURPOSE" wordmark on navy
+- Hero: large PNG of the on-chain receipt (centered, max-width 100%)
+- Details block: champion name, vendor name, amount in PURPOSE, USDC settled, date, tx hash (linked to Basescan)
+- "View on-chain receipt" CTA → `/receipt/:tokenId` page
+- Footer: short note that the NFT is soulbound + "View attachments to print"
+- Dark-mode CSS hints (`@media (prefers-color-scheme: dark)`) so Apple Mail/Gmail iOS render the navy correctly
+- Plain-text version included for spam-filter friendliness
 
----
+## Technical details
 
-## Medium — fix in first patch after launch
+**Dependencies (Deno via npm: specifiers, no install step):**
+- `npm:@resvg/resvg-wasm@2.6.2` — SVG → PNG (works in Deno edge runtime)
+- `npm:pdf-lib@1.17.1` — PNG → PDF
+- Resend: plain `fetch` to `https://api.resend.com/emails` (no SDK needed)
 
-### 8. `VendorRedemptionV2.sweep()` lacks `whenNotPaused`
-**What:** Unlike `lock`, `capture`, and `settle`, `sweep` and `refund` don't use `whenNotPaused`. During an emergency pause, no new charges settle, but old charges can still be finalized (burning PURPOSE) or refunded.
-**Impact:** Limited — refunds during pause may actually be desirable. But if you want a full freeze, sweep should also pause.
-**Fix:** Add `whenNotPaused` to `sweep()` (and optionally `refund()`) if you want a full stop. Document the decision either way.
+**Secrets used:**
+- `RESEND_API_KEY` (just added) ✓
+- `CHAIN_RPC` (already configured for V2 functions)
+- `RECEIPT_NFT_ADDRESS` (already in deployment env)
 
-### 9. `VendorRedemptionV2.cancel()` also lacks `whenNotPaused`
-**What:** Same as above — cancellations can happen during pause.
-**Impact:** A vendor or admin can cancel a locked charge even while the system is paused. This is probably acceptable emergency behavior, but make it explicit.
-**Fix:** Either add `whenNotPaused` or document in DEPLOYMENT.md that cancel/refund/sweep are intentionally pause-exempt.
+**Idempotency:** key = `${tokenId}:${recipientKind}`. The log table's status='sent' rows are checked before send.
 
-### 10. `bounty-checkin` edge function has an unused hardcoded address
-**What:** Line 12 hardcodes `0x7f54d4c8b2f0e75c8aef7e8efbd4a52a7a9a23b0` in `BOUNTY_MANAGER` but the actual used address is on line 91 from the env var.
-**Impact:** Low — the constant is never referenced. But it's confusing and could be copy-pasted elsewhere later.
-**Fix:** Remove the unused `BOUNTY_MANAGER` constant.
+**Performance:** WASM cold start ~400ms, render ~150ms, total send <2s per recipient.
 
-### 11. `vendor-redeem-settle` uses `mainnet.base.org` RPC for both settle and receipt log parsing
-**What:** All V2 edge functions hardcode `https://mainnet.base.org`. This is fine for mainnet but means you can't test the same functions on Base Sepolia without editing code.
-**Impact:** You'll need to edit every edge function to test on testnet, then revert for mainnet.
-**Fix:** Make the RPC URL an env var (`CHAIN_RPC`) so the same deployed functions work on both chains by flipping a secret.
+## Out of scope (for this round)
+- Receipt regeneration if SVG metadata changes (token is immutable, so not needed)
+- Bulk re-send across all historical receipts (admin can trigger one-by-one)
+- Vendor branding overrides (uses Purpose branding only)
 
-### 12. No `V2_LIVE` graceful degradation for bounty-checkin
-**What:** `bounty-checkin` always uses the env var bounty manager address (or V1 fallback). It doesn't check `V2_LIVE` or use a V2 address.
-**Impact:** After V2 deploy, bounty check-ins may still point to the old V1 contract.
-**Fix:** Add `BOUNTY_MANAGER_V2_ADDRESS` env var and a check: if V2 address is set, use it; otherwise fall back to V1.
+## Files
 
----
+**New:**
+- `supabase/functions/receipt-email/index.ts`
+- `supabase/migrations/<timestamp>_receipt_email_log.sql`
 
-## Low — polish / nice-to-have
-
-### 13. `ReceiptNFT` has no `supportsInterface` check for ERC721 in `_update`
-**What:** `_update` correctly reverts on transfers, but `approve` and `setApprovalForAll` also revert. Marketplaces may not handle the revert gracefully.
-**Impact:** Cosmetic — marketplaces will show the NFT as non-tradable.
-**Fix:** Already correct behavior for soulbound. No change needed.
-
-### 14. `RefundPool.paidPerVendor` key is the `to` address (treasury), not the vendor
-**What:** The mapping comment says "tracked by `to` arg (treasury or vendor)" but in practice `payRefund` always passes `treasury` as `to`.
-**Impact:** The accounting field is mislabeled. Not a functional bug.
-**Fix:** Clarify the comment or track by actual vendor address.
-
-### 15. Missing `auth_window_seconds` / `refund_window_seconds` default in DB when charge is created
-**What:** Charges created by the POS/online-shop flow may not have these columns set.
-**Impact:** Edge functions fall back to hardcoded `24*3600` and `7*24*3600`. Fine if defaults match the contract, but fragile if contract defaults change.
-**Fix:** When inserting a `vendor_charges` row, also write the current default windows from the contract (or from a config table).
-
----
-
-## Deployment checklist (exact order)
-
-Use this instead of DEPLOYMENT.md for the actual deploy day.
-
-### Pre-deploy (before you touch Remix)
-- [ ] Fix items #1–7 above in code.
-- [ ] Decide on #8 and #9 (pause behavior) and document the decision.
-- [ ] Add `CHAIN_RPC`, `VENDOR_REDEMPTION_V2_ADDRESS`, `RECEIPT_NFT_ADDRESS`, `REFUND_POOL_ADDRESS`, `PURPOSE_TOKEN_V2_ADDRESS`, `BOUNTY_MANAGER_V2_ADDRESS`, `PURPOSE_GOV_ADDRESS`, `GOVERNOR_ADDRESS` to secrets.
-- [ ] Run `supabase--test_edge_functions` on all V2 functions.
-- [ ] Re-read `contracts/DEPLOYMENT.md` and update it with any decisions you made.
-
-### Testnet deploy (Base Sepolia)
-1. Deploy `PurposeTokenV2(admin)`
-2. Deploy `BountyManagerV2(admin, purposeV2)`
-3. On `PurposeTokenV2`: `grantRole(MINTER_ROLE, bountyManagerV2)`
-4. Deploy `VendorRedemptionV2(admin, purposeV2, USDC_Sepolia, treasury)`
-5. On `PurposeTokenV2`: `setTransferAllowedBatch([vendorRedemptionV2, treasury], true)`
-6. From **treasury wallet**: `usdc.approve(vendorRedemptionV2, max)`
-7. On `VendorRedemptionV2`: `grantRole(SETTLEMENT_ROLE, backendSigner)`
-8. On `VendorRedemptionV2`: `approveVendor(testVendor)`
-9. Deploy `RefundPool(admin, USDC_Sepolia)`
-10. On `VendorRedemptionV2`: `setRefundPool(refundPoolAddress)`
-11. On `RefundPool`: `grantRole(REDEMPTION_ROLE, vendorRedemptionV2)`
-12. Deploy `ReceiptNFT(admin)`
-13. On `ReceiptNFT`: `grantRole(MINTER_ROLE, vendorRedemptionV2)`
-14. On `VendorRedemptionV2`: `setReceiptNFT(receiptNFTAddress)`
-15. Deploy `vPURPOSE` via thirdweb Token prebuilt
-16. On `vPURPOSE`: `grantRole(MINTER_ROLE, backendSigner)`
-17. Deploy thirdweb Vote governor
-18. End-to-end test: bounty → check-in → end → champion approves → POS charge → sign → lock → capture → wait auth window → settle → receipt minted → verify on BaseScan Sepolia
-
-### Mainnet deploy (repeat in exact same order)
-- Same 17 steps, using Base mainnet addresses.
-- After mainnet addresses are known, paste them into chat and Lovable will update `CONTRACTS_V2` + `V2_LIVE`.
-
----
-
-## What is NOT built yet (out of scope for this deploy)
-
-Governance frontend cutover from Supabase tally to on-chain `propose/castVote/execute`. The backend (`vPURPOSE` minting) and contracts (VoteERC20) are ready, but the UI still reads from `bounty_draft_votes`. That can be the first post-launch feature.
-
-Receipt email delivery (PNG/PDF generation). The on-chain SVG receipt works; email is a follow-up.
-
-Timelock. Recommended for mainnet but adds 24-hour delay to all admin actions. Deploy without it for launch, add in a governance-upgrade patch.
-
----
-
-## Questions for you before I implement the fixes
-
-1. **Pause behavior**: Do you want `refund`, `cancel`, and `sweep` to be callable during a contract pause, or should they also freeze? (Emergency refunds during pause seems useful, but it's your call.)
-
-2. **Receipt email**: Do you want me to build the `receipt-email` edge function now, or is on-chain-only acceptable for launch?
-
-3. **vPURPOSE / governance cutover**: Should I wire the on-chain vPURPOSE minting into `mint-monthly-membership` before deploy, or is off-chain tally fine for the first weeks?
+**Edited:**
+- `supabase/functions/vendor-redeem-settle/index.ts` (auto-trigger)
+- `src/components/admin/ReceiptOpsCard.tsx` (resend button)
+- `src/components/champion/ChampionReceiptsStrip.tsx` (email-me button)
+- `src/components/vendor/VendorChargesHistory.tsx` (email-me button)
+- `contracts/DEPLOYMENT.md` (note `RESEND_API_KEY` requirement + `receipts@popmgm.org` verification step in Resend dashboard)
