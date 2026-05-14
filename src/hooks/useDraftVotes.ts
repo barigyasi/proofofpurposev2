@@ -22,6 +22,8 @@ export type DraftWithVotes = {
   video_url: string | null;
   deck_url: string | null;
   deck_filename: string | null;
+  location: string | null;
+  on_chain_tx_hash: string | null;
 };
 
 export function useDraftVotes() {
