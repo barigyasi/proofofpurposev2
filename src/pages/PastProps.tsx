@@ -257,6 +257,29 @@ export default function PastProps() {
                         ⚡ {Number(d.metrics.rewardsMintedPurpose).toLocaleString()} PURPOSE minted to participants
                       </p>
                     )}
+
+                    <div className="mt-3 flex items-center justify-between gap-2 border-t-2 border-foreground pt-3">
+                      <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
+                        {d.metrics.isSnapshot
+                          ? `// snapshot · ${new Date(d.snapshot_at!).toLocaleDateString()}`
+                          : "// live counts"}
+                      </p>
+                      {isAdmin && (
+                        <button
+                          onClick={async () => {
+                            setSnapping(d.id);
+                            const { error } = await supabase.rpc("snapshot_bounty_draft_metrics", { _draft_id: d.id });
+                            setSnapping(null);
+                            if (error) toast.error(error.message);
+                            else toast.success("Snapshot captured");
+                          }}
+                          disabled={snapping === d.id}
+                          className="brutal brutal-hover px-2 py-1 font-mono text-[9px] uppercase tracking-widest disabled:opacity-50"
+                        >
+                          {snapping === d.id ? "snapping…" : d.metrics.isSnapshot ? "re-snapshot" : "snapshot"}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
