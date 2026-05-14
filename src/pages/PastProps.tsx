@@ -82,11 +82,17 @@ export default function PastProps() {
         const result = classifyOutcome(d);
         if (!result) return null;
         const onChainKey = d.on_chain_bounty_id != null ? String(d.on_chain_bounty_id) : null;
+        const hasSnapshot = d.snapshot_at != null;
         const metrics: Metrics = {
           walletsVoted: voterCounts[d.id] ?? d.yes_count + d.no_count + d.abstain_count,
           purposeCommitted: Number(d.reward_purpose) * Number(d.max_participants),
-          actualSignups: onChainKey ? (signupCounts[onChainKey] ?? 0) : 0,
-          rewardsMintedPurpose: onChainKey ? (rewardsMinted[onChainKey] ?? 0) : 0,
+          actualSignups: hasSnapshot
+            ? Number(d.completed_participants ?? 0)
+            : (onChainKey ? (signupCounts[onChainKey] ?? 0) : 0),
+          rewardsMintedPurpose: hasSnapshot
+            ? Number(d.purpose_minted_snapshot ?? 0)
+            : (onChainKey ? (rewardsMinted[onChainKey] ?? 0) : 0),
+          isSnapshot: hasSnapshot,
         };
         return { ...d, metrics, result } as DraftWithMetrics;
       })
