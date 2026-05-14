@@ -200,13 +200,13 @@ export function Header() {
                 {busy ? "BYE…" : "LOGOUT"}
               </button>
             ) : (
-              // WAITLIST MODE: ENTER disabled until v2 launch.
-              <span
-                aria-disabled="true"
-                className="bg-primary/60 px-4 py-3 font-display text-base text-primary-foreground cursor-not-allowed"
+              <Link
+                to="/login"
+                onClick={() => setOpen(false)}
+                className="bg-primary px-4 py-3 font-display text-base text-primary-foreground"
               >
-                ENTER SOON
-              </span>
+                ENTER
+              </Link>
             )}
           </nav>
         </div>
