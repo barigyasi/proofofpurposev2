@@ -118,6 +118,12 @@ export default function Governance() {
             // enter as a Donor or Catalyst to cast a vote
           </p>
         )}
+        <Link
+          to="/governance/past"
+          className="mt-4 inline-block font-mono text-[10px] uppercase tracking-widest text-primary hover:underline"
+        >
+          past props archive{pastCount > 0 ? ` (${pastCount})` : ""} →
+        </Link>
       </div>
 
       {loading ? (
