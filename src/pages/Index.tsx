@@ -1,6 +1,5 @@
-// import { Link } from "react-router-dom"; // restore when WAITLIST MODE is turned off
+import { Link } from "react-router-dom";
 import { TreasuryStat } from "@/components/TreasuryStat";
-import { WaitlistForm } from "@/components/WaitlistForm";
 
 const Index = () => {
   return (
@@ -46,21 +45,12 @@ const Index = () => {
         </div>
       </section>
 
-      <section className="mt-12">
-        <WaitlistForm />
-      </section>
-
-      {/*
-        WAITLIST MODE: CTA buttons hidden until v2 contracts ship.
-        To restore, delete the <WaitlistForm /> section above and
-        un-comment this block.
-
       <section className="mt-12 flex flex-wrap items-center gap-4">
         <Link
           to="/login"
           className="brutal-primary brutal-hover inline-flex items-center px-8 py-5 font-display text-xl"
         >
-          GET STARTED →
+          ENTER →
         </Link>
         <Link
           to="/donate"
@@ -69,13 +59,12 @@ const Index = () => {
           DONATE
         </Link>
         <Link
-          to="/login?next=/onboarding"
+          to="/login?redirect=/onboarding"
           className="brutal brutal-hover inline-flex items-center px-8 py-5 font-display text-xl"
         >
           PARTNER WITH US
         </Link>
       </section>
-      */}
     </main>
   );
 };
