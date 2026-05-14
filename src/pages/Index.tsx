@@ -1,6 +1,5 @@
-// import { Link } from "react-router-dom"; // restore when WAITLIST MODE is turned off
+import { Link } from "react-router-dom";
 import { TreasuryStat } from "@/components/TreasuryStat";
-import { WaitlistForm } from "@/components/WaitlistForm";
 
 const Index = () => {
   return (
