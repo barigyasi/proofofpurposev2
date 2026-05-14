@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { useActiveAccount } from "thirdweb/react";
 import { toast } from "sonner";
 import { useEffectiveRoles } from "@/hooks/useEffectiveRoles";
@@ -55,7 +56,14 @@ function outcome(d: DraftWithVotes) {
 export default function Governance() {
   const { roles } = useEffectiveRoles();
   const account = useActiveAccount();
-  const { drafts, myVotes, loading, castVote } = useDraftVotes();
+  const { drafts: allDrafts, myVotes, loading, castVote } = useDraftVotes();
+
+  // Active = pending_vote and voting window still open. Everything else lives on /governance/past.
+  const drafts = useMemo(
+    () => allDrafts.filter((d) => d.status === "pending_vote" && new Date(d.vote_closes_at).getTime() > Date.now()),
+    [allDrafts],
+  );
+  const pastCount = allDrafts.length - drafts.length;
 
   const canVote = useMemo(
     () => roles.some((r) => r === "donor" || r === "catalyst" || r === "admin"),
@@ -110,6 +118,12 @@ export default function Governance() {
             // enter as a Donor or Catalyst to cast a vote
           </p>
         )}
+        <Link
+          to="/governance/past"
+          className="mt-4 inline-block font-mono text-[10px] uppercase tracking-widest text-primary hover:underline"
+        >
+          past props archive{pastCount > 0 ? ` (${pastCount})` : ""} →
+        </Link>
       </div>
 
       {loading ? (

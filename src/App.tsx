@@ -32,6 +32,7 @@ import Donate from "./pages/Donate.tsx";
 import About from "./pages/About.tsx";
 import Whitepaper from "./pages/Whitepaper.tsx";
 import Governance from "./pages/Governance.tsx";
+import PastProps from "./pages/PastProps.tsx";
 import Bulletin from "./pages/Bulletin.tsx";
 import Receipt from "./pages/Receipt.tsx";
 import NotFound from "./pages/NotFound.tsx";
@@ -68,6 +69,7 @@ const App = () => (
               <Route path="/about" element={<About />} />
               <Route path="/about/whitepaper" element={<Whitepaper />} />
               <Route path="/governance" element={<AuthGuard><Governance /></AuthGuard>} />
+              <Route path="/governance/past" element={<PastProps />} />
               <Route path="/bulletin" element={<AuthGuard><Bulletin /></AuthGuard>} />
               <Route path="/admin" element={<AdminGuard><Admin /></AdminGuard>} />
               <Route path="/admin/bounties" element={<AdminGuard><AdminBounties /></AdminGuard>} />
