@@ -25,6 +25,9 @@ function classifyOutcome(d: DraftWithVotes): DraftWithMetrics["result"] | null {
 
 export default function PastProps() {
   const { drafts, loading } = useDraftVotes();
+  const { roles } = useEffectiveRoles();
+  const isAdmin = roles.includes("admin");
+  const [snapping, setSnapping] = useState<string | null>(null);
   const [voterCounts, setVoterCounts] = useState<Record<string, number>>({});
   const [signupCounts, setSignupCounts] = useState<Record<string, number>>({});
   const [rewardsMinted, setRewardsMinted] = useState<Record<string, number>>({});
