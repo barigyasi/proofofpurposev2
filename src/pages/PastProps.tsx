@@ -1,13 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useDraftVotes, type DraftWithVotes } from "@/hooks/useDraftVotes";
+import { useEffectiveRoles } from "@/hooks/useEffectiveRoles";
 
 type Metrics = {
   walletsVoted: number;
   purposeCommitted: number;
   actualSignups: number;
   rewardsMintedPurpose: number;
+  isSnapshot: boolean;
 };
 
 type DraftWithMetrics = DraftWithVotes & { metrics: Metrics; result: "passed" | "failed" | "on-chain" | "rejected" };
