@@ -32,6 +32,7 @@ import Donate from "./pages/Donate.tsx";
 import About from "./pages/About.tsx";
 import Whitepaper from "./pages/Whitepaper.tsx";
 import Governance from "./pages/Governance.tsx";
+import PastProps from "./pages/PastProps.tsx";
 import Bulletin from "./pages/Bulletin.tsx";
 import Receipt from "./pages/Receipt.tsx";
 import NotFound from "./pages/NotFound.tsx";
