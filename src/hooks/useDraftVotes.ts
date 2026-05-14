@@ -35,7 +35,7 @@ export function useDraftVotes() {
     const [{ data: d }, { data: { user } }] = await Promise.all([
       supabase
         .from("bounty_drafts")
-        .select("id,name,description,reward_purpose,max_participants,status,vote_opens_at,vote_closes_at,yes_count,no_count,abstain_count,on_chain_bounty_id,executed_at,created_at,image_urls,video_url,deck_url,deck_filename")
+        .select("id,name,description,reward_purpose,max_participants,status,vote_opens_at,vote_closes_at,yes_count,no_count,abstain_count,on_chain_bounty_id,on_chain_tx_hash,executed_at,created_at,image_urls,video_url,deck_url,deck_filename,location")
         .order("created_at", { ascending: false }),
       supabase.auth.getUser(),
     ]);
