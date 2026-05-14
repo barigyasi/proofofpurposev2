@@ -122,6 +122,7 @@ export type Database = {
         Row: {
           abstain_count: number
           catalyst_id: string | null
+          completed_participants: number | null
           created_at: string
           dao_proposal_id: number | null
           deck_filename: string | null
@@ -139,8 +140,11 @@ export type Database = {
           no_count: number
           on_chain_bounty_id: number | null
           on_chain_tx_hash: string | null
+          outcome_notes: string | null
           proposer_id: string
+          purpose_minted_snapshot: number | null
           reward_purpose: number
+          snapshot_at: string | null
           status: string
           updated_at: string
           video_url: string | null
@@ -151,6 +155,7 @@ export type Database = {
         Insert: {
           abstain_count?: number
           catalyst_id?: string | null
+          completed_participants?: number | null
           created_at?: string
           dao_proposal_id?: number | null
           deck_filename?: string | null
@@ -168,8 +173,11 @@ export type Database = {
           no_count?: number
           on_chain_bounty_id?: number | null
           on_chain_tx_hash?: string | null
+          outcome_notes?: string | null
           proposer_id: string
+          purpose_minted_snapshot?: number | null
           reward_purpose: number
+          snapshot_at?: string | null
           status?: string
           updated_at?: string
           video_url?: string | null
@@ -180,6 +188,7 @@ export type Database = {
         Update: {
           abstain_count?: number
           catalyst_id?: string | null
+          completed_participants?: number | null
           created_at?: string
           dao_proposal_id?: number | null
           deck_filename?: string | null
@@ -197,8 +206,11 @@ export type Database = {
           no_count?: number
           on_chain_bounty_id?: number | null
           on_chain_tx_hash?: string | null
+          outcome_notes?: string | null
           proposer_id?: string
+          purpose_minted_snapshot?: number | null
           reward_purpose?: number
+          snapshot_at?: string | null
           status?: string
           updated_at?: string
           video_url?: string | null
@@ -1074,6 +1086,48 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      snapshot_bounty_draft_metrics: {
+        Args: { _draft_id: string }
+        Returns: {
+          abstain_count: number
+          catalyst_id: string | null
+          completed_participants: number | null
+          created_at: string
+          dao_proposal_id: number | null
+          deck_filename: string | null
+          deck_url: string | null
+          description: string | null
+          executed_at: string | null
+          executed_by: string | null
+          expires_at: string | null
+          id: string
+          image_url: string | null
+          image_urls: string[]
+          location: string | null
+          max_participants: number
+          name: string
+          no_count: number
+          on_chain_bounty_id: number | null
+          on_chain_tx_hash: string | null
+          outcome_notes: string | null
+          proposer_id: string
+          purpose_minted_snapshot: number | null
+          reward_purpose: number
+          snapshot_at: string | null
+          status: string
+          updated_at: string
+          video_url: string | null
+          vote_closes_at: string
+          vote_opens_at: string
+          yes_count: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "bounty_drafts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
     }
     Enums: {

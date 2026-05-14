@@ -1,13 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useDraftVotes, type DraftWithVotes } from "@/hooks/useDraftVotes";
+import { useEffectiveRoles } from "@/hooks/useEffectiveRoles";
 
 type Metrics = {
   walletsVoted: number;
   purposeCommitted: number;
   actualSignups: number;
   rewardsMintedPurpose: number;
+  isSnapshot: boolean;
 };
 
 type DraftWithMetrics = DraftWithVotes & { metrics: Metrics; result: "passed" | "failed" | "on-chain" | "rejected" };
@@ -22,6 +25,9 @@ function classifyOutcome(d: DraftWithVotes): DraftWithMetrics["result"] | null {
 
 export default function PastProps() {
   const { drafts, loading } = useDraftVotes();
+  const { roles } = useEffectiveRoles();
+  const isAdmin = roles.includes("admin");
+  const [snapping, setSnapping] = useState<string | null>(null);
   const [voterCounts, setVoterCounts] = useState<Record<string, number>>({});
   const [signupCounts, setSignupCounts] = useState<Record<string, number>>({});
   const [rewardsMinted, setRewardsMinted] = useState<Record<string, number>>({});
@@ -76,11 +82,17 @@ export default function PastProps() {
         const result = classifyOutcome(d);
         if (!result) return null;
         const onChainKey = d.on_chain_bounty_id != null ? String(d.on_chain_bounty_id) : null;
+        const hasSnapshot = d.snapshot_at != null;
         const metrics: Metrics = {
           walletsVoted: voterCounts[d.id] ?? d.yes_count + d.no_count + d.abstain_count,
           purposeCommitted: Number(d.reward_purpose) * Number(d.max_participants),
-          actualSignups: onChainKey ? (signupCounts[onChainKey] ?? 0) : 0,
-          rewardsMintedPurpose: onChainKey ? (rewardsMinted[onChainKey] ?? 0) : 0,
+          actualSignups: hasSnapshot
+            ? Number(d.completed_participants ?? 0)
+            : (onChainKey ? (signupCounts[onChainKey] ?? 0) : 0),
+          rewardsMintedPurpose: hasSnapshot
+            ? Number(d.purpose_minted_snapshot ?? 0)
+            : (onChainKey ? (rewardsMinted[onChainKey] ?? 0) : 0),
+          isSnapshot: hasSnapshot,
         };
         return { ...d, metrics, result } as DraftWithMetrics;
       })
@@ -245,6 +257,29 @@ export default function PastProps() {
                         ⚡ {Number(d.metrics.rewardsMintedPurpose).toLocaleString()} PURPOSE minted to participants
                       </p>
                     )}
+
+                    <div className="mt-3 flex items-center justify-between gap-2 border-t-2 border-foreground pt-3">
+                      <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
+                        {d.metrics.isSnapshot
+                          ? `// snapshot · ${new Date(d.snapshot_at!).toLocaleDateString()}`
+                          : "// live counts"}
+                      </p>
+                      {isAdmin && (
+                        <button
+                          onClick={async () => {
+                            setSnapping(d.id);
+                            const { error } = await supabase.rpc("snapshot_bounty_draft_metrics", { _draft_id: d.id });
+                            setSnapping(null);
+                            if (error) toast.error(error.message);
+                            else toast.success("Snapshot captured");
+                          }}
+                          disabled={snapping === d.id}
+                          className="brutal brutal-hover px-2 py-1 font-mono text-[9px] uppercase tracking-widest disabled:opacity-50"
+                        >
+                          {snapping === d.id ? "snapping…" : d.metrics.isSnapshot ? "re-snapshot" : "snapshot"}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
