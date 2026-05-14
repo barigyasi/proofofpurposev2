@@ -69,6 +69,7 @@ const App = () => (
               <Route path="/about" element={<About />} />
               <Route path="/about/whitepaper" element={<Whitepaper />} />
               <Route path="/governance" element={<AuthGuard><Governance /></AuthGuard>} />
+              <Route path="/governance/past" element={<PastProps />} />
               <Route path="/bulletin" element={<AuthGuard><Bulletin /></AuthGuard>} />
               <Route path="/admin" element={<AdminGuard><Admin /></AdminGuard>} />
               <Route path="/admin/bounties" element={<AdminGuard><AdminBounties /></AdminGuard>} />
