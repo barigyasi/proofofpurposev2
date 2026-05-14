@@ -24,6 +24,10 @@ export type DraftWithVotes = {
   deck_filename: string | null;
   location: string | null;
   on_chain_tx_hash: string | null;
+  completed_participants: number | null;
+  purpose_minted_snapshot: number | null;
+  outcome_notes: string | null;
+  snapshot_at: string | null;
 };
 
 export function useDraftVotes() {
