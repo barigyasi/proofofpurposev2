@@ -51,36 +51,36 @@ export default function VendorDashboard() {
     }
   }, [isLoading, session, isApproved, appStatus, navigate]);
 
-  // Subscribe to status changes on the active charge.
+  // Poll for status changes on the active charge (realtime disabled for privacy).
   useEffect(() => {
     if (!pendingCharge) return;
-    const channel = supabase
-      .channel(`charge-${pendingCharge.id}`)
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "vendor_charges", filter: `id=eq.${pendingCharge.id}` },
-        (payload) => {
-          const row = payload.new as unknown as ChargeRow;
-          setPendingCharge(row);
-          if (row.status === "settled") {
-            toast.success(`Paid · $${row.usdc_payout?.toFixed(2)} USDC`);
-            setTimeout(() => {
-              setPendingCharge(null);
-              setScanned(null);
-              setAmount("");
-              setMemo("");
-            }, 2000);
-          } else if (row.status === "rejected") {
-            toast.error("Champion rejected the charge");
-          } else if (row.status === "failed" || row.status === "expired") {
-            toast.error(row.error ?? `Charge ${row.status}`);
-          }
-        },
-      )
-      .subscribe();
-    channelRef.current = channel;
-    return () => { supabase.removeChannel(channel); };
-  }, [pendingCharge?.id]);
+    let cancelled = false;
+    const interval = setInterval(async () => {
+      const { data } = await supabase
+        .from("vendor_charges")
+        .select("*")
+        .eq("id", pendingCharge.id)
+        .maybeSingle();
+      if (cancelled || !data) return;
+      const row = data as unknown as ChargeRow;
+      if (row.status === pendingCharge.status) return;
+      setPendingCharge(row);
+      if (row.status === "settled") {
+        toast.success(`Paid · $${row.usdc_payout?.toFixed(2)} USDC`);
+        setTimeout(() => {
+          setPendingCharge(null);
+          setScanned(null);
+          setAmount("");
+          setMemo("");
+        }, 2000);
+      } else if (row.status === "rejected") {
+        toast.error("Champion rejected the charge");
+      } else if (row.status === "failed" || row.status === "expired") {
+        toast.error(row.error ?? `Charge ${row.status}`);
+      }
+    }, 2000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [pendingCharge?.id, pendingCharge?.status]);
 
   if (isLoading || !session) return null;
 
