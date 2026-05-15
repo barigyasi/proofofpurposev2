@@ -43,8 +43,7 @@ export function ChampionChargeWatcher() {
     const wallet = account.address.toLowerCase();
     let active = true;
 
-    // Pick up any unhandled pending charge on load.
-    (async () => {
+    async function pickup() {
       const { data } = await supabase
         .from("vendor_charges")
         .select("*")
@@ -55,27 +54,19 @@ export function ChampionChargeWatcher() {
         .limit(1)
         .maybeSingle();
       if (active && data) setCharge(data as unknown as Charge);
-    })();
+    }
 
-    const channel = supabase
-      .channel(`charges-${wallet}`)
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "vendor_charges" },
-        (payload) => {
-          const c = payload.new as unknown as Charge;
-          if (c.champion_wallet?.toLowerCase() === wallet && c.status === "pending") {
-            setCharge(c);
-          }
-        },
-      )
-      .subscribe();
+    // Initial fetch + poll for incoming charges (realtime disabled for privacy).
+    pickup();
+    const interval = setInterval(() => {
+      if (active && !charge) pickup();
+    }, 3000);
 
     return () => {
       active = false;
-      supabase.removeChannel(channel);
+      clearInterval(interval);
     };
-  }, [account]);
+  }, [account, charge]);
 
   if (!charge || !account) return null;
 
