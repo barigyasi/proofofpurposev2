@@ -5,6 +5,7 @@ import { useSessionRoles } from "@/hooks/useSessionRoles";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { AddressLabel } from "@/components/AddressLabel";
+import { toCsv, downloadCsv, todayStamp } from "@/lib/csv";
 
 type App = {
   id: string;
@@ -69,13 +70,29 @@ export default function AdminChampions() {
     load();
   }
 
+  async function exportCsv() {
+    const { data, error } = await supabase
+      .from("champion_applications")
+      .select("created_at, status, champion_name, date_of_birth, school, wallet_address, champion_email, guardian_name, guardian_email, guardian_phone, guardian_relationship, notes")
+      .order("created_at", { ascending: false });
+    if (error || !data?.length) { toast.error("Nothing to export"); return; }
+    const csv = toCsv(data as Record<string, unknown>[], [
+      "created_at", "status", "champion_name", "date_of_birth", "school", "wallet_address",
+      "champion_email", "guardian_name", "guardian_email", "guardian_phone", "guardian_relationship", "notes",
+    ]);
+    downloadCsv(`champions-${todayStamp()}.csv`, csv);
+  }
+
   if (!roles.includes("admin")) return null;
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
       <div className="border-b-2 border-foreground pb-6">
         <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">// admin</p>
-        <h1 className="mt-2 font-display text-5xl">CHAMPIONS</h1>
+        <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
+          <h1 className="font-display text-5xl">CHAMPIONS</h1>
+          <Button onClick={exportCsv} className="brutal-primary brutal-hover font-display">EXPORT CSV</Button>
+        </div>
         <p className="mt-2 text-sm text-muted-foreground">Verify guardian + school info before granting access.</p>
       </div>
       <div className="mt-8 space-y-3">

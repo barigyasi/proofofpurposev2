@@ -11,6 +11,7 @@ import { CONTRACTS } from "@/config/contracts";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { AddressLabel } from "@/components/AddressLabel";
+import { toCsv, downloadCsv, todayStamp } from "@/lib/csv";
 
 type Vendor = {
   id: string;
@@ -72,13 +73,29 @@ export default function AdminVendors() {
     }
   }
 
+  async function exportCsv() {
+    const { data } = await supabase
+      .from("vendors")
+      .select("created_at, approved, business_name, category, wallet_address, contact_email, phone, description, approved_tx_hash")
+      .order("created_at", { ascending: false });
+    if (!data?.length) { toast.error("Nothing to export"); return; }
+    const csv = toCsv(data as Record<string, unknown>[], [
+      "created_at", "approved", "business_name", "category", "wallet_address",
+      "contact_email", "phone", "description", "approved_tx_hash",
+    ]);
+    downloadCsv(`vendors-${todayStamp()}.csv`, csv);
+  }
+
   if (!roles.includes("admin")) return null;
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
       <div className="border-b-2 border-foreground pb-6">
         <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">// admin</p>
-        <h1 className="mt-2 font-display text-5xl">VENDORS</h1>
+        <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
+          <h1 className="font-display text-5xl">VENDORS</h1>
+          <Button onClick={exportCsv} className="brutal-primary brutal-hover font-display">EXPORT CSV</Button>
+        </div>
       </div>
       <div className="mt-8 space-y-3">
         {items.length === 0 ? (

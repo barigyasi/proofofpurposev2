@@ -6,6 +6,7 @@ import { CONTRACTS } from "@/config/contracts";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { toCsv, downloadCsv, todayStamp } from "@/lib/csv";
 
 type Donation = {
   id: string;
@@ -17,18 +18,6 @@ type Donation = {
   tx_hash: string | null;
   created_at: string;
 };
-
-function toCsv(rows: Donation[]): string {
-  const header = ["created_at", "amount_usdc", "donor_wallet", "champion_referral", "source", "status", "tx_hash"];
-  const body = rows.map((r) =>
-    header.map((h) => {
-      const v = (r as unknown as Record<string, unknown>)[h];
-      const s = v == null ? "" : String(v);
-      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-    }).join(","),
-  );
-  return [header.join(","), ...body].join("\n");
-}
 
 export default function AdminDonations() {
   const navigate = useNavigate();
@@ -54,18 +43,15 @@ export default function AdminDonations() {
       });
   }, [roles]);
 
-  function downloadCsv() {
+  function exportCsv() {
     if (!rows.length) {
       toast.error("No donations to export");
       return;
     }
-    const blob = new Blob([toCsv(rows)], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `donations-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const csv = toCsv(rows, [
+      "created_at", "amount_usdc", "donor_wallet", "champion_referral", "source", "status", "tx_hash",
+    ]);
+    downloadCsv(`donations-${todayStamp()}.csv`, csv);
   }
 
   if (!roles.includes("admin")) return null;
@@ -93,7 +79,7 @@ export default function AdminDonations() {
           </p>
           <h2 className="mt-1 font-display text-3xl">DONATION LOG</h2>
         </div>
-        <Button onClick={downloadCsv} className="brutal-primary brutal-hover font-display">
+        <Button onClick={exportCsv} className="brutal-primary brutal-hover font-display">
           EXPORT CSV
         </Button>
       </div>
