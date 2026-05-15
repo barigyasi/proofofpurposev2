@@ -48,7 +48,7 @@ function useImpactStats() {
         uniqueDonors,
         totalMinted,
         treasuryPurpose,
-        championCount: championsRes.count ?? 0,
+        championCount: Number(championsRes.data ?? 0),
         bountyCount: bounties.length,
         bountiesCompleted,
         vendorCount: vendorsRes.count ?? 0,
