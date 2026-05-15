@@ -6,7 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { AddressLabel } from "@/components/AddressLabel";
 import { toCsv, downloadCsv, todayStamp } from "@/lib/csv";
-import { toast } from "sonner";
 
 type App = {
   id: string;
