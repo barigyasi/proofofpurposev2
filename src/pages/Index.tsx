@@ -1,9 +1,21 @@
 import { Link } from "react-router-dom";
 import { TreasuryStat } from "@/components/TreasuryStat";
+import { Seo } from "@/components/Seo";
 
 const Index = () => {
   return (
     <main className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24">
+      <Seo
+        title="Proof of Purpose — On-chain youth impact"
+        description="Wallet-primary youth impact on Base. Donors fund. Champions earn PURPOSE. Vendors redeem. Every step verifiable on-chain."
+        path="/"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "Proof of Purpose",
+          url: "/",
+        }}
+      />
       <section className="border-y-2 border-foreground py-10 sm:py-16">
         <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
           // popmgm.org · base mainnet
