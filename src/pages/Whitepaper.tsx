@@ -1,6 +1,6 @@
-import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { CONTRACTS } from "@/config/contracts";
+import { Seo } from "@/components/Seo";
 
 const TOC = [
   ["executive-summary", "Executive Summary"],
@@ -37,23 +37,21 @@ function Anchor({ id, label }: { id: string; label: string }) {
 }
 
 export default function Whitepaper() {
-  useEffect(() => {
-    const prevTitle = document.title;
-    document.title = "Whitepaper · Proof of Purpose";
-    const meta = document.querySelector('meta[name="description"]');
-    const prev = meta?.getAttribute("content") ?? "";
-    meta?.setAttribute(
-      "content",
-      "Proof of Purpose whitepaper: on-chain youth impact protocol on Base. Roles, smart contracts, tokenomics, governance, security, and how to participate.",
-    );
-    return () => {
-      document.title = prevTitle;
-      meta?.setAttribute("content", prev);
-    };
-  }, []);
-
   return (
     <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+      <Seo
+        title="Whitepaper — Proof of Purpose"
+        description="Proof of Purpose whitepaper: on-chain youth impact on Base. Roles, smart contracts, tokenomics, governance, security, and how to participate."
+        path="/about/whitepaper"
+        type="article"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "Article",
+          headline: "Proof of Purpose Whitepaper",
+          description: "On-chain youth impact protocol on Base.",
+          author: { "@type": "Organization", name: "Proof of Purpose" },
+        }}
+      />
       <div className="border-b-2 border-foreground pb-6">
         <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
           // whitepaper · v1 · open-source under AGPL-3.0

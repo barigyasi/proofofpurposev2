@@ -6,6 +6,7 @@ import { useEffectiveRoles } from "@/hooks/useEffectiveRoles";
 import { useDraftVotes, type DraftWithVotes, type VoteChoice } from "@/hooks/useDraftVotes";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Seo } from "@/components/Seo";
 
 // Cool vote labels — matches the "ignite movements" theme
 const VOTE_LABEL: Record<VoteChoice, string> = {
@@ -104,6 +105,11 @@ export default function Governance() {
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+      <Seo
+        title="Governance — Proof of Purpose"
+        description="Vote on bounty proposals. 1 active monthly membership = 1 vote. Transparent DAO governance on Base."
+        path="/governance"
+      />
       <div className="border-b-2 border-foreground pb-6">
         <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
           // proof of purpose · dao

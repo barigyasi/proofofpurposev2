@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { membershipDataUri, monthLabel, currentMonthKey } from "@/lib/membershipArt";
 import { MembershipsStrip } from "@/components/membership/MembershipsStrip";
+import { Seo } from "@/components/Seo";
 
 function toUsdc(amount: string): bigint {
   const [w, f = ""] = amount.split(".");
@@ -77,6 +78,11 @@ export default function Donate() {
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
+      <Seo
+        title="Donate — Proof of Purpose"
+        description="Fund the mission in USDC on Base. No account needed — just connect and give. Every donation is verifiable on-chain with permanent receipts."
+        path="/donate"
+      />
       <div className="border-b-2 border-foreground pb-6">
         <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
           // fund the mission · base usdc

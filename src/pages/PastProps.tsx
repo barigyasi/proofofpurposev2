@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useDraftVotes, type DraftWithVotes } from "@/hooks/useDraftVotes";
 import { useEffectiveRoles } from "@/hooks/useEffectiveRoles";
+import { Seo } from "@/components/Seo";
 
 type Metrics = {
   walletsVoted: number;
@@ -127,6 +128,11 @@ export default function PastProps() {
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
+      <Seo
+        title="Past Proposals — Proof of Purpose"
+        description="Archive of closed bounty proposals. Track wallets that voted, PURPOSE committed, real participants, and tokens minted."
+        path="/governance/past"
+      />
       <div className="border-b-2 border-foreground pb-6">
         <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
           // proof of purpose · archive

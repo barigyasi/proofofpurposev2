@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { CONTRACTS } from "@/config/contracts";
+import { Seo } from "@/components/Seo";
 
 const LINKS = [
   ["Treasury", CONTRACTS.TREASURY],
@@ -11,6 +12,11 @@ const COMING_SOON = ["PURPOSE Token", "Bounty Manager", "Vendor Redemption"] as 
 export default function About() {
   return (
     <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+      <Seo
+        title="About — Proof of Purpose"
+        description="An on-chain nonprofit rewarding youth for real-world community work on Base. Learn how Donors, Champions, Catalysts, and Vendors connect."
+        path="/about"
+      />
       <div className="border-b-2 border-foreground pb-6">
         <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
           // about

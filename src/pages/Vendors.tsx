@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { Seo } from "@/components/Seo";
 
 type Vendor = {
   id: string;
@@ -28,6 +29,11 @@ export default function Vendors() {
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+      <Seo
+        title="Vendors — Proof of Purpose"
+        description="Approved local businesses where Champions can spend $PURPOSE tokens. Every redemption settles 1:1 in USDC, verifiable on-chain."
+        path="/vendors"
+      />
       <div className="border-b-2 border-foreground pb-6">
         <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
           // approved vendors
