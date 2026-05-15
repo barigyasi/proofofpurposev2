@@ -79,7 +79,7 @@ export default function AdminDonations() {
           </p>
           <h2 className="mt-1 font-display text-3xl">DONATION LOG</h2>
         </div>
-        <Button onClick={downloadCsv} className="brutal-primary brutal-hover font-display">
+        <Button onClick={exportCsv} className="brutal-primary brutal-hover font-display">
           EXPORT CSV
         </Button>
       </div>
