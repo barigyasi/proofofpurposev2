@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { AdminEntryDialog } from "@/components/auth/AdminEntryDialog";
 
 export function Footer() {
@@ -17,7 +18,7 @@ export function Footer() {
   return (
     <>
       <footer className="border-t-2 border-foreground bg-background">
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
             // popmgm.org
             {" "}
@@ -34,6 +35,13 @@ export function Footer() {
             {" "}
             base mainnet · v0.1
           </p>
+          <nav className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+            <Link to="/impact" className="hover:text-primary">impact</Link>
+            <Link to="/vendors" className="hover:text-primary">vendors</Link>
+            <Link to="/governance/past" className="hover:text-primary">past props</Link>
+            <Link to="/about" className="hover:text-primary">about</Link>
+            <Link to="/about/whitepaper" className="hover:text-primary">whitepaper</Link>
+          </nav>
         </div>
       </footer>
       <AdminEntryDialog open={open} onOpenChange={setOpen} />

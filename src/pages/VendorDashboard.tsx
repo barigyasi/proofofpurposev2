@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useVendorApplication } from "@/hooks/useApplicationStatus";
 import { VendorChargesHistory } from "@/components/vendor/VendorChargesHistory";
+import { V2StatusBanner } from "@/components/V2StatusBanner";
 
 type Scanned = { wallet: string; expires_at: number; signature: string };
 
@@ -152,6 +153,10 @@ export default function VendorDashboard() {
           // vendor terminal
         </p>
         <h1 className="mt-2 font-display text-5xl">REDEEM<br /><span className="text-primary">$PURPOSE</span></h1>
+      </div>
+
+      <div className="mt-6">
+        <V2StatusBanner context="vendor" />
       </div>
 
       {isPending ? (
