@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useBounties, type Bounty } from "@/hooks/useBounties";
 import { ChampionChargeWatcher } from "@/components/champion/ChampionChargeWatcher";
 import { ChampionReceiptsStrip } from "@/components/champion/ChampionReceiptsStrip";
+import { V2StatusBanner } from "@/components/V2StatusBanner";
 
 type SignupRow = { bounty_id: string; status: string };
 
@@ -102,6 +103,10 @@ export function ChampionDashboard() {
           WHAT'S<br />
           POPPIN, <span className="text-primary">CHAMP?</span>
         </h1>
+      </div>
+
+      <div className="mt-6">
+        <V2StatusBanner context="champion" />
       </div>
 
       <div className="mt-8">
