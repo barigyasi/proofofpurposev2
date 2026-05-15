@@ -41,7 +41,7 @@ export function useParticipantNames(rows: Input[]) {
           : Promise.resolve({ data: [] as never[], error: null }),
         userIds.length
           ? supabase
-              .from("profiles")
+              .from("public_profiles" as never)
               .select("id, wallet_address, display_name, username")
               .in("id", userIds)
           : Promise.resolve({ data: [] as never[], error: null }),
