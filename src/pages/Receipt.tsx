@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { CONTRACTS_V2 } from "@/config/contracts";
 import { fetchReceipt, type DecodedReceipt } from "@/lib/receipts";
+import { Seo } from "@/components/Seo";
 
 export default function Receipt() {
   const { tokenId } = useParams<{ tokenId: string }>();
@@ -16,10 +17,14 @@ export default function Receipt() {
       .catch((e) => setError(e instanceof Error ? e.message : "Failed to load receipt"));
   }, [tokenId]);
 
-  useEffect(() => { document.title = `POP Receipt #${tokenId ?? ""} — Proof of Purpose`; }, [tokenId]);
-
   return (
     <main className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
+      <Seo
+        title={`POP Receipt #${tokenId} — Proof of Purpose`}
+        description={`On-chain donation receipt #${tokenId} minted on Base. Verifiable forever.`}
+        path={`/receipts/${tokenId}`}
+        type="article"
+      />
       <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">// public receipt</p>
       <h1 className="mt-3 font-display text-5xl">RECEIPT <span className="text-primary">#{tokenId}</span></h1>
 

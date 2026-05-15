@@ -35,6 +35,7 @@ import Governance from "./pages/Governance.tsx";
 import PastProps from "./pages/PastProps.tsx";
 import Bulletin from "./pages/Bulletin.tsx";
 import Receipt from "./pages/Receipt.tsx";
+import Impact from "./pages/Impact.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import { RoleViewProvider } from "@/context/RoleViewContext";
 import { AdminGuard } from "@/components/auth/AdminGuard";
@@ -68,6 +69,7 @@ const App = () => (
               <Route path="/donate" element={<Donate />} />
               <Route path="/about" element={<About />} />
               <Route path="/about/whitepaper" element={<Whitepaper />} />
+              <Route path="/impact" element={<Impact />} />
               <Route path="/governance" element={<AuthGuard><Governance /></AuthGuard>} />
               <Route path="/governance/past" element={<PastProps />} />
               <Route path="/bulletin" element={<AuthGuard><Bulletin /></AuthGuard>} />
