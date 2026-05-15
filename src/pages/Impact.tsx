@@ -28,9 +28,9 @@ function useImpactStats() {
             method: "function totalSupply() view returns (uint256)",
           }) as Promise<bigint>,
           supabase.from("donations").select("amount_usdc, donor_wallet", { count: "exact" }).eq("status", "confirmed"),
-          supabase.from("user_roles").select("user_id", { count: "exact", head: true }).eq("role", "champion"),
+          supabase.rpc("public_role_count", { _role: "champion" }),
           supabase.from("bounties").select("status", { count: "exact" }),
-          supabase.from("vendors").select("id", { count: "exact", head: true }).eq("approved", true),
+          supabase.from("vendors_public_view" as never).select("id", { count: "exact", head: true }),
         ]);
 
       const treasuryPurpose = Number(treasuryBalanceWei) / 10 ** PURPOSE_DECIMALS;
