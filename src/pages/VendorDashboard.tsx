@@ -34,7 +34,7 @@ export default function VendorDashboard() {
   const [busy, setBusy] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [pendingCharge, setPendingCharge] = useState<ChargeRow | null>(null);
-  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  
 
   const isApproved = roles.includes("vendor");
   const isPending = !isApproved && appStatus === "pending";
