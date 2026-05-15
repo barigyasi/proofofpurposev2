@@ -3,6 +3,9 @@ import { useParams, Link } from "react-router-dom";
 import { CONTRACTS_V2 } from "@/config/contracts";
 import { fetchReceipt, type DecodedReceipt } from "@/lib/receipts";
 import { Seo } from "@/components/Seo";
+import { toast } from "sonner";
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 
 export default function Receipt() {
   const { tokenId } = useParams<{ tokenId: string }>();
