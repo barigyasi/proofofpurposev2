@@ -70,7 +70,7 @@ export default function Receipt() {
               /* user cancelled */
             }
           }}
-          className="brutal-btn font-mono text-xs uppercase tracking-widest"
+          className="brutal-primary brutal-hover px-5 py-2 font-mono text-xs uppercase tracking-widest"
         >
           Share receipt
         </button>
