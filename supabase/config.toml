@@ -2,3 +2,6 @@ project_id = "szlnvjzluzplpvzigboo"
 
 [functions.admin-notify]
 verify_jwt = false
+
+[functions.receipt-og]
+verify_jwt = false

@@ -3,6 +3,9 @@ import { useParams, Link } from "react-router-dom";
 import { CONTRACTS_V2 } from "@/config/contracts";
 import { fetchReceipt, type DecodedReceipt } from "@/lib/receipts";
 import { Seo } from "@/components/Seo";
+import { toast } from "sonner";
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 
 export default function Receipt() {
   const { tokenId } = useParams<{ tokenId: string }>();
@@ -51,7 +54,26 @@ export default function Receipt() {
         </p>
       )}
 
-      <div className="mt-6 text-center">
+      <div className="mt-6 flex flex-col items-center gap-3">
+        <button
+          type="button"
+          onClick={async () => {
+            const shareUrl = `${SUPABASE_URL}/functions/v1/receipt-og/${tokenId}?origin=${encodeURIComponent(window.location.origin)}`;
+            try {
+              if (navigator.share) {
+                await navigator.share({ title: `POP Receipt #${tokenId}`, url: shareUrl });
+              } else {
+                await navigator.clipboard.writeText(shareUrl);
+                toast.success("Share link copied");
+              }
+            } catch {
+              /* user cancelled */
+            }
+          }}
+          className="brutal-primary brutal-hover px-5 py-2 font-mono text-xs uppercase tracking-widest"
+        >
+          Share receipt
+        </button>
         <Link to="/" className="font-mono text-xs uppercase tracking-widest text-muted-foreground underline">
           ← back to proof of purpose
         </Link>
