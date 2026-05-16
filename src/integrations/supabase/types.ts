@@ -1070,7 +1070,66 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          display_name: string | null
+          id: string | null
+          username: string | null
+          wallet_address: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          display_name?: string | null
+          id?: string | null
+          username?: string | null
+          wallet_address?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          display_name?: string | null
+          id?: string | null
+          username?: string | null
+          wallet_address?: string | null
+        }
+        Relationships: []
+      }
+      vendors_public_view: {
+        Row: {
+          approved: boolean | null
+          business_name: string | null
+          category: string | null
+          created_at: string | null
+          description: string | null
+          id: string | null
+          logo_url: string | null
+          wallet_address: string | null
+        }
+        Insert: {
+          approved?: boolean | null
+          business_name?: string | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          logo_url?: string | null
+          wallet_address?: string | null
+        }
+        Update: {
+          approved?: boolean | null
+          business_name?: string | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          logo_url?: string | null
+          wallet_address?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_any_role: {
@@ -1086,6 +1145,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      public_role_count: {
+        Args: { _role: Database["public"]["Enums"]["app_role"] }
+        Returns: number
       }
       snapshot_bounty_draft_metrics: {
         Args: { _draft_id: string }

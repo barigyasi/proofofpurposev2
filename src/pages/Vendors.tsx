@@ -17,9 +17,8 @@ export default function Vendors() {
 
   useEffect(() => {
     supabase
-      .from("vendors")
+      .from("vendors_public_view" as never)
       .select("id, business_name, description, category, logo_url, wallet_address")
-      .eq("approved", true)
       .order("business_name")
       .then(({ data }) => {
         setVendors(data ?? []);
