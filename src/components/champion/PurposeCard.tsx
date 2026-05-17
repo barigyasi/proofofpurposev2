@@ -85,34 +85,43 @@ export function PurposeCard({ address, onShowQR }: Props) {
     })();
   }, [address]);
 
-  // generate QR payload when flipped
-  useEffect(() => {
-    if (!flipped || !account) return;
-    let cancelled = false;
-    setQrPayload(null);
+  const [signing, setSigning] = useState(false);
+
+  async function generateQr() {
+    if (!account || signing) return;
+    setSigning(true);
     setQrError(null);
-    (async () => {
-      try {
-        const expiresAt = Date.now() + 5 * 60 * 1000;
-        const message = `pop-redeem:${account.address}:${expiresAt}`;
-        const signature = await account.signMessage({ message });
-        if (cancelled) return;
-        setQrPayload(
-          JSON.stringify({
-            wallet: account.address,
-            expires_at: expiresAt,
-            signature,
-          }),
-        );
-      } catch (e) {
-        if (!cancelled)
-          setQrError(e instanceof Error ? e.message : "Failed to sign");
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [flipped, account]);
+    try {
+      const expiresAt = Date.now() + 5 * 60 * 1000;
+      const message = `pop-redeem:${account.address}:${expiresAt}`;
+      const signature = await account.signMessage({ message });
+      setQrPayload(
+        JSON.stringify({
+          wallet: account.address,
+          expires_at: expiresAt,
+          signature,
+        }),
+      );
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to sign";
+      // User-rejected MetaMask popup → friendly copy
+      setQrError(
+        /reject|denied|cancel/i.test(msg)
+          ? "Signature cancelled. Tap GENERATE to try again."
+          : msg,
+      );
+    } finally {
+      setSigning(false);
+    }
+  }
+
+  // Reset QR when flipped back to front so each redeem session is fresh
+  useEffect(() => {
+    if (!flipped) {
+      setQrPayload(null);
+      setQrError(null);
+    }
+  }, [flipped]);
 
   function onPointerMove(e: React.PointerEvent) {
     const el = cardRef.current;
@@ -315,25 +324,39 @@ export function PurposeCard({ address, onShowQR }: Props) {
                 <p
                   className={`font-mono text-[10px] uppercase tracking-[0.25em] ${subText(variant)}`}
                 >
-                  expires 5:00
+                  {qrPayload ? "expires 5:00" : "tap to generate"}
                 </p>
               </div>
 
-              <div className="rounded-xl bg-white p-2 shadow-2xl">
-                {qrError ? (
-                  <p className="w-44 p-4 text-center text-xs text-destructive">
+              <div className="flex flex-col items-center gap-3">
+                <div className="rounded-xl bg-white p-2 shadow-2xl">
+                  {qrPayload ? (
+                    <QRCodeSVG
+                      value={qrPayload}
+                      size={150}
+                      level="L"
+                      bgColor="#ffffff"
+                      fgColor="#000000"
+                    />
+                  ) : (
+                    <button
+                      onClick={generateQr}
+                      disabled={signing}
+                      className="flex h-[150px] w-[150px] flex-col items-center justify-center gap-2 bg-foreground text-background hover:bg-foreground/90 disabled:opacity-60"
+                    >
+                      <QrCode className="h-8 w-8 text-primary" />
+                      <span className="font-display text-xs">
+                        {signing ? "SIGNING…" : "GENERATE"}
+                      </span>
+                    </button>
+                  )}
+                </div>
+                {qrError && (
+                  <p
+                    className={`max-w-[200px] text-center font-mono text-[10px] uppercase tracking-wider ${variant === "signal" ? "text-foreground/80" : "text-background/80"}`}
+                  >
                     {qrError}
                   </p>
-                ) : qrPayload ? (
-                  <QRCodeSVG
-                    value={qrPayload}
-                    size={150}
-                    level="L"
-                    bgColor="#ffffff"
-                    fgColor="#000000"
-                  />
-                ) : (
-                  <Skeleton className="h-[150px] w-[150px] bg-foreground/10" />
                 )}
               </div>
 
