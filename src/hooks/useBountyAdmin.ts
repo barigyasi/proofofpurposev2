@@ -5,11 +5,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { decodeEventLog, parseAbiItem } from "viem";
 import { thirdwebClient, baseChain } from "@/lib/thirdweb";
-import { CONTRACTS, PURPOSE_DECIMALS } from "@/config/contracts";
+import { ACTIVE, PURPOSE_DECIMALS } from "@/config/contracts";
+import { readTreasuryHeadroom } from "@/hooks/useTreasuryHeadroom";
 import { supabase } from "@/integrations/supabase/client";
 
 function bm() {
-  return getContract({ client: thirdwebClient, chain: baseChain, address: CONTRACTS.BOUNTY_MANAGER });
+  return getContract({ client: thirdwebClient, chain: baseChain, address: ACTIVE.BOUNTY_MANAGER });
 }
 
 export function toPurposeWei(amount: string): bigint {
