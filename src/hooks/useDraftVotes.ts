@@ -21,7 +21,7 @@ export type DraftWithVotes = {
   no_count: number;
   abstain_count: number;
   on_chain_bounty_id: number | null;
-  dao_proposal_id: number | null;
+  dao_proposal_id: string | null;
   executed_at: string | null;
   created_at: string;
   image_urls: string[] | null;
