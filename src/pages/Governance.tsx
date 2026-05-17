@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { useEffectiveRoles } from "@/hooks/useEffectiveRoles";
 import { useDraftVotes, type DraftWithVotes, type VoteChoice } from "@/hooks/useDraftVotes";
 import { useVotingEligibility } from "@/hooks/useVotingEligibility";
+import { useGovernorProposalState } from "@/hooks/useGovernorProposalState";
 import { VotingPowerCard, VotingPowerPill } from "@/components/governance/VotingPowerCard";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -47,6 +48,52 @@ function Countdown({ closesAt }: { closesAt: string }) {
         </div>
       ))}
     </div>
+  );
+}
+
+function fmtCountdown(totalSec: number): string {
+  if (totalSec <= 0) return "0s";
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = Math.floor(totalSec % 60);
+  if (h > 0) return `${h}h ${String(m).padStart(2, "0")}m ${String(s).padStart(2, "0")}s`;
+  if (m > 0) return `${m}m ${String(s).padStart(2, "0")}s`;
+  return `${s}s`;
+}
+
+/** Live "voting opens in …" / "voting closes in …" pill for an on-chain proposal. */
+function OnChainProposalTimer({ proposalId }: { proposalId: string }) {
+  const { data } = useGovernorProposalState(proposalId);
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const i = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => clearInterval(i);
+  }, []);
+  if (!data) {
+    return <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">// reading chain…</span>;
+  }
+  // decrement locally between RPC refreshes
+  const opensIn = Math.max(0, data.opensInSec - tick);
+  const closesIn = Math.max(0, data.closesInSec - tick);
+  if (data.state === 0) {
+    return (
+      <span className="font-mono text-[10px] uppercase tracking-widest text-primary">
+        ⛓ voting opens in {fmtCountdown(opensIn)}
+      </span>
+    );
+  }
+  if (data.state === 1) {
+    return (
+      <span className="font-mono text-[10px] uppercase tracking-widest text-primary">
+        ⛓ voting open · closes in {fmtCountdown(closesIn)}
+      </span>
+    );
+  }
+  const labels = ["pending","active","canceled","defeated","succeeded","queued","expired","executed"];
+  return (
+    <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+      ⛓ {labels[data.state] ?? `state ${data.state}`}
+    </span>
   );
 }
 
@@ -187,7 +234,7 @@ export default function Governance() {
             return (
               <div key={d.id} className="brutal relative p-0">
                 {/* status ribbon */}
-                <div className="flex items-center justify-between gap-3 border-b-2 border-foreground bg-secondary px-4 py-2">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-foreground bg-secondary px-4 py-2">
                   <p className="font-mono text-[10px] uppercase tracking-widest text-primary">
                     // {result ?? d.status.replace("_", " ")}
                     {" · "}
@@ -195,13 +242,16 @@ export default function Governance() {
                       {d.dao_proposal_id ? "⛓ proposal live on-chain" : "off-chain tally"}
                     </span>
                   </p>
-                  {!closed && d.status === "pending_vote" ? (
-                    <Countdown closesAt={d.vote_closes_at} />
-                  ) : (
-                    <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-                      {result === "passed" ? "✓ passed" : result === "failed" ? "✗ failed" : result === "on-chain" ? "⛓ on-chain" : "closed"}
-                    </span>
-                  )}
+                  <div className="flex items-center gap-3">
+                    {d.dao_proposal_id && <OnChainProposalTimer proposalId={d.dao_proposal_id} />}
+                    {!closed && d.status === "pending_vote" ? (
+                      <Countdown closesAt={d.vote_closes_at} />
+                    ) : (
+                      <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                        {result === "passed" ? "✓ passed" : result === "failed" ? "✗ failed" : result === "on-chain" ? "⛓ on-chain" : "closed"}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="p-5">
