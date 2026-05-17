@@ -212,7 +212,7 @@ export function PurposeCard({ address, onShowQR }: Props) {
                   background: `radial-gradient(300px circle at ${tilt.glareX}% ${tilt.glareY}%, hsl(0 0% 100% / 0.22), transparent 60%)`,
                 }}
               />
-              <div className="pointer-events-none absolute inset-[1px] rounded-[27px] border border-white/10" />
+              <div className={`pointer-events-none absolute inset-[1px] rounded-[27px] border ${activeVariant.innerBorder}`} />
 
               <div className="relative flex h-full flex-col justify-between">
                 <div className="flex items-start justify-between gap-4">
