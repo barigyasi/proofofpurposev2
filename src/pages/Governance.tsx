@@ -132,10 +132,15 @@ export default function Governance() {
           Catalysts propose bounties. Donors, Catalysts, and the steward each get one vote.
           Voting is open for 72h; bounties that pass move to the on-chain queue.
         </p>
-        {!canVote && (
+        {!hasVoterRole && (
           <p className="brutal mt-4 p-3 font-mono text-[10px]">
             // enter as a Donor or Catalyst to cast a vote
           </p>
+        )}
+        {hasVoterRole && !isAdmin && (
+          <div className="mt-4">
+            <VotingPowerCard />
+          </div>
         )}
         <Link
           to="/governance/past"
