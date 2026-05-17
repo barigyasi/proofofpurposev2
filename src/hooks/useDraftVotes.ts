@@ -72,9 +72,33 @@ export function useDraftVotes() {
     return () => { supabase.removeChannel(ch); };
   }, [refresh]);
 
-  async function castVote(draftId: string, choice: VoteChoice, walletAddress?: string | null) {
+  async function castVote(
+    draftId: string,
+    choice: VoteChoice,
+    walletAddress?: string | null,
+    account?: Account | null,
+  ) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Enter to vote");
+
+    // If the draft has an on-chain proposal, cast the vote on the Governor first.
+    // The Supabase row then mirrors it for UI snappiness.
+    const draft = drafts.find((d) => d.id === draftId);
+    if (draft?.dao_proposal_id && account) {
+      const governor = getContract({
+        client: thirdwebClient,
+        chain: baseChain,
+        address: CONTRACTS_V2.POP_GOVERNOR,
+      });
+      const tx = prepareContractCall({
+        contract: governor,
+        method: "function castVote(uint256 proposalId, uint8 support) returns (uint256)",
+        params: [BigInt(draft.dao_proposal_id), voteChoiceToSupport(choice)],
+      });
+      const { transactionHash } = await sendTransaction({ transaction: tx, account });
+      await waitForReceipt({ client: thirdwebClient, chain: baseChain, transactionHash });
+    }
+
     const existing = myVotes[draftId];
     if (existing) {
       const { error } = await supabase
