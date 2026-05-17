@@ -21,6 +21,12 @@ contract ReceiptNFT is ERC721, AccessControl {
 
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
+    // SVG palette (kept as contract-level constants to avoid stack pressure in _renderSVG)
+    string private constant SVG_BG     = "#0A1729";
+    string private constant SVG_FG     = "#FFFFFF";
+    string private constant SVG_MUTED  = "#94A3B8";
+    string private constant SVG_ACCENT = "#F2C033";
+
     struct Receipt {
         address champion;
         address vendor;
