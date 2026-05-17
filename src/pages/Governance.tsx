@@ -186,6 +186,10 @@ export default function Governance() {
                 <div className="flex items-center justify-between gap-3 border-b-2 border-foreground bg-secondary px-4 py-2">
                   <p className="font-mono text-[10px] uppercase tracking-widest text-primary">
                     // {result ?? d.status.replace("_", " ")}
+                    {" · "}
+                    <span className={d.dao_proposal_id ? "text-primary" : "text-muted-foreground"}>
+                      {d.dao_proposal_id ? "⛓ on-chain" : "off-chain tally"}
+                    </span>
                   </p>
                   {!closed && d.status === "pending_vote" ? (
                     <Countdown closesAt={d.vote_closes_at} />
