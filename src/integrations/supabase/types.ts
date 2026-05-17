@@ -538,11 +538,51 @@ export type Database = {
         }
         Relationships: []
       }
+      membership_editions: {
+        Row: {
+          active: boolean
+          animation_url: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          image_url: string
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          animation_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          image_url: string
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          animation_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       membership_mints: {
         Row: {
           contract_address: string | null
           created_at: string
           donor_wallet: string
+          edition_id: string | null
           id: string
           month_key: number
           status: string
@@ -554,6 +594,7 @@ export type Database = {
           contract_address?: string | null
           created_at?: string
           donor_wallet: string
+          edition_id?: string | null
           id?: string
           month_key: number
           status?: string
@@ -565,6 +606,7 @@ export type Database = {
           contract_address?: string | null
           created_at?: string
           donor_wallet?: string
+          edition_id?: string | null
           id?: string
           month_key?: number
           status?: string
@@ -572,7 +614,15 @@ export type Database = {
           tx_hash?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "membership_mints_edition_id_fkey"
+            columns: ["edition_id"]
+            isOneToOne: false
+            referencedRelation: "membership_editions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pending_applicants: {
         Row: {

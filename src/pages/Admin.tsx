@@ -5,6 +5,7 @@ import { SplitsDistributeCard } from "@/components/admin/SplitsDistributeCard";
 import { EscrowOpsCard } from "@/components/admin/EscrowOpsCard";
 import { RefundPoolCard } from "@/components/admin/RefundPoolCard";
 import { ReceiptOpsCard } from "@/components/admin/ReceiptOpsCard";
+import { MembershipEditionsCard } from "@/components/admin/MembershipEditionsCard";
 
 const TILES = [
   { to: "/admin/bounties", label: "BOUNTIES", desc: "Create, fund, complete bounties" },
@@ -44,6 +45,7 @@ export default function Admin() {
         <EscrowOpsCard />
         <RefundPoolCard />
         <ReceiptOpsCard />
+        <MembershipEditionsCard />
       </div>
 
       <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
