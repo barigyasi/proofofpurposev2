@@ -124,7 +124,7 @@ export type Database = {
           catalyst_id: string | null
           completed_participants: number | null
           created_at: string
-          dao_proposal_id: number | null
+          dao_proposal_id: string | null
           deck_filename: string | null
           deck_url: string | null
           description: string | null
@@ -157,7 +157,7 @@ export type Database = {
           catalyst_id?: string | null
           completed_participants?: number | null
           created_at?: string
-          dao_proposal_id?: number | null
+          dao_proposal_id?: string | null
           deck_filename?: string | null
           deck_url?: string | null
           description?: string | null
@@ -190,7 +190,7 @@ export type Database = {
           catalyst_id?: string | null
           completed_participants?: number | null
           created_at?: string
-          dao_proposal_id?: number | null
+          dao_proposal_id?: string | null
           deck_filename?: string | null
           deck_url?: string | null
           description?: string | null
@@ -1209,7 +1209,7 @@ export type Database = {
           catalyst_id: string | null
           completed_participants: number | null
           created_at: string
-          dao_proposal_id: number | null
+          dao_proposal_id: string | null
           deck_filename: string | null
           deck_url: string | null
           description: string | null
