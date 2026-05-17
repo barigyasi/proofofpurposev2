@@ -73,8 +73,9 @@ export function useTreasuryHeadroom() {
   return useQuery({
     queryKey: ["treasury-headroom", ACTIVE.PURPOSE_TOKEN],
     queryFn: fetch,
-    staleTime: 30_000,
-    refetchOnWindowFocus: false,
+    staleTime: 5_000,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 }
 
