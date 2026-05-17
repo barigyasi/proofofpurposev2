@@ -54,16 +54,16 @@ contract BountyManagerV2 is AccessControl, ReentrancyGuard {
         purposeToken = IPurposeTokenV2(token);
     }
 
-    function createBounty(uint256 rewardAmount, uint32 minParticipants)
+    function createBounty(uint256 _rewardAmount, uint32 minParticipants)
         external
         onlyRole(BOUNTY_ADMIN_ROLE)
         returns (uint256 id)
     {
         id = nextBountyId++;
         Bounty storage b = _bounties[id];
-        b.rewardAmount = rewardAmount;
+        b.rewardAmount = _rewardAmount;
         b.minParticipants = minParticipants;
-        emit BountyCreated(id, rewardAmount, minParticipants);
+        emit BountyCreated(id, _rewardAmount, minParticipants);
     }
 
     function addParticipant(uint256 id, address participant)
