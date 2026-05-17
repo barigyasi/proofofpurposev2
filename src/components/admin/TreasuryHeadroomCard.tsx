@@ -17,9 +17,13 @@ export function TreasuryHeadroomCard() {
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-            // treasury
+            // treasury · usdc-backed
           </p>
-          <h3 className="mt-1 font-display text-xl">PURPOSE HEADROOM</h3>
+          <h3 className="mt-1 font-display text-xl">MINT HEADROOM</h3>
+          <p className="mt-1 max-w-prose text-[11px] text-muted-foreground">
+            Every 1 USDC in the Treasury backs 1 PURPOSE. Headroom = USDC backing − PURPOSE
+            already in circulation − reward committed to open events.
+          </p>
         </div>
         <Button
           size="sm"
@@ -39,11 +43,17 @@ export function TreasuryHeadroomCard() {
       {isLoading || !data ? (
         <p className="mt-3 font-mono text-xs text-muted-foreground">// loading…</p>
       ) : (
-        <div className="mt-3 grid grid-cols-3 gap-3 font-mono text-xs">
+        <div className="mt-3 grid grid-cols-2 gap-3 font-mono text-xs sm:grid-cols-4">
           <div>
-            <p className="text-[9px] uppercase text-muted-foreground">balance</p>
+            <p className="text-[9px] uppercase text-muted-foreground">USDC backing</p>
             <p className="mt-1 font-display text-lg text-foreground">
-              {data.balance.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+              ${data.backing.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+            </p>
+          </div>
+          <div>
+            <p className="text-[9px] uppercase text-muted-foreground">in circulation</p>
+            <p className="mt-1 font-display text-lg text-foreground">
+              {data.outstanding.toLocaleString(undefined, { maximumFractionDigits: 2 })}
             </p>
           </div>
           <div>
@@ -67,18 +77,17 @@ export function TreasuryHeadroomCard() {
 
       {low && (
         <p className="mt-3 font-mono text-[10px] uppercase text-destructive">
-          // treasury cannot cover all open + running events. fund before ending events.
+          // treasury USDC cannot cover all open + circulating PURPOSE. fund before ending events.
         </p>
       )}
       {tight && !low && (
         <p className="mt-3 font-mono text-[10px] uppercase text-primary">
-          // headroom under 10% — consider funding the treasury soon.
+          // headroom under 10% of commitments — consider funding the treasury soon.
         </p>
       )}
       {data && (
         <p className="mt-2 break-all font-mono text-[9px] text-muted-foreground">
-          // commitment estimated from min_participants × reward (no max-cap column yet).
-          treasury: {data.treasuryAddress}
+          // treasury: {data.treasuryAddress}
         </p>
       )}
     </div>
