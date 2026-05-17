@@ -4,7 +4,7 @@ import { MembershipsStrip } from "@/components/membership/MembershipsStrip";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { PurposeBalanceCard } from "@/components/champion/PurposeBalanceCard";
+import { PurposeCard } from "@/components/champion/PurposeCard";
 import { RedeemQRDialog } from "@/components/champion/RedeemQRDialog";
 import { CheckInQRDialog } from "@/components/champion/CheckInQRDialog";
 import { SectionDivider } from "@/components/champion/SectionDivider";
