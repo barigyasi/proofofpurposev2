@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { CONTRACTS } from "@/config/contracts";
+import { CONTRACTS, CONTRACTS_V2 } from "@/config/contracts";
 import { Seo } from "@/components/Seo";
 
 const TOC = [
