@@ -23,7 +23,7 @@ export function ChampionDashboard() {
   const account = useActiveAccount();
   const qc = useQueryClient();
   const { data: bounties, isLoading } = useBounties();
-  const [qrOpen, setQrOpen] = useState(false);
+  
   const [details, setDetails] = useState<Bounty | null>(null);
   const [signingUp, setSigningUp] = useState<string | null>(null);
   const [signups, setSignups] = useState<SignupRow[]>([]);
