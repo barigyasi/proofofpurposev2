@@ -75,7 +75,7 @@ function formatAddress(address: string, showFull: boolean) {
 export function PurposeCard({ address, onShowQR }: Props) {
   const account = useActiveAccount();
   const { data: balance, isLoading } = usePurposeBalance(address);
-  const [variant, setVariant] = useState<Variant>("obsidian");
+  const { theme: variant, setTheme: setVariant } = useCardTheme();
   const [showFull, setShowFull] = useState(false);
   const [copied, setCopied] = useState(false);
   const [displayName, setDisplayName] = useState<string>("");
