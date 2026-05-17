@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.receipt-og]
 verify_jwt = false
+
+[functions.receipt-metadata]
+verify_jwt = false

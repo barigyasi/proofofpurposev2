@@ -29,6 +29,20 @@
       {"name":"championName","type":"string"},
       {"name":"vendorName","type":"string"}
     ],"outputs":[{"type":"uint256"}]},
+    {"type":"function","name":"getReceipt","stateMutability":"view","inputs":[{"name":"tokenId","type":"uint256"}],"outputs":[
+      {"type":"tuple","components":[
+        {"name":"champion","type":"address"},
+        {"name":"vendor","type":"address"},
+        {"name":"usdcAmount","type":"uint256"},
+        {"name":"purposeAmount","type":"uint256"},
+        {"name":"chargeId","type":"bytes32"},
+        {"name":"settledAt","type":"uint64"},
+        {"name":"championName","type":"string"},
+        {"name":"vendorName","type":"string"}
+      ]}
+    ]},
+    {"type":"function","name":"baseURI","stateMutability":"view","inputs":[],"outputs":[{"type":"string"}]},
+    {"type":"function","name":"setBaseURI","stateMutability":"nonpayable","inputs":[{"name":"baseURI","type":"string"}],"outputs":[]},
     {"type":"event","name":"ReceiptMinted","inputs":[
       {"name":"chargeId","type":"bytes32","indexed":true},
       {"name":"tokenId","type":"uint256","indexed":true},
@@ -36,6 +50,9 @@
       {"name":"vendor","type":"address","indexed":false},
       {"name":"usdcAmount","type":"uint256","indexed":false},
       {"name":"purposeAmount","type":"uint256","indexed":false}
+    ],"anonymous":false},
+    {"type":"event","name":"BaseURIUpdated","inputs":[
+      {"name":"baseURI","type":"string","indexed":false}
     ],"anonymous":false}
   ]
 }
