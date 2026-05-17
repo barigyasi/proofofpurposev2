@@ -144,15 +144,25 @@ Deno.serve(async (req) => {
     const proposalId = logs[0]?.args?.proposalId as bigint | undefined;
     if (!proposalId) return json({ error: "ProposalCreated event missing", txHash: hash }, 500);
 
-    await supabase
+    const proposalIdText = proposalId.toString();
+
+    const { error: updateError } = await supabase
       .from("bounty_drafts")
       .update({
-        dao_proposal_id: Number(proposalId), // bounty_drafts.dao_proposal_id is numeric
+        dao_proposal_id: proposalIdText,
         on_chain_tx_hash: hash,
       })
       .eq("id", draft.id);
 
-    return json({ ok: true, proposalId: proposalId.toString(), txHash: hash, description });
+    if (updateError) {
+      return json({
+        error: `Proposal created on-chain but could not be saved: ${updateError.message}`,
+        proposalId: proposalIdText,
+        txHash: hash,
+      }, 500);
+    }
+
+    return json({ ok: true, proposalId: proposalIdText, txHash: hash, description });
   } catch (e) {
     console.error("governor-propose error", e);
     return json({ error: e instanceof Error ? e.message : String(e) }, 500);
