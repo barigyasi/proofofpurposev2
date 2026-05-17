@@ -21,6 +21,12 @@ contract ReceiptNFT is ERC721, AccessControl {
 
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
+    // SVG palette (kept as contract-level constants to avoid stack pressure in _renderSVG)
+    string private constant SVG_BG     = "#0A1729";
+    string private constant SVG_FG     = "#FFFFFF";
+    string private constant SVG_MUTED  = "#94A3B8";
+    string private constant SVG_ACCENT = "#F2C033";
+
     struct Receipt {
         address champion;
         address vendor;
@@ -121,43 +127,59 @@ contract ReceiptNFT is ERC721, AccessControl {
     }
 
     function _renderSVG(uint256 tokenId, Receipt memory r) internal pure returns (string memory) {
-        // brand: navy 220 70% 12% (#0A1729-ish), gold 43 96% 56% (#F2C033-ish)
-        string memory headerColor = "#F2C033";
-        string memory bg = "#0A1729";
-        string memory fg = "#FFFFFF";
-        string memory muted = "#94A3B8";
+        return string(abi.encodePacked(
+            _svgHeader(tokenId),
+            _svgParties(r.champion, r.vendor, r.championName, r.vendorName),
+            _svgAmount(r.usdcAmount, r.purposeAmount),
+            _svgFooter(r.chargeId, r.settledAt)
+        ));
+    }
+
+    function _svgHeader(uint256 tokenId) internal pure returns (string memory) {
         return string(abi.encodePacked(
             '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" font-family="monospace">',
-            '<rect width="600" height="600" fill="', bg, '"/>',
-            '<rect x="20" y="20" width="560" height="560" fill="none" stroke="', headerColor, '" stroke-width="3"/>',
-            '<text x="40" y="70" fill="', headerColor, '" font-size="14" letter-spacing="3">PROOF OF PURPOSE</text>',
-            '<text x="40" y="100" fill="', fg, '" font-size="34" font-weight="bold">RECEIPT #', tokenId.toString(), '</text>',
-            '<line x1="40" y1="120" x2="560" y2="120" stroke="', muted, '" stroke-width="1"/>',
+            '<rect width="600" height="600" fill="', SVG_BG, '"/>',
+            '<rect x="20" y="20" width="560" height="560" fill="none" stroke="', SVG_ACCENT, '" stroke-width="3"/>',
+            '<text x="40" y="70" fill="', SVG_ACCENT, '" font-size="14" letter-spacing="3">PROOF OF PURPOSE</text>',
+            '<text x="40" y="100" fill="', SVG_FG, '" font-size="34" font-weight="bold">RECEIPT #', tokenId.toString(), '</text>',
+            '<line x1="40" y1="120" x2="560" y2="120" stroke="', SVG_MUTED, '" stroke-width="1"/>'
+        ));
+    }
 
-            '<text x="40" y="160" fill="', muted, '" font-size="11" letter-spacing="2">CHAMPION</text>',
-            '<text x="40" y="185" fill="', fg, '" font-size="18">', _escape(r.championName), '</text>',
-            '<text x="40" y="205" fill="', muted, '" font-size="11">', _shortAddr(r.champion), '</text>',
+    function _svgParties(
+        address champion,
+        address vendor,
+        string memory championName,
+        string memory vendorName
+    ) internal pure returns (string memory) {
+        return string(abi.encodePacked(
+            '<text x="40" y="160" fill="', SVG_MUTED, '" font-size="11" letter-spacing="2">CHAMPION</text>',
+            '<text x="40" y="185" fill="', SVG_FG, '" font-size="18">', _escape(championName), '</text>',
+            '<text x="40" y="205" fill="', SVG_MUTED, '" font-size="11">', _shortAddr(champion), '</text>',
+            '<text x="40" y="245" fill="', SVG_MUTED, '" font-size="11" letter-spacing="2">VENDOR</text>',
+            '<text x="40" y="270" fill="', SVG_FG, '" font-size="18">', _escape(vendorName), '</text>',
+            '<text x="40" y="290" fill="', SVG_MUTED, '" font-size="11">', _shortAddr(vendor), '</text>',
+            '<line x1="40" y1="320" x2="560" y2="320" stroke="', SVG_MUTED, '" stroke-width="1"/>'
+        ));
+    }
 
-            '<text x="40" y="245" fill="', muted, '" font-size="11" letter-spacing="2">VENDOR</text>',
-            '<text x="40" y="270" fill="', fg, '" font-size="18">', _escape(r.vendorName), '</text>',
-            '<text x="40" y="290" fill="', muted, '" font-size="11">', _shortAddr(r.vendor), '</text>',
+    function _svgAmount(uint256 usdcAmount, uint256 purposeAmount) internal pure returns (string memory) {
+        return string(abi.encodePacked(
+            '<text x="40" y="355" fill="', SVG_MUTED, '" font-size="11" letter-spacing="2">AMOUNT</text>',
+            '<text x="40" y="410" fill="', SVG_ACCENT, '" font-size="56" font-weight="bold">$', _formatUSDC(usdcAmount), '</text>',
+            '<text x="40" y="440" fill="', SVG_FG, '" font-size="14">', _formatPURPOSE(purposeAmount), ' PURPOSE redeemed</text>',
+            '<line x1="40" y1="475" x2="560" y2="475" stroke="', SVG_MUTED, '" stroke-width="1"/>'
+        ));
+    }
 
-            '<line x1="40" y1="320" x2="560" y2="320" stroke="', muted, '" stroke-width="1"/>',
-
-            '<text x="40" y="355" fill="', muted, '" font-size="11" letter-spacing="2">AMOUNT</text>',
-            '<text x="40" y="410" fill="', headerColor, '" font-size="56" font-weight="bold">$', _formatUSDC(r.usdcAmount), '</text>',
-            '<text x="40" y="440" fill="', fg, '" font-size="14">', _formatPURPOSE(r.purposeAmount), ' PURPOSE redeemed</text>',
-
-            '<line x1="40" y1="475" x2="560" y2="475" stroke="', muted, '" stroke-width="1"/>',
-
-            '<text x="40" y="505" fill="', muted, '" font-size="10">CHARGE</text>',
-            '<text x="40" y="525" fill="', fg, '" font-size="11">', _shortHex(r.chargeId), '</text>',
-
-            '<text x="40" y="555" fill="', muted, '" font-size="10">SETTLED (UNIX)</text>',
-            '<text x="40" y="575" fill="', fg, '" font-size="11">', uint256(r.settledAt).toString(), '</text>',
-
-            '<rect x="430" y="540" width="135" height="32" fill="', headerColor, '"/>',
-            '<text x="497" y="561" fill="', bg, '" font-size="12" font-weight="bold" text-anchor="middle">SOULBOUND</text>',
+    function _svgFooter(bytes32 chargeId, uint64 settledAt) internal pure returns (string memory) {
+        return string(abi.encodePacked(
+            '<text x="40" y="505" fill="', SVG_MUTED, '" font-size="10">CHARGE</text>',
+            '<text x="40" y="525" fill="', SVG_FG, '" font-size="11">', _shortHex(chargeId), '</text>',
+            '<text x="40" y="555" fill="', SVG_MUTED, '" font-size="10">SETTLED (UNIX)</text>',
+            '<text x="40" y="575" fill="', SVG_FG, '" font-size="11">', uint256(settledAt).toString(), '</text>',
+            '<rect x="430" y="540" width="135" height="32" fill="', SVG_ACCENT, '"/>',
+            '<text x="497" y="561" fill="', SVG_BG, '" font-size="12" font-weight="bold" text-anchor="middle">SOULBOUND</text>',
             '</svg>'
         ));
     }
