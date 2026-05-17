@@ -34,12 +34,9 @@ async function fetch() {
       .from("bounties")
       .select("reward_amount,max_participants,min_participants,status")
       .in("status", ["open", "running"]),
-    // Drafts that are queued or in voting also reserve headroom, since they
-    // are still expected to mint PURPOSE if/when executed.
     supabase
       .from("bounty_drafts")
-      .select("reward_purpose,max_participants,status,on_chain_bounty_id")
-      .in("status", ["queued", "pending_vote"])
+      .select("reward_purpose,max_participants,status,on_chain_bounty_id,dao_proposal_id,vote_closes_at")
       .is("on_chain_bounty_id", null),
   ]);
 
@@ -51,6 +48,10 @@ async function fetch() {
     return sum + reward * cap;
   }, 0);
   const committedDrafts = (draftRows ?? []).reduce((sum, d) => {
+    const voteStillOpen = !!d.vote_closes_at && new Date(d.vote_closes_at).getTime() > Date.now();
+    const reservesHeadroom = Boolean(d.dao_proposal_id) || (d.status === "pending_vote" && voteStillOpen);
+    if (!reservesHeadroom) return sum;
+
     const reward = Number(d.reward_purpose) || 0;
     const cap = Math.max(1, Number(d.max_participants) || 1);
     return sum + reward * cap;
