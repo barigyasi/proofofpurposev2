@@ -143,6 +143,12 @@ export default function CatalystDashboard() {
         </p>
       )}
 
+      {!isPending && (
+        <div className="mt-6">
+          <TreasuryHeadroomCard />
+        </div>
+      )}
+
       {isPending ? (
         <div className="brutal mt-8 p-6">
           <p className="font-mono text-[10px] uppercase tracking-widest text-primary">// pending approval</p>
