@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { membershipDataUri, monthLabel } from "@/lib/membershipArt";
+import { SelfDelegateButton } from "@/components/membership/SelfDelegateButton";
 
 type Mint = {
   id: string;
