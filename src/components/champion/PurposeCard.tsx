@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatPurpose, usePurposeBalance } from "@/hooks/usePurposeBalance";
 import { toast } from "sonner";
 import popLogo from "@/assets/pop-logo.png";
+import { useCardTheme } from "@/context/CardThemeContext";
 
 interface Props {
   address: string;
@@ -74,7 +75,7 @@ function formatAddress(address: string, showFull: boolean) {
 export function PurposeCard({ address, onShowQR }: Props) {
   const account = useActiveAccount();
   const { data: balance, isLoading } = usePurposeBalance(address);
-  const [variant, setVariant] = useState<Variant>("obsidian");
+  const { theme: variant, setTheme: setVariant } = useCardTheme();
   const [showFull, setShowFull] = useState(false);
   const [copied, setCopied] = useState(false);
   const [displayName, setDisplayName] = useState<string>("");
