@@ -242,7 +242,7 @@ export function PurposeCard({ address, onShowQR }: Props) {
                 </div>
 
                 <div className="space-y-4">
-                  <div className={`rounded-2xl border p-4 backdrop-blur-sm ${activeVariant.line} bg-black/10`}>
+                  <div className={`rounded-2xl border p-4 backdrop-blur-sm ${activeVariant.line} ${activeVariant.innerPanel}`}>
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <p className={`font-mono text-[10px] uppercase tracking-[0.24em] ${activeVariant.sub}`}>
