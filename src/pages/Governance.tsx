@@ -91,20 +91,37 @@ export default function Governance() {
       return;
     }
     try {
-      await castVote(draftId, choice, account.address);
+      await castVote(draftId, choice, account.address, account);
       toast.success(`Vote recorded: ${choice}`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
     }
   }
 
-  async function adminApprove(d: DraftWithVotes) {
-    const { error } = await supabase
-      .from("bounty_drafts")
-      .update({ status: "queued", executed_at: new Date().toISOString() })
-      .eq("id", d.id);
-    if (error) toast.error(error.message);
-    else toast.success("Approved — queued for on-chain creation");
+  async function adminPropose(d: DraftWithVotes) {
+    const t = toast.loading("Submitting on-chain proposal…");
+    try {
+      const { data, error } = await supabase.functions.invoke("governor-propose", {
+        body: { draft_id: d.id },
+      });
+      if (error) throw error;
+      toast.success(`Proposal ${data?.proposalId?.slice?.(0, 8) ?? "created"}…`, { id: t });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Propose failed", { id: t });
+    }
+  }
+
+  async function adminExecute(d: DraftWithVotes) {
+    const t = toast.loading("Executing on-chain…");
+    try {
+      const { data, error } = await supabase.functions.invoke("governor-execute", {
+        body: { draft_id: d.id },
+      });
+      if (error) throw error;
+      toast.success(`Executed — bounty #${data?.onChainBountyId} is live`, { id: t });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Execute failed", { id: t });
+    }
   }
 
   async function adminReject(d: DraftWithVotes) {
