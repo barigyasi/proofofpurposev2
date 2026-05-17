@@ -384,7 +384,7 @@ contract VendorRedemptionV2 is AccessControl, ReentrancyGuard, Pausable {
         if (block.timestamp <= uint256(c.capturedAt) + c.refundWindow) revert RefundWindowExpired();
 
         c.state = State.Finalized;
-        purposeToken.burnFrom(address(this), c.purposeAmount);
+        purposeToken.burn(c.purposeAmount);
         emit ChargeFinalized(chargeId, c.purposeAmount);
     }
 
