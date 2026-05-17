@@ -61,16 +61,17 @@ Eight contracts total:
 2. **BountyManagerV2** — mints PURPOSE on bounty completion
 3. **VendorRedemptionV2** — escrow state machine (Lock→Capture→Settle/Cancel/Refund/Sweep)
 4. **RefundPool** — USDC vault that backs vendor refunds
-5. **ReceiptNFT** — soulbound on-chain SVG receipts minted on settle (champion side)
+5. **ReceiptNFT** — soulbound ERC-721 receipts minted to the champion on settle. JSON metadata + brutalist SVG are served off-chain by the `receipt-metadata` edge function, which reads the on-chain `getReceipt(tokenId)` data (so the art is verifiable even though it's rendered server-side). Iterate on the design without redeploying.
 6. **PurposeGovToken** — separate ERC20Votes token used **only** for governance weight
 7. **VoteERC20 (thirdweb)** — the governor itself
 8. *(optional v2)* **Timelock** — execution delay for governor; recommended on mainnet
 
 After deploying ReceiptNFT, also run:
+- `receiptNFT.setBaseURI("https://szlnvjzluzplpvzigboo.supabase.co/functions/v1/receipt-metadata/")` *(trailing slash required — `tokenURI(id)` returns `<baseURI><id>`)*
 - `receiptNFT.grantRole(MINTER_ROLE, VENDOR_REDEMPTION_V2)`
 - `receiptNFT.grantRole(MINTER_ROLE, BACKEND_SIGNER_ADDRESS)` *(for receipt-mint-retry)*
 - `vendorRedemptionV2.setReceiptNFT(RECEIPT_NFT_ADDRESS)`
-- Add `RECEIPT_NFT_ADDRESS` to Lovable Cloud secrets.
+- Add `RECEIPT_NFT_ADDRESS` to Lovable Cloud secrets — the `receipt-metadata` edge function reads it to do the on-chain `getReceipt` call.
 
 USDC is **not** deployed — you reuse the canonical address per chain.
 
@@ -539,6 +540,12 @@ Remix setup:
 
 **Deploy** (A): `admin = A`.
 
+> **Off-chain art:** JSON metadata + the brutalist SVG (near-black bg, acid yellow primary) are rendered by the `receipt-metadata` edge function, which reads `getReceipt(tokenId)` from this contract. To change the look later, edit the edge function — no redeploy. To rotate hosts (e.g. to IPFS), call `setBaseURI` again.
+
+**Setup — set baseURI first:**
+1. A: `setBaseURI("https://szlnvjzluzplpvzigboo.supabase.co/functions/v1/receipt-metadata/")` → ✅ `BaseURIUpdated` event. Trailing slash is required.
+2. Add `RECEIPT_NFT_ADDRESS = <this contract>` to Lovable Cloud secrets so the edge function can do its read call.
+
 **Test 1 — minter gating:**
 1. A: `mintReceipt(C, D, 5000000, 5e18, 0xabc..., 1700000000, "Alice", "Bob's Coffee")` → ❌ revert (no MINTER_ROLE)
 2. A: `grantRole(MINTER_ROLE, A)` then retry → ✅ returns tokenId `1`, event `ReceiptMinted`
@@ -551,14 +558,17 @@ Remix setup:
 **Test 3 — duplicate chargeId blocked:**
 1. A: `mintReceipt(C, D, 5e6, 5e18, 0xabc..., ...)` (same chargeId as Test 1) → ❌ revert `AlreadyMinted`
 
-**Test 4 — tokenURI renders:**
-1. A: `tokenURI(1)` → returns long `data:application/json;base64,...` string
-2. Decode (any base64 decoder): you should see `{"name":"POP Receipt #1", ..., "image":"data:image/svg+xml;base64,..."}`
-3. Decode the inner SVG and paste into a browser address bar (`data:image/svg+xml;base64,...`) → renders the navy/gold receipt card
+**Test 4 — tokenURI + metadata render:**
+1. A: `tokenURI(1)` → returns the string `https://szlnvjzluzplpvzigboo.supabase.co/functions/v1/receipt-metadata/1`
+2. Paste that URL in a browser → returns OpenSea-style JSON: `{"name":"POP Receipt #1", "description":"...", "image":"data:image/svg+xml;utf8,...", "attributes":[...]}`
+3. Copy the `image` data URL into a new tab → renders the brutalist receipt card (near-black bg, acid yellow accents, receipt #, champion + vendor, big $X.YY, PURPOSE redeemed, charge hash, SOULBOUND badge)
 
-**Test 5 — escape safety:**
+**Test 4b — on-chain data getter:**
+1. A (or anyone): `getReceipt(1)` → returns the full tuple. Verify `champion`, `vendor`, `usdcAmount`, `purposeAmount`, `chargeId`, `settledAt`, `championName`, `vendorName` match what was minted.
+
+**Test 5 — name sanitization (edge function side):**
 1. Mint with `championName = 'Alice "Hacker" </script>'`
-2. `tokenURI` should still parse cleanly as JSON (quotes/angle brackets replaced with spaces)
+2. Fetch the resulting `tokenURI(<id>)` → JSON parses cleanly; in the inline SVG the angle brackets/quotes are HTML-escaped (`&lt;`, `&quot;`, etc.) so the card renders safely.
 
 **Wiring into VendorRedemptionV2:**
 1. ReceiptNFT (A): `grantRole(MINTER_ROLE, <VR_V2>)`
@@ -569,13 +579,14 @@ Remix setup:
 1. Run lock + capture on `0x09...`, wait past auth window
 2. **B**: `settleWithReceipt(0x09..., "Alice", "Bob's Coffee")` → ✅ `ChargeSettled` + `ReceiptMinted` events
 3. ReceiptNFT `ownerOf(<newTokenId>) == C`, `tokenIdForCharge(0x09...) == newTokenId`
+4. Fetch `tokenURI(<newTokenId>)` in browser → renders the new champion's receipt card
 
 **Test 7 — receipt mint failure doesn't break settle:**
 1. Temporarily revoke `MINTER_ROLE` from VR_V2: ReceiptNFT (A): `revokeRole(MINTER_ROLE, <VR_V2>)`
 2. Run another full flow + `settleWithReceipt` → ✅ `ChargeSettled` succeeds; `ReceiptMintFailed` event emitted; vendor still got USDC
 3. Re-grant role for normal flow.
 
-✅ **Pass criteria:** soulbound enforced, tokenURI renders valid JSON+SVG, receipt mint isolated from settle (failure ≠ revert).
+✅ **Pass criteria:** soulbound enforced, `tokenURI` returns the edge-function URL, edge function renders valid JSON+SVG from on-chain data, receipt mint isolated from settle (failure ≠ revert).
 
 ---
 
@@ -588,7 +599,7 @@ After everything above passes individually, run **one full champion journey**:
 3. **B** does `lockAndCapture(...)` for `(D, C, amount)`
 4. Wait auth window
 5. **B** does `settleWithReceipt(..., championName, vendorName)`
-6. **D** receives USDC, **C** receives ReceiptNFT, view `tokenURI` in browser
+6. **D** receives USDC, **C** receives ReceiptNFT — fetch `tokenURI(<id>)` in a browser and verify the receipt JSON + inline SVG render
 7. Wait refund window
 8. Anyone calls `sweep(...)` — PURPOSE burned
 

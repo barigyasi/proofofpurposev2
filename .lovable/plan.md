@@ -1,69 +1,20 @@
-## Plan — minimal ReceiptNFT + off-chain art
+Update `contracts/DEPLOYMENT.md` to match the new minimal ReceiptNFT design (no on-chain SVG; metadata served by the `receipt-metadata` edge function).
 
-Strip `ReceiptNFT.sol` down to the smallest possible soulbound ERC-721, store only the data needed to look up the receipt later, and serve the JSON + SVG from a new `receipt-metadata` edge function that reads on-chain state.
+### Changes
 
-### 1. Slim down `contracts/ReceiptNFT.sol`
+1. **Line 64** — update the one-line description of ReceiptNFT in the contracts list: soulbound ERC-721 with off-chain JSON+SVG served by the `receipt-metadata` edge function.
 
-Keep:
-- Same interface signature for `mintReceipt(...)` (so `VendorRedemptionV2` keeps calling it unchanged — no VR_V2 redeploy needed).
-- Same constructor, roles (`DEFAULT_ADMIN_ROLE`, `MINTER_ROLE`), errors, events.
-- Soulbound `_update`, `approve`/`setApprovalForAll` reverts.
-- Storage: `receipts[tokenId]` (full `Receipt` struct including `championName`/`vendorName`) + `tokenIdForCharge[chargeId]`. Keeping the names on-chain means the edge function never has to trust a DB for the wallet's display.
-- `setBaseURI(string)` admin-only setter + `_baseURI()` override.
+2. **Lines 69–73** — extend the post-deploy checklist with the new step: `receiptNFT.setBaseURI("https://szlnvjzluzplpvzigboo.supabase.co/functions/v1/receipt-metadata/")`, and clarify that `RECEIPT_NFT_ADDRESS` is a Lovable Cloud secret used by the edge function.
 
-Remove:
-- `_renderSVG`, `_svgHeader`, `_svgChampion`, `_svgVendor`, `_svgAmount`, `_svgFooter`.
-- `_jsonHead`, `_jsonAttrs`, the custom `tokenURI`.
-- `_formatUSDC`, `_formatPURPOSE`, `_pad2`, `_shortAddr`, `_shortHex`, `_escape`.
-- SVG palette constants.
-- `Strings` and `Base64` imports.
+3. **Section 6.5 (lines 538–578)** — rewrite the ReceiptNFT test plan:
+   - Add a "set baseURI first" step before tokenURI tests.
+   - Replace Test 4 (decode base64 data URL) with: `tokenURI(1)` returns `<baseURI>1`; fetch that URL in a browser and verify JSON renders + inline SVG paints the brutalist (near-black + acid yellow) receipt card.
+   - Add a Test 4b: call `getReceipt(1)` and check tuple fields match what was minted.
+   - Remove Test 5 (on-chain XML/JSON escape safety) — escaping now happens in the edge function; replace it with a note that the edge function HTML-escapes name fields, and suggest minting with `championName = 'Alice "Hacker" </script>'` and confirming the fetched JSON still parses.
+   - Keep Tests 1, 2, 3, 6, 7 as-is (mint gating, soulbound, dup chargeId, end-to-end, receipt-mint-failure isolation).
 
-Result: bytecode well under 24 KB, zero stack pressure, no `viaIR` needed. Default `tokenURI` becomes `<baseURI><tokenId>`.
+4. **Line 591** — tweak the smoke-test wording from "view `tokenURI` in browser" to "fetch `tokenURI(<id>)` in browser and verify the receipt JSON + SVG render".
 
-### 2. Add a public read getter
+5. Add a short callout near section 6.5 explaining: art changes don't require redeploy — just update the edge function. To rotate the metadata host (e.g. IPFS), call `setBaseURI` again.
 
-Add `getReceipt(uint256 tokenId) external view returns (Receipt memory)` so the edge function (and anyone) can fetch all fields in one `eth_call` without decoding the auto-generated tuple getter quirks.
-
-### 3. New edge function `receipt-metadata`
-
-`supabase/functions/receipt-metadata/index.ts`, public (no JWT), `verify_jwt = false` via config.toml.
-
-Route: `GET /receipt-metadata/:tokenId` (also accept `?tokenId=` for flexibility).
-
-Behavior:
-- Validate `tokenId` (positive integer, fits in uint256).
-- Use viem + the Base mainnet RPC to call `getReceipt(tokenId)` on the ReceiptNFT address (read from env var `RECEIPT_NFT_ADDRESS`, chain from `CHAIN_ID` defaulting to Base mainnet).
-- If the token doesn't exist, return 404 JSON.
-- Build the OpenSea-style JSON metadata (name, description, image, attributes) in TypeScript — easy to evolve later without redeploying the contract.
-- Generate the SVG as a data URL inside the JSON. The SVG is the same brutalist look (near-black bg `hsl(0 0% 4%)`, acid yellow primary `hsl(60 100% 50%)`) per project brand, with: receipt #, champion name + short addr, vendor name + short addr, big $X.YY, PURPOSE redeemed, charge hash, settled timestamp, SOULBOUND badge.
-- Set `Cache-Control: public, max-age=3600, s-maxage=86400` so OpenSea/wallets cache it.
-- Return JSON with proper CORS headers.
-
-Why an SVG data URL inside JSON (instead of a second `/receipt-image/:id` route): one fewer round trip, easier to reason about, and keeps everything cacheable as one document.
-
-### 4. Wire-up
-
-- After deploying the slimmed `ReceiptNFT`, admin calls `setBaseURI("https://<project>.supabase.co/functions/v1/receipt-metadata/")` once.
-- Re-grant `MINTER_ROLE` to `VendorRedemptionV2` and to the backend signer (same procedure as before).
-- Update `VR_V2.setReceiptNFT(<new>)`.
-- Update `src/config/contracts.ts` and `src/contracts/abis/ReceiptNFT.json` with the new address + ABI.
-
-### 5. Frontend `/receipt/:tokenId` page (light touch)
-
-The existing `src/pages/Receipt.tsx` already reads chain state — point it at the new contract address and keep using the same data. The NFT image people see in their wallet / OpenSea comes from the edge function automatically; the in-app receipt page can keep rendering its own React version for a better UX.
-
-### Technical details
-
-- `Receipt` struct stays as-is so VR_V2's `mintReceipt(...)` call site keeps working unchanged → **no VR_V2 redeploy required**.
-- Storing `championName`/`vendorName` on-chain is the only "expensive" choice; it's already what's happening today and it guarantees the receipt art is verifiable on-chain without trusting our DB.
-- Edge function uses `npm:viem` for the read call; no signing, no secrets beyond the public RPC URL.
-- If you ever want to flip to IPFS later, it's a one-line change to `setBaseURI` — the contract doesn't care where the metadata lives.
-
-### What you'll do after I ship the code
-
-1. Recompile new `ReceiptNFT.sol` in Remix (0.8.24, optimizer on, runs 200) — will be tiny.
-2. Deploy `ReceiptNFT(admin)` on Base.
-3. Admin calls `setBaseURI("https://szlnvjzluzplpvzigboo.supabase.co/functions/v1/receipt-metadata/")`.
-4. Admin calls `grantRole(MINTER_ROLE, <VR_V2>)` and `grantRole(MINTER_ROLE, <backend signer>)`.
-5. Admin calls `VR_V2.setReceiptNFT(<new ReceiptNFT>)`.
-6. Paste the new address — I'll update `src/config/contracts.ts` + ABI.
+No other sections need changes. No code-file edits — docs only.
