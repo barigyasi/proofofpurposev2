@@ -4,6 +4,8 @@ import { useActiveAccount } from "thirdweb/react";
 import { toast } from "sonner";
 import { useEffectiveRoles } from "@/hooks/useEffectiveRoles";
 import { useDraftVotes, type DraftWithVotes, type VoteChoice } from "@/hooks/useDraftVotes";
+import { useVotingEligibility } from "@/hooks/useVotingEligibility";
+import { VotingPowerCard, VotingPowerPill } from "@/components/governance/VotingPowerCard";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Seo } from "@/components/Seo";
@@ -66,15 +68,26 @@ export default function Governance() {
   );
   const pastCount = allDrafts.length - drafts.length;
 
-  const canVote = useMemo(
+  const hasVoterRole = useMemo(
     () => roles.some((r) => r === "donor" || r === "catalyst" || r === "admin"),
     [roles],
   );
   const isAdmin = roles.includes("admin");
+  const eligibility = useVotingEligibility(account?.address);
+  // Admins can always vote; everyone else needs an active membership + delegation.
+  const canVote = isAdmin || (hasVoterRole && eligibility.eligible);
 
   async function vote(draftId: string, choice: VoteChoice) {
     if (!account?.address) {
       toast.error("Connect your wallet to vote — votes are tied to a wallet address for the on-chain DAO.");
+      return;
+    }
+    if (!isAdmin && !eligibility.eligible) {
+      if (eligibility.reason === "no-membership")
+        toast.error("Mint a membership first ($5+ on /donate).");
+      else if (eligibility.reason === "not-delegated")
+        toast.error("Activate your voting power first.");
+      else toast.error("You're not eligible to vote yet.");
       return;
     }
     try {
