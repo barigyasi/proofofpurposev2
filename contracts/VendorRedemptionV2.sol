@@ -8,6 +8,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 interface IPurposeBurnable {
+    function burn(uint256 amount) external;
     function burnFrom(address account, uint256 amount) external;
     function transfer(address to, uint256 amount) external returns (bool);
     function transferFrom(address from, address to, uint256 amount) external returns (bool);
@@ -383,7 +384,7 @@ contract VendorRedemptionV2 is AccessControl, ReentrancyGuard, Pausable {
         if (block.timestamp <= uint256(c.capturedAt) + c.refundWindow) revert RefundWindowExpired();
 
         c.state = State.Finalized;
-        purposeToken.burnFrom(address(this), c.purposeAmount);
+        purposeToken.burn(c.purposeAmount);
         emit ChargeFinalized(chargeId, c.purposeAmount);
     }
 
