@@ -1,63 +1,43 @@
-# SEO Pass Plan
+## Fix `Stack too deep` in `ReceiptNFT._renderSVG`
 
-## Goal
-Make the site fully crawlable, indexable, and shareable with proper titles, descriptions, sitemaps, canonical URLs, and structured data — all in the brutalist near-black + acid-yellow brand.
+### Cause
+One `abi.encodePacked(...)` call with ~30 arguments + 4 local color strings + the `Receipt memory r` struct fields blows past the EVM's 16-slot stack limit. Remix's default compile is without `viaIR`, so it fails at the first reference deep in the expression (`_shortAddr(r.champion)` on line 152).
 
-## What we'll do
+### Fix: split the SVG builder into chunks
+Refactor `_renderSVG` so each helper returns a small `string` and the top-level function just concatenates 3-4 chunks. No behavior change, no ABI change, no redeploy gymnastics — pure compile-time fix that also works on stock solc without `viaIR`.
 
-### 1. Sitewide foundation (index.html)
-- Add `<link rel="canonical" href="/" />`
-- Add JSON-LD Organization schema so search engines understand the brand
-- Add `og:locale`, `og:site_name` meta tags
+Proposed structure inside `ReceiptNFT.sol`:
 
-### 2. Generate a brutalist OG share image
-- Create a 1200×630 PNG: black background, acid-yellow "PROOF OF PURPOSE" in Archivo Black, thick 2px borders, mono tagline — matches the in-app brutalist look
-- Update `og:image` and `twitter:image` in `index.html` (currently pointing at the tiny favicon)
-- This is what Twitter/LinkedIn/Facebook show when someone pastes the link
+```text
+_renderSVG(tokenId, r)
+  ├─ _svgHeader(tokenId)              // <svg>, frame, "PROOF OF PURPOSE", "RECEIPT #N", divider
+  ├─ _svgParties(r)                   // CHAMPION block + VENDOR block + divider
+  ├─ _svgAmount(r)                    // AMOUNT label, $X.YY, "N.NN PURPOSE redeemed", divider
+  └─ _svgFooter(r)                    // CHARGE, SETTLED, SOULBOUND badge, </svg>
+```
 
-### 3. Sitemap
-- Create `scripts/generate-sitemap.ts` that lists every public, indexable route
-- Wire `predev` and `prebuild` scripts in `package.json` so the sitemap regenerates on every build
-- Output to `public/sitemap.xml`
-- **Routes included:** `/`, `/about`, `/about/whitepaper`, `/donate`, `/vendors`, `/governance`, `/governance/past`
-- **Routes excluded:** `/login`, `/dashboard`, `/onboarding`, `/catalyst`, `/vendor`, `/apply/*`, `/admin/*`, `/receipts/*`, `/bulletin`, `*` — auth-gated, admin-only, or dynamic; should not be indexed
+Each helper:
+- Takes only what it needs (e.g. `_svgParties` takes `address`, `address`, `string memory`, `string memory`).
+- Declares the 3-4 color constants it uses locally, or we hoist them into `internal constant string` at contract scope to avoid repetition.
+- Uses its own `abi.encodePacked` with ≤ ~10 args, well under the stack limit.
 
-### 4. Per-page SEO with react-helmet-async
-- Install `react-helmet-async`
-- Wrap the app in `<HelmetProvider>` in `src/main.tsx`
-- Add `<Helmet>` blocks to every public page with unique:
-  - `<title>` (under 60 chars with keyword)
-  - `<meta name="description">` (under 160 chars)
-  - `<link rel="canonical">`
-  - `<meta property="og:title">`, `og:description`, `og:url`
-  - JSON-LD `WebPage` per route; `Article` for the Whitepaper
+### Cleanup along the way
+- Promote the four palette strings to `string constant` at contract scope so every helper reads them without re-declaring locals:
+  ```solidity
+  string constant SVG_BG     = "#0A1729";
+  string constant SVG_FG     = "#FFFFFF";
+  string constant SVG_MUTED  = "#94A3B8";
+  string constant SVG_ACCENT = "#F2C033";
+  ```
+  (Keeping the existing navy/gold palette — brand rebrand to brutalist black + acid yellow is a separate question; ping me if you want that swap in the same edit.)
 
-**Page-by-page titles/descriptions:**
+### Files touched
+- `contracts/ReceiptNFT.sol` — refactor `_renderSVG` into 4 internal pure helpers; add 4 string constants. No changes to storage, events, errors, `mintReceipt`, soulbound logic, or `tokenURI` shape.
 
-| Page | Title | Description |
-|------|-------|-------------|
-| `/` | Proof of Purpose — On-chain youth impact | Wallet-primary youth impact on Base. Donors fund. Champions earn PURPOSE. Vendors redeem. |
-| `/about` | About — Proof of Purpose | An on-chain nonprofit rewarding youth for real-world community work. Learn how it works. |
-| `/about/whitepaper` | Whitepaper — Proof of Purpose | Full protocol documentation: smart contracts, tokenomics, governance, and how to participate. |
-| `/donate` | Donate — Proof of Purpose | Fund the mission in USDC on Base. No account needed. Transparent on-chain receipts. |
-| `/vendors` | Vendors — Proof of Purpose | Approved local businesses where Champions can spend $PURPOSE tokens. |
-| `/governance` | Governance — Proof of Purpose | Vote on bounty proposals. 1 membership = 1 vote. Transparent DAO governance on Base. |
-| `/governance/past` | Past Proposals — Proof of Purpose | Archive of closed bounty proposals. See what passed, failed, and made an impact. |
+### Verification
+- Recompile in Remix with default settings (no `viaIR`) — should succeed.
+- `tokenURI(tokenId)` output is byte-identical to the pre-refactor version (same SVG bytes → same base64 → same JSON).
+- No redeploy needed yet since the contract isn't live on the new redemption manager wiring; if it is already deployed, this requires a fresh deploy + re-granting `MINTER_ROLE` to `VendorRedemptionV2 (0x9dAf…Defe6)`.
 
-### 5. robots.txt update
-- Add `Sitemap: /sitemap.xml` directive so crawlers discover it automatically
-- Keep existing `Allow: /` blocks
-
-### 6. Remove the Whitepaper useEffect head hack
-- The Whitepaper page currently mutates `document.title` and meta description via `useEffect`
-- Replace with `<Helmet>` once `react-helmet-async` is in place
-
-## Technical details
-- **Library:** `react-helmet-async` (lightweight, React 18 compatible)
-- **Canonicals:** relative paths (`href="/about"` etc.) since no custom domain is set yet
-- **JSON-LD types:** `Organization` in `index.html`, `WebPage` per route via Helmet, `Article` for Whitepaper
-- **No functional changes:** no edits to auth, admin, dashboards, or business logic — purely metadata and one OG image asset
-
-## Out of scope (later)
-- Per-receipt SEO (`/receipts/:tokenId`) — needs SSR/pre-rendering since social crawlers don't run JS for dynamic OG tags
-- Per-bounty/proposal SEO — same limitation
+### Optional alternative
+If you'd rather not refactor, enable `viaIR: true` + optimizer in Remix's "Advanced Configurations" and the current code compiles as-is. The refactor is preferred because it keeps the contract portable across toolchains (Foundry, Hardhat default configs, BaseScan verification with stock settings).
