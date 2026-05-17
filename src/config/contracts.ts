@@ -34,6 +34,23 @@ export const CONTRACTS_V2 = {
 
 export const V2_LIVE = Boolean(CONTRACTS_V2.VENDOR_REDEMPTION) && Boolean(CONTRACTS_V2.PURPOSE_TOKEN);
 
+/**
+ * Single source of truth for "the live contract addresses the app should read from".
+ * Flips to V2 the moment V2_LIVE is true.
+ */
+export const ACTIVE = {
+  PURPOSE_TOKEN: V2_LIVE ? CONTRACTS_V2.PURPOSE_TOKEN : CONTRACTS.PURPOSE_TOKEN,
+  BOUNTY_MANAGER: V2_LIVE ? CONTRACTS_V2.BOUNTY_MANAGER : CONTRACTS.BOUNTY_MANAGER,
+  VENDOR_REDEMPTION: V2_LIVE ? CONTRACTS_V2.VENDOR_REDEMPTION : CONTRACTS.VENDOR_REDEMPTION,
+  TREASURY: CONTRACTS.TREASURY,
+  USDC: CONTRACTS.USDC_BASE,
+  DONATION_SPLIT: CONTRACTS.DONATION_SPLIT,
+  TEAM_SPLIT: CONTRACTS.TEAM_SPLIT,
+} as const;
+
+/** Minimum recommended PURPOSE per participant for new bounties. */
+export const MIN_RECOMMENDED_REWARD = 25;
+
 // 1 PURPOSE (18 decimals) = 1 USDC (6 decimals); on-chain rate = amount / 1e12
 export const PURPOSE_DECIMALS = 18;
 export const USDC_DECIMALS = 6;
