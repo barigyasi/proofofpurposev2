@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatPurpose, usePurposeBalance } from "@/hooks/usePurposeBalance";
 import { toast } from "sonner";
 import popLogo from "@/assets/pop-logo.png";
+import { useCardTheme } from "@/context/CardThemeContext";
 
 interface Props {
   address: string;
