@@ -51,6 +51,52 @@ function Countdown({ closesAt }: { closesAt: string }) {
   );
 }
 
+function fmtCountdown(totalSec: number): string {
+  if (totalSec <= 0) return "0s";
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = Math.floor(totalSec % 60);
+  if (h > 0) return `${h}h ${String(m).padStart(2, "0")}m ${String(s).padStart(2, "0")}s`;
+  if (m > 0) return `${m}m ${String(s).padStart(2, "0")}s`;
+  return `${s}s`;
+}
+
+/** Live "voting opens in …" / "voting closes in …" pill for an on-chain proposal. */
+function OnChainProposalTimer({ proposalId }: { proposalId: string }) {
+  const { data } = useGovernorProposalState(proposalId);
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const i = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => clearInterval(i);
+  }, []);
+  if (!data) {
+    return <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">// reading chain…</span>;
+  }
+  // decrement locally between RPC refreshes
+  const opensIn = Math.max(0, data.opensInSec - tick);
+  const closesIn = Math.max(0, data.closesInSec - tick);
+  if (data.state === 0) {
+    return (
+      <span className="font-mono text-[10px] uppercase tracking-widest text-primary">
+        ⛓ voting opens in {fmtCountdown(opensIn)}
+      </span>
+    );
+  }
+  if (data.state === 1) {
+    return (
+      <span className="font-mono text-[10px] uppercase tracking-widest text-primary">
+        ⛓ voting open · closes in {fmtCountdown(closesIn)}
+      </span>
+    );
+  }
+  const labels = ["pending","active","canceled","defeated","succeeded","queued","expired","executed"];
+  return (
+    <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+      ⛓ {labels[data.state] ?? `state ${data.state}`}
+    </span>
+  );
+}
+
 function outcome(d: DraftWithVotes) {
   if (d.executed_at) return d.on_chain_bounty_id ? "on-chain" : "approved";
   if (new Date(d.vote_closes_at).getTime() > Date.now()) return null;
