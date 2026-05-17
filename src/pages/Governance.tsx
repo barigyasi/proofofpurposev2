@@ -234,7 +234,7 @@ export default function Governance() {
             return (
               <div key={d.id} className="brutal relative p-0">
                 {/* status ribbon */}
-                <div className="flex items-center justify-between gap-3 border-b-2 border-foreground bg-secondary px-4 py-2">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-foreground bg-secondary px-4 py-2">
                   <p className="font-mono text-[10px] uppercase tracking-widest text-primary">
                     // {result ?? d.status.replace("_", " ")}
                     {" · "}
@@ -242,13 +242,16 @@ export default function Governance() {
                       {d.dao_proposal_id ? "⛓ proposal live on-chain" : "off-chain tally"}
                     </span>
                   </p>
-                  {!closed && d.status === "pending_vote" ? (
-                    <Countdown closesAt={d.vote_closes_at} />
-                  ) : (
-                    <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-                      {result === "passed" ? "✓ passed" : result === "failed" ? "✗ failed" : result === "on-chain" ? "⛓ on-chain" : "closed"}
-                    </span>
-                  )}
+                  <div className="flex items-center gap-3">
+                    {d.dao_proposal_id && <OnChainProposalTimer proposalId={d.dao_proposal_id} />}
+                    {!closed && d.status === "pending_vote" ? (
+                      <Countdown closesAt={d.vote_closes_at} />
+                    ) : (
+                      <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                        {result === "passed" ? "✓ passed" : result === "failed" ? "✗ failed" : result === "on-chain" ? "⛓ on-chain" : "closed"}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="p-5">
