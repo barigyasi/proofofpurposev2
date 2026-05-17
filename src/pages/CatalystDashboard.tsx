@@ -25,12 +25,31 @@ type Draft = {
   status: string;
   dao_proposal_id: number | null;
   on_chain_bounty_id: number | null;
+  on_chain_tx_hash: string | null;
+  vote_closes_at: string;
   created_at: string;
   image_urls: string[] | null;
   video_url: string | null;
   deck_url: string | null;
   deck_filename: string | null;
 };
+
+function badge(d: Draft): { label: string; tone: "primary" | "muted" | "destructive" } {
+  if (d.on_chain_bounty_id !== null) return { label: "⛓ ON-CHAIN BOUNTY", tone: "primary" };
+  if (d.dao_proposal_id) {
+    const closed = new Date(d.vote_closes_at).getTime() <= Date.now();
+    return { label: closed ? "VOTE CLOSED · AWAITING EXECUTION" : "⛓ VOTE LIVE ON-CHAIN", tone: "primary" };
+  }
+  if (d.status === "pending_vote") {
+    const closed = new Date(d.vote_closes_at).getTime() <= Date.now();
+    return closed
+      ? { label: "VOTE CLOSED · AWAITING ADMIN", tone: "muted" }
+      : { label: "OFF-CHAIN TALLY · AWAITING ADMIN TO POST", tone: "muted" };
+  }
+  if (d.status === "rejected") return { label: "REJECTED", tone: "destructive" };
+  if (d.status === "queued") return { label: "QUEUED", tone: "muted" };
+  return { label: d.status.toUpperCase(), tone: "muted" };
+}
 
 const EMPTY_MEDIA: DraftMedia = { imageUrls: [], videoUrl: null, deckUrl: null, deckFilename: null };
 
