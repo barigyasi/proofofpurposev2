@@ -49,6 +49,7 @@ export function CreateBountyDialog({ open, onOpenChange }: Props) {
   const newCommitment = rewardNum * Math.max(1, maxNum);
   const projectedHeadroom = treasury ? treasury.headroom - newCommitment : null;
   const wouldOverdraw = projectedHeadroom !== null && projectedHeadroom < 0;
+  const belowRecommended = rewardNum > 0 && rewardNum < MIN_RECOMMENDED_REWARD;
 
   async function submit() {
     if (!name || !reward || !maxP) {
