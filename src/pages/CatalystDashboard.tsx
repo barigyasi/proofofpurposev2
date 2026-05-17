@@ -23,7 +23,7 @@ type Draft = {
   reward_purpose: number;
   max_participants: number;
   status: string;
-  dao_proposal_id: number | null;
+  dao_proposal_id: string | null;
   on_chain_bounty_id: number | null;
   on_chain_tx_hash: string | null;
   vote_closes_at: string;
