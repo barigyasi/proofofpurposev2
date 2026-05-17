@@ -179,7 +179,7 @@ export function ChampionDashboard() {
 
       {account?.address && <ChampionReceiptsStrip wallet={account.address} />}
 
-      <RedeemQRDialog open={qrOpen} onOpenChange={setQrOpen} />
+      
       {checkInBounty && account && (
         <CheckInQRDialog
           open={!!checkInBounty}
