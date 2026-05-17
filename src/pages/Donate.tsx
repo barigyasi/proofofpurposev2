@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { membershipDataUri, monthLabel, currentMonthKey } from "@/lib/membershipArt";
 import { MembershipsStrip } from "@/components/membership/MembershipsStrip";
+import { VotingPowerCard } from "@/components/governance/VotingPowerCard";
 import { Seo } from "@/components/Seo";
 
 function toUsdc(amount: string): bigint {
