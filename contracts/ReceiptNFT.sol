@@ -108,22 +108,46 @@ contract ReceiptNFT is ERC721, AccessControl {
         _requireOwned(tokenId);
         Receipt memory r = receipts[tokenId];
 
-        string memory image = _renderSVG(tokenId, r);
+        string memory imageB64 = Base64.encode(bytes(_renderSVG(tokenId, r)));
+        string memory champ = _escape(r.championName);
+        string memory vend = _escape(r.vendorName);
+
         string memory json = string(abi.encodePacked(
+            _jsonHead(tokenId, champ, vend, imageB64),
+            _jsonAttrs(champ, vend, r)
+        ));
+        return string(abi.encodePacked("data:application/json;base64,", Base64.encode(bytes(json))));
+    }
+
+    function _jsonHead(
+        uint256 tokenId,
+        string memory champ,
+        string memory vend,
+        string memory imageB64
+    ) internal pure returns (string memory) {
+        return string(abi.encodePacked(
             '{"name":"POP Receipt #', tokenId.toString(),
             '","description":"Soulbound proof-of-purchase receipt issued by Proof of Purpose. Champion: ',
-            _escape(r.championName), ' | Vendor: ', _escape(r.vendorName),
-            '","image":"data:image/svg+xml;base64,', Base64.encode(bytes(image)),
-            '","attributes":[',
-              '{"trait_type":"Champion","value":"', _escape(r.championName), '"},',
-              '{"trait_type":"Vendor","value":"', _escape(r.vendorName), '"},',
+            champ, ' | Vendor: ', vend,
+            '","image":"data:image/svg+xml;base64,', imageB64, '",'
+        ));
+    }
+
+    function _jsonAttrs(
+        string memory champ,
+        string memory vend,
+        Receipt memory r
+    ) internal pure returns (string memory) {
+        return string(abi.encodePacked(
+            '"attributes":[',
+              '{"trait_type":"Champion","value":"', champ, '"},',
+              '{"trait_type":"Vendor","value":"', vend, '"},',
               '{"trait_type":"USDC","display_type":"number","value":', _formatUSDC(r.usdcAmount), '},',
               '{"trait_type":"PURPOSE","display_type":"number","value":', _formatPURPOSE(r.purposeAmount), '},',
               '{"trait_type":"Settled At","display_type":"date","value":', uint256(r.settledAt).toString(), '},',
               '{"trait_type":"Soulbound","value":"true"}',
             ']}'
         ));
-        return string(abi.encodePacked("data:application/json;base64,", Base64.encode(bytes(json))));
     }
 
     function _renderSVG(uint256 tokenId, Receipt memory r) internal pure returns (string memory) {
