@@ -153,7 +153,8 @@ contract ReceiptNFT is ERC721, AccessControl {
     function _renderSVG(uint256 tokenId, Receipt memory r) internal pure returns (string memory) {
         return string(abi.encodePacked(
             _svgHeader(tokenId),
-            _svgParties(r.champion, r.vendor, r.championName, r.vendorName),
+            _svgChampion(r.champion, r.championName),
+            _svgVendor(r.vendor, r.vendorName),
             _svgAmount(r.usdcAmount, r.purposeAmount),
             _svgFooter(r.chargeId, r.settledAt)
         ));
@@ -170,16 +171,16 @@ contract ReceiptNFT is ERC721, AccessControl {
         ));
     }
 
-    function _svgParties(
-        address champion,
-        address vendor,
-        string memory championName,
-        string memory vendorName
-    ) internal pure returns (string memory) {
+    function _svgChampion(address champion, string memory championName) internal pure returns (string memory) {
         return string(abi.encodePacked(
             '<text x="40" y="160" fill="', SVG_MUTED, '" font-size="11" letter-spacing="2">CHAMPION</text>',
             '<text x="40" y="185" fill="', SVG_FG, '" font-size="18">', _escape(championName), '</text>',
-            '<text x="40" y="205" fill="', SVG_MUTED, '" font-size="11">', _shortAddr(champion), '</text>',
+            '<text x="40" y="205" fill="', SVG_MUTED, '" font-size="11">', _shortAddr(champion), '</text>'
+        ));
+    }
+
+    function _svgVendor(address vendor, string memory vendorName) internal pure returns (string memory) {
+        return string(abi.encodePacked(
             '<text x="40" y="245" fill="', SVG_MUTED, '" font-size="11" letter-spacing="2">VENDOR</text>',
             '<text x="40" y="270" fill="', SVG_FG, '" font-size="18">', _escape(vendorName), '</text>',
             '<text x="40" y="290" fill="', SVG_MUTED, '" font-size="11">', _shortAddr(vendor), '</text>',
