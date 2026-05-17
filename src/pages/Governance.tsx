@@ -192,7 +192,7 @@ export default function Governance() {
                     // {result ?? d.status.replace("_", " ")}
                     {" · "}
                     <span className={d.dao_proposal_id ? "text-primary" : "text-muted-foreground"}>
-                      {d.dao_proposal_id ? "⛓ on-chain" : "off-chain tally"}
+                      {d.dao_proposal_id ? "⛓ proposal live on-chain" : "off-chain tally"}
                     </span>
                   </p>
                   {!closed && d.status === "pending_vote" ? (
@@ -327,7 +327,7 @@ export default function Governance() {
                         rel="noreferrer"
                         className="text-primary underline"
                       >
-                        #{String(d.dao_proposal_id).slice(0, 10)}…
+                        #{String(d.dao_proposal_id).slice(0, 12)}…
                       </a>
                     </p>
                   )}
