@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useBountyAdmin } from "@/hooks/useBountyAdmin";
 import { useTreasuryHeadroom } from "@/hooks/useTreasuryHeadroom";
+import { MIN_RECOMMENDED_REWARD } from "@/config/contracts";
 import { uploadPublicImage } from "@/lib/storage";
 
 interface Props {
@@ -48,6 +49,7 @@ export function CreateBountyDialog({ open, onOpenChange }: Props) {
   const newCommitment = rewardNum * Math.max(1, maxNum);
   const projectedHeadroom = treasury ? treasury.headroom - newCommitment : null;
   const wouldOverdraw = projectedHeadroom !== null && projectedHeadroom < 0;
+  const belowRecommended = rewardNum > 0 && rewardNum < MIN_RECOMMENDED_REWARD;
 
   async function submit() {
     if (!name || !reward || !maxP) {
@@ -153,8 +155,13 @@ export function CreateBountyDialog({ open, onOpenChange }: Props) {
                 inputMode="decimal"
                 value={reward}
                 onChange={(e) => setReward(e.target.value.replace(/[^0-9.]/g, ""))}
-                placeholder="100"
+                placeholder={`${MIN_RECOMMENDED_REWARD}+`}
               />
+              <p className={`mt-1 font-mono text-[10px] uppercase tracking-widest ${belowRecommended ? "text-destructive" : "text-muted-foreground"}`}>
+                {belowRecommended
+                  ? `// below recommended — aim for ${MIN_RECOMMENDED_REWARD}+ per participant`
+                  : `// recommended: ${MIN_RECOMMENDED_REWARD}+ per participant`}
+              </p>
             </div>
             <div>
               <Label>Max participants</Label>

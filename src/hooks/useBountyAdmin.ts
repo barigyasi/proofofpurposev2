@@ -5,11 +5,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { decodeEventLog, parseAbiItem } from "viem";
 import { thirdwebClient, baseChain } from "@/lib/thirdweb";
-import { CONTRACTS, PURPOSE_DECIMALS } from "@/config/contracts";
+import { ACTIVE, PURPOSE_DECIMALS } from "@/config/contracts";
+import { readTreasuryHeadroom } from "@/hooks/useTreasuryHeadroom";
 import { supabase } from "@/integrations/supabase/client";
 
 function bm() {
-  return getContract({ client: thirdwebClient, chain: baseChain, address: CONTRACTS.BOUNTY_MANAGER });
+  return getContract({ client: thirdwebClient, chain: baseChain, address: ACTIVE.BOUNTY_MANAGER });
 }
 
 export function toPurposeWei(amount: string): bigint {
@@ -161,20 +162,10 @@ export function useBountyAdmin() {
       const payouts = (checkedInCount ?? 0) * reward;
 
       if (payouts > 0) {
-        const purpose = getContract({
-          client: thirdwebClient,
-          chain: baseChain,
-          address: CONTRACTS.PURPOSE_TOKEN,
-        });
-        const balanceWei = (await readContract({
-          contract: purpose,
-          method: "function balanceOf(address) view returns (uint256)",
-          params: [CONTRACTS.TREASURY as `0x${string}`],
-        })) as bigint;
-        const balance = Number(balanceWei) / 10 ** PURPOSE_DECIMALS;
+        const { balance } = await readTreasuryHeadroom(); // USDC-backed mintable capacity
         if (balance < payouts) {
           const proceed = window.confirm(
-            `Treasury holds ${balance.toLocaleString()} PURPOSE but this event will mint ${payouts.toLocaleString()} PURPOSE to ${checkedInCount} checked-in participant(s). The on-chain end-event tx will revert. Send anyway?`,
+            `Treasury can back ${balance.toLocaleString()} new PURPOSE (USDC reserve minus circulating supply), but this event will mint ${payouts.toLocaleString()} PURPOSE to ${checkedInCount} checked-in participant(s). The on-chain end-event tx will revert. Send anyway?`,
           );
           if (!proceed) {
             setBusy(false);

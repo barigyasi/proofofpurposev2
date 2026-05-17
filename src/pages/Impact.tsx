@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { getContract, readContract } from "thirdweb";
 import { supabase } from "@/integrations/supabase/client";
 import { thirdwebClient, baseChain } from "@/lib/thirdweb";
-import { CONTRACTS, PURPOSE_DECIMALS } from "@/config/contracts";
+import { ACTIVE, PURPOSE_DECIMALS } from "@/config/contracts";
 import { Seo } from "@/components/Seo";
 
 function useImpactStats() {
@@ -13,7 +13,7 @@ function useImpactStats() {
       const purpose = getContract({
         client: thirdwebClient,
         chain: baseChain,
-        address: CONTRACTS.PURPOSE_TOKEN,
+        address: ACTIVE.PURPOSE_TOKEN,
       });
 
       const [treasuryBalanceWei, totalSupplyWei, donationsRes, championsRes, bountiesRes, vendorsRes] =
@@ -21,7 +21,7 @@ function useImpactStats() {
           readContract({
             contract: purpose,
             method: "function balanceOf(address) view returns (uint256)",
-            params: [CONTRACTS.TREASURY as `0x${string}`],
+            params: [ACTIVE.TREASURY as `0x${string}`],
           }) as Promise<bigint>,
           readContract({
             contract: purpose,
@@ -110,24 +110,24 @@ export default function Impact() {
 
           <div className="mt-12 grid gap-5 md:grid-cols-2">
             <a
-              href={`https://basescan.org/address/${CONTRACTS.TREASURY}`}
+              href={`https://basescan.org/address/${ACTIVE.TREASURY}`}
               target="_blank"
               rel="noreferrer"
               className="brutal brutal-hover block p-6"
             >
               <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">// treasury</p>
               <p className="mt-2 font-display text-2xl">VERIFY ON BASESCAN ↗</p>
-              <p className="mt-2 break-all font-mono text-[10px] text-muted-foreground">{CONTRACTS.TREASURY}</p>
+              <p className="mt-2 break-all font-mono text-[10px] text-muted-foreground">{ACTIVE.TREASURY}</p>
             </a>
             <a
-              href={`https://basescan.org/token/${CONTRACTS.PURPOSE_TOKEN}`}
+              href={`https://basescan.org/token/${ACTIVE.PURPOSE_TOKEN}`}
               target="_blank"
               rel="noreferrer"
               className="brutal brutal-hover block p-6"
             >
               <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">// $purpose token</p>
               <p className="mt-2 font-display text-2xl">CONTRACT ↗</p>
-              <p className="mt-2 break-all font-mono text-[10px] text-muted-foreground">{CONTRACTS.PURPOSE_TOKEN}</p>
+              <p className="mt-2 break-all font-mono text-[10px] text-muted-foreground">{ACTIVE.PURPOSE_TOKEN}</p>
             </a>
           </div>
         </>

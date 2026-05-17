@@ -7,7 +7,7 @@ import {
 import { toast } from "sonner";
 import { useSessionRoles } from "@/hooks/useSessionRoles";
 import { thirdwebClient, baseChain } from "@/lib/thirdweb";
-import { CONTRACTS } from "@/config/contracts";
+import { ACTIVE } from "@/config/contracts";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { AddressLabel } from "@/components/AddressLabel";
@@ -46,7 +46,7 @@ export default function AdminVendors() {
     setBusy(v.id);
     try {
       const contract = getContract({
-        client: thirdwebClient, chain: baseChain, address: CONTRACTS.VENDOR_REDEMPTION,
+        client: thirdwebClient, chain: baseChain, address: ACTIVE.VENDOR_REDEMPTION,
       });
       const tx = prepareContractCall({
         contract,

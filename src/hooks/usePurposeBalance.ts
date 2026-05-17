@@ -1,18 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { getContract, readContract } from "thirdweb";
 import { thirdwebClient, baseChain } from "@/lib/thirdweb";
-import { CONTRACTS } from "@/config/contracts";
+import { ACTIVE } from "@/config/contracts";
 
 export function usePurposeBalance(address: string | undefined) {
   return useQuery({
-    queryKey: ["purpose-balance", address?.toLowerCase()],
+    queryKey: ["purpose-balance", address?.toLowerCase(), ACTIVE.PURPOSE_TOKEN],
     enabled: !!address,
     refetchInterval: 15000,
     queryFn: async () => {
       const contract = getContract({
         client: thirdwebClient,
         chain: baseChain,
-        address: CONTRACTS.PURPOSE_TOKEN,
+        address: ACTIVE.PURPOSE_TOKEN,
       });
       const raw = (await readContract({
         contract,
