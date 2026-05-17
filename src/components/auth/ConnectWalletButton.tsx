@@ -47,27 +47,54 @@ export function ConnectWalletButton({ mode = "default", label }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account?.address, authedWallet]);
 
+  async function runAuthOnce(walletAddress: string) {
+    const nonceRes = await supabase.functions.invoke("wallet-auth-nonce", {
+      body: { walletAddress },
+    });
+    if (nonceRes.error) throw nonceRes.error;
+    const { message } = nonceRes.data as { nonce: string; message: string };
+
+    const signature = await account!.signMessage({ message });
+
+    const authRes = await supabase.functions.invoke("wallet-auth", {
+      body: { walletAddress, signature, message },
+    });
+    if (authRes.error) {
+      // Surface the JSON error body so we can detect nonce expiry
+      const ctx = (authRes.error as { context?: Response }).context;
+      let body: { error?: string } = {};
+      try {
+        body = ctx ? await ctx.clone().json() : {};
+      } catch { /* ignore */ }
+      const err = new Error(body.error || authRes.error.message);
+      (err as Error & { code?: string }).code = body.error;
+      throw err;
+    }
+    return authRes.data as {
+      userId: string;
+      session: { access_token: string; refresh_token: string };
+    };
+  }
+
   async function authenticate() {
     if (!account) return;
     setAuthing(true);
     try {
       const walletAddress = account.address;
-      const nonceRes = await supabase.functions.invoke("wallet-auth-nonce", {
-        body: { walletAddress },
-      });
-      if (nonceRes.error) throw nonceRes.error;
-      const { message } = nonceRes.data as { nonce: string; message: string };
 
-      const signature = await account.signMessage({ message });
-
-      const authRes = await supabase.functions.invoke("wallet-auth", {
-        body: { walletAddress, signature, message },
-      });
-      if (authRes.error) throw authRes.error;
-      const { userId, session } = authRes.data as {
-        userId: string;
-        session: { access_token: string; refresh_token: string };
-      };
+      let result;
+      try {
+        result = await runAuthOnce(walletAddress);
+      } catch (e) {
+        const code = (e as Error & { code?: string }).code ?? "";
+        // Auto-retry once on stale/expired nonce (concurrent invoke, slow signer, etc.)
+        if (/Nonce missing or expired|Nonce mismatch/i.test(code)) {
+          result = await runAuthOnce(walletAddress);
+        } else {
+          throw e;
+        }
+      }
+      const { userId, session } = result;
 
       const { error } = await supabase.auth.setSession({
         access_token: session.access_token,
