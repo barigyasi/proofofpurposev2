@@ -267,18 +267,23 @@ export default function CatalystDashboard() {
       )}
 
       <div className="mt-10">
-        <h2 className="font-display text-2xl border-b-2 border-foreground pb-2">YOUR DRAFTS</h2>
+        <h2 className="font-display text-2xl border-b-2 border-foreground pb-2">MY PROPOSALS</h2>
         <div className="mt-4 space-y-3">
           {drafts.length === 0 ? (
-            <p className="font-mono text-xs text-muted-foreground">// no drafts yet</p>
+            <p className="font-mono text-xs text-muted-foreground">// no proposals yet</p>
           ) : (
             drafts.map((d) => {
               const imgs = d.image_urls ?? [];
+              const b = badge(d);
+              const toneCls =
+                b.tone === "primary" ? "text-primary"
+                : b.tone === "destructive" ? "text-destructive"
+                : "text-muted-foreground";
               return (
                 <div key={d.id} className="brutal p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="font-mono text-[10px] uppercase text-primary">{d.status}</p>
+                      <p className={`font-mono text-[10px] uppercase tracking-widest ${toneCls}`}>// {b.label}</p>
                       <h3 className="mt-1 font-display text-xl">{d.name}</h3>
                       <p className="mt-1 text-sm text-muted-foreground">{d.description}</p>
                       {(imgs.length > 0 || d.video_url || d.deck_url) && (
@@ -287,6 +292,16 @@ export default function CatalystDashboard() {
                           {d.video_url && <>🎞️ </>}
                           {d.deck_url && <>📊 </>}
                         </p>
+                      )}
+                      {d.on_chain_tx_hash && (
+                        <a
+                          href={`https://basescan.org/tx/${d.on_chain_tx_hash}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-2 inline-block font-mono text-[10px] text-primary underline"
+                        >
+                          view proposal tx ↗
+                        </a>
                       )}
                     </div>
                     <p className="font-display text-lg text-primary">{d.reward_purpose} ⨯ {d.max_participants}</p>
