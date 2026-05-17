@@ -324,25 +324,39 @@ export function PurposeCard({ address, onShowQR }: Props) {
                 <p
                   className={`font-mono text-[10px] uppercase tracking-[0.25em] ${subText(variant)}`}
                 >
-                  expires 5:00
+                  {qrPayload ? "expires 5:00" : "tap to generate"}
                 </p>
               </div>
 
-              <div className="rounded-xl bg-white p-2 shadow-2xl">
-                {qrError ? (
-                  <p className="w-44 p-4 text-center text-xs text-destructive">
+              <div className="flex flex-col items-center gap-3">
+                <div className="rounded-xl bg-white p-2 shadow-2xl">
+                  {qrPayload ? (
+                    <QRCodeSVG
+                      value={qrPayload}
+                      size={150}
+                      level="L"
+                      bgColor="#ffffff"
+                      fgColor="#000000"
+                    />
+                  ) : (
+                    <button
+                      onClick={generateQr}
+                      disabled={signing}
+                      className="flex h-[150px] w-[150px] flex-col items-center justify-center gap-2 bg-foreground text-background hover:bg-foreground/90 disabled:opacity-60"
+                    >
+                      <QrCode className="h-8 w-8 text-primary" />
+                      <span className="font-display text-xs">
+                        {signing ? "SIGNING…" : "GENERATE"}
+                      </span>
+                    </button>
+                  )}
+                </div>
+                {qrError && (
+                  <p
+                    className={`max-w-[200px] text-center font-mono text-[10px] uppercase tracking-wider ${variant === "signal" ? "text-foreground/80" : "text-background/80"}`}
+                  >
                     {qrError}
                   </p>
-                ) : qrPayload ? (
-                  <QRCodeSVG
-                    value={qrPayload}
-                    size={150}
-                    level="L"
-                    bgColor="#ffffff"
-                    fgColor="#000000"
-                  />
-                ) : (
-                  <Skeleton className="h-[150px] w-[150px] bg-foreground/10" />
                 )}
               </div>
 
