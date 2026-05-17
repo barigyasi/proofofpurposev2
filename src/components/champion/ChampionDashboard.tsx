@@ -95,33 +95,26 @@ export function ChampionDashboard() {
   return (
     <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
       <ChampionChargeWatcher />
-      <div className="border-b-2 border-foreground pb-6">
+      <div className="flex items-baseline justify-between border-b-2 border-foreground pb-4">
         <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
-          // champion dashboard
+          // champion
         </p>
-        <h1 className="mt-3 font-display text-5xl sm:text-7xl">
-          WHAT'S<br />
-          POPPIN, <span className="text-primary">CHAMP?</span>
-        </h1>
+        <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+          {account.address.slice(0, 6)}…{account.address.slice(-4)}
+        </p>
       </div>
 
       <div className="mt-6">
         <V2StatusBanner context="champion" />
       </div>
 
+      {/* BOUNTIES — moved to top */}
       <div className="mt-8">
-        <PurposeBalanceCard
-          address={account.address}
-          onShowQR={() => setQrOpen(true)}
-        />
-      </div>
-
-      <div className="mt-12">
         <SectionDivider label="ACTIVE BOUNTIES" />
         {isLoading ? (
           <Skeleton className="h-24 w-full" />
         ) : active.length === 0 ? (
-          <p className="py-10 text-center font-mono text-sm text-muted-foreground">
+          <p className="py-6 text-center font-mono text-sm text-muted-foreground">
             // no active bounties yet
           </p>
         ) : (
@@ -155,12 +148,12 @@ export function ChampionDashboard() {
         )}
       </div>
 
-      <div className="mt-12">
+      <div className="mt-10">
         <SectionDivider label="AVAILABLE BOUNTIES" />
         {isLoading ? (
           <Skeleton className="h-24 w-full" />
         ) : available.length === 0 ? (
-          <p className="py-10 text-center font-mono text-sm text-muted-foreground">
+          <p className="py-6 text-center font-mono text-sm text-muted-foreground">
             // nothing available — check back soon
           </p>
         ) : (
@@ -177,6 +170,17 @@ export function ChampionDashboard() {
             ))}
           </div>
         )}
+      </div>
+
+      {/* PURPOSE CARD — Cash App style */}
+      <div className="mt-12">
+        <SectionDivider label="YOUR PURPOSE CARD" />
+        <div className="pt-4">
+          <PurposeCard
+            address={account.address}
+            onShowQR={() => setQrOpen(true)}
+          />
+        </div>
       </div>
 
       <MembershipsStrip wallet={account?.address} />
