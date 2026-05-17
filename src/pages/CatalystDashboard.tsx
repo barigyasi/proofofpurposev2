@@ -103,6 +103,13 @@ export default function CatalystDashboard() {
     setDrafts((data ?? []) as Draft[]);
   }
   useEffect(() => { load(); }, [session]);
+  useEffect(() => {
+    const ch = supabase
+      .channel("catalyst-drafts")
+      .on("postgres_changes", { event: "*", schema: "public", table: "bounty_drafts" }, () => load())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, []);
 
   async function submitDraft() {
     if (!name || !reward || !maxP) return toast.error("Fill required fields");
