@@ -185,15 +185,11 @@ export default function Whitepaper() {
                   </tr>
                 </thead>
                 <tbody>
-                  {CONTRACT_ROWS.map(({ label, addr, desc, pending }) => (
+                  {CONTRACT_ROWS.map(({ label, addr, desc }) => (
                     <tr key={label} className="border-t border-foreground/30 align-top">
                       <td className="px-3 py-2 font-display text-foreground">{label}</td>
                       <td className="px-3 py-2 font-mono">
-                        {pending || !addr ? (
-                          <span className="rounded border border-primary/60 px-2 py-0.5 text-[10px] uppercase tracking-widest text-primary">
-                            Not yet deployed
-                          </span>
-                        ) : (
+                        {addr ? (
                           <a
                             className="text-primary underline break-all"
                             target="_blank"
@@ -202,6 +198,10 @@ export default function Whitepaper() {
                           >
                             {addr}
                           </a>
+                        ) : (
+                          <span className="rounded border border-primary/60 px-2 py-0.5 text-[10px] uppercase tracking-widest text-primary">
+                            Not yet deployed
+                          </span>
                         )}
                       </td>
                       <td className="px-3 py-2">{desc}</td>
@@ -212,10 +212,9 @@ export default function Whitepaper() {
             </div>
 
             <p className="text-xs">
-              <span className="text-foreground">Note:</span> the V2 contracts (PURPOSE Token,
-              Bounty Manager, Vendor Redemption) are finalized but not yet deployed to Base
-              mainnet. Earlier V1 addresses have been retired and are intentionally omitted to
-              avoid ambiguity. Addresses will be published here on the day of redeploy.
+              <span className="text-foreground">Note:</span> all V2 contracts are live on Base
+              mainnet. V1 addresses have been retired and are intentionally omitted to avoid
+              ambiguity.
             </p>
 
             <h3 className="mt-4 font-display text-xl text-foreground">REVENUE SPLIT</h3>
@@ -256,10 +255,8 @@ export default function Whitepaper() {
             <h3 className="font-display text-xl text-foreground">REDEMPTION</h3>
             <p>
               Champion presents a wallet QR code to a vendor (or proceeds to checkout in the
-              online shop). The backend signer calls{" "}
-              <code className="text-foreground">redeemFor(vendor, champion, amount)</code> on
-              the Vendor Redemption contract: $PURPOSE is burned and the vendor wallet receives
-              an equivalent USDC payout from the Treasury — instantly and verifiably on-chain.
+              online shop). The backend signer drives an on-chain escrow state machine on
+              Vendor Redemption V2 — full lifecycle in the next section.
             </p>
 
             <h3 className="font-display text-xl text-foreground">DONATIONS</h3>
@@ -268,6 +265,86 @@ export default function Whitepaper() {
               (signed in or as a guest), pay USDC or card via thirdweb PayEmbed, and the
               Donation Split contract distributes funds atomically. Each donation is logged with
               wallet, timestamp, and amount.
+            </p>
+          </section>
+
+          {/* Redemption lifecycle */}
+          <section className="space-y-4">
+            <Anchor id="redemption-lifecycle" label="REDEMPTION LIFECYCLE" />
+            <p>
+              Vendor Redemption V2 replaces the old single-call <code className="text-foreground">redeemFor</code>{" "}
+              with an escrow state machine that protects both champions and vendors. Each
+              charge has a unique <code className="text-foreground">chargeId</code> and moves
+              through these states, all driven by the backend signer:
+            </p>
+            <ol className="list-decimal space-y-2 pl-6">
+              <li>
+                <span className="text-foreground">Lock</span> — when a champion confirms a
+                vendor's request, the contract pulls $PURPOSE from the champion's wallet and an
+                equivalent USDC quote from the Treasury into escrow.
+              </li>
+              <li>
+                <span className="text-foreground">Capture</span> — the vendor confirms
+                fulfillment (in POS flows this happens automatically in the same tx via{" "}
+                <code className="text-foreground">lockAndCapture</code>). The auth window
+                starts here.
+              </li>
+              <li>
+                <span className="text-foreground">Cancel</span> (Locked or Captured, inside
+                auth window) — $PURPOSE returns to the champion, USDC returns to the Treasury.
+                Used for vendor-side errors or champion disputes.
+              </li>
+              <li>
+                <span className="text-foreground">Settle</span> — after the auth window, USDC
+                is paid out to the vendor. $PURPOSE stays in escrow until the refund window
+                closes. A soulbound <span className="text-foreground">Receipt NFT</span> is
+                minted to the champion in the same transaction.
+              </li>
+              <li>
+                <span className="text-foreground">Refund</span> (Settled, inside refund window)
+                — the vendor or admin can return funds; USDC pulls from the vendor wallet or
+                the Refund Pool back to the Treasury, and $PURPOSE returns to the champion.
+              </li>
+              <li>
+                <span className="text-foreground">Sweep</span> — after the refund window
+                expires, anyone can finalize the charge: the escrowed $PURPOSE is burned and
+                the charge is closed.
+              </li>
+            </ol>
+            <p className="text-xs">
+              Default windows: <span className="text-foreground">24h auth</span> (cancel before
+              settle) and <span className="text-foreground">7d refund</span> (refund after
+              settle). Admin can override per vendor.
+            </p>
+          </section>
+
+          {/* Refunds & Receipts */}
+          <section className="space-y-4">
+            <Anchor id="refunds-receipts" label="REFUNDS & RECEIPTS" />
+
+            <h3 className="font-display text-xl text-foreground">REFUND POOL</h3>
+            <p>
+              The Refund Pool is a standalone USDC vault that backs vendor refunds. When a
+              vendor can't fund a refund from their own wallet (e.g. cash already deposited
+              to the bank), the protocol pulls from the pool instead — the champion still
+              gets their $PURPOSE back instantly, and the Treasury stays whole. Admins top
+              up the pool from the <Link to="/admin/treasury" className="text-primary underline">treasury dashboard</Link>;
+              long-term, a portion of donations will route here automatically.
+            </p>
+
+            <h3 className="font-display text-xl text-foreground">RECEIPT NFT</h3>
+            <p>
+              Every settled redemption mints a soulbound ERC-721 receipt to the champion.
+              The on-chain record stores champion, vendor, USDC and $PURPOSE amounts,
+              chargeId, and timestamp; champion + vendor names are passed in by the backend
+              and rendered into the SVG. Receipts are non-transferable by design — they're a
+              verifiable history of the champion's contributions, not a tradable asset.
+            </p>
+            <p className="text-xs">
+              The metadata renderer is a Lovable Cloud edge function so receipt artwork can
+              evolve without redeploying the contract. If the mint ever fails inside settle
+              (RPC hiccup, gas spike), the backend's{" "}
+              <code className="text-foreground">receipt-mint-retry</code> function reissues it.
             </p>
           </section>
 
