@@ -23,9 +23,13 @@ type ContractRow = { label: string; addr: string | null; desc: string; pending?:
 const CONTRACT_ROWS: ContractRow[] = [
   { label: "Treasury", addr: CONTRACTS.TREASURY, desc: "USDC reserve backing every $PURPOSE in circulation." },
   { label: "Donation Split", addr: CONTRACTS.DONATION_SPLIT, desc: "Routes incoming USDC: 90% Treasury, 8% admin multisig, 2% founder." },
-  { label: "PURPOSE Token (V2)", addr: null, desc: "Soulbound community credit minted to Champions, burned at redemption.", pending: true },
-  { label: "Bounty Manager (V2)", addr: null, desc: "On-chain registry for bounty payouts and on-chain check-ins.", pending: true },
-  { label: "Vendor Redemption (V2)", addr: null, desc: "Burns $PURPOSE and pays vendors 1:1 in USDC.", pending: true },
+  { label: "PURPOSE Token (V2)", addr: CONTRACTS_V2.PURPOSE_TOKEN, desc: "Soulbound community credit minted to Champions, burned at redemption." },
+  { label: "Bounty Manager (V2)", addr: CONTRACTS_V2.BOUNTY_MANAGER, desc: "On-chain registry for bounty payouts and on-chain check-ins." },
+  { label: "Vendor Redemption (V2)", addr: CONTRACTS_V2.VENDOR_REDEMPTION, desc: "Burns $PURPOSE and pays vendors 1:1 in USDC, with refund + receipt support." },
+  { label: "Refund Pool", addr: CONTRACTS_V2.REFUND_POOL, desc: "USDC cushion vendors draw from when issuing refunds." },
+  { label: "Receipt NFT", addr: CONTRACTS_V2.RECEIPT_NFT, desc: "Soulbound on-chain receipt minted on every settled vendor charge." },
+  { label: "vPURPOSE Vote Token", addr: CONTRACTS_V2.VPURPOSE_TOKEN, desc: "Non-transferable ERC20Votes credit — 1 active monthly membership = 1 vote." },
+  { label: "POP Governor", addr: CONTRACTS_V2.POP_GOVERNOR, desc: "On-chain DAO contract that tallies vPURPOSE votes and executes proposals." },
 ];
 
 function Anchor({ id, label }: { id: string; label: string }) {
