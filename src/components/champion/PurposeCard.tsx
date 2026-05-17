@@ -214,26 +214,13 @@ export function PurposeCard({ address, onShowQR }: Props) {
                     $PURPOSE
                   </p>
                 </div>
-                {/* chip */}
-                <div
-                  className="h-9 w-12 rounded-md"
-                  style={{
-                    background:
-                      variant === "signal"
-                        ? "linear-gradient(135deg, hsl(40 40% 60%), hsl(45 60% 45%))"
-                        : "linear-gradient(135deg, hsl(48 80% 65%), hsl(40 70% 40%))",
-                    boxShadow:
-                      "inset 0 0 0 1px hsl(0 0% 0% / 0.3), inset 0 -2px 4px hsl(0 0% 0% / 0.25)",
-                  }}
-                >
-                  <div className="m-1.5 grid h-6 w-9 grid-cols-3 grid-rows-2 gap-px opacity-50">
-                    {Array.from({ length: 6 }).map((_, i) => (
-                      <div
-                        key={i}
-                        className="rounded-[1px] bg-foreground/60"
-                      />
-                    ))}
-                  </div>
+                {/* POP logo */}
+                <div className="flex h-10 w-10 items-center justify-center">
+                  <img
+                    src={popLogo}
+                    alt="POP"
+                    className="h-10 w-10 object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.4)]"
+                  />
                 </div>
               </div>
 
