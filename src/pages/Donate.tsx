@@ -168,6 +168,14 @@ export default function Donate() {
           → {CONTRACTS.DONATION_SPLIT}
         </p>
       </div>
+      {hash && account && (
+        <div className="mt-6 space-y-2">
+          <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+            // unlock your vote
+          </p>
+          <VotingPowerCard showGovernanceCta />
+        </div>
+      )}
       <MembershipsStrip wallet={account?.address} />
     </main>
   );
