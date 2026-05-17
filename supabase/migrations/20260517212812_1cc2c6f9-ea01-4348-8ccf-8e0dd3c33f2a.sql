@@ -1,0 +1,1 @@
+UPDATE public.governance_config SET vote_contract_address = '0x137CDAE27838Ddb13572dDDf6bb13E982D968E97' WHERE id = 1;
