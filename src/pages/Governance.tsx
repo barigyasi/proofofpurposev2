@@ -253,16 +253,19 @@ export default function Governance() {
                         </div>
                       )}
                     </div>
-                    <p className="mt-2 text-center font-mono text-[10px] text-muted-foreground">
-                      {total} {total === 1 ? "vote" : "votes"} cast
-                    </p>
+                    <div className="mt-2 flex items-center justify-between">
+                      <span className="font-mono text-[10px] text-muted-foreground">
+                        {total} {total === 1 ? "vote" : "votes"} cast
+                      </span>
+                      {hasVoterRole && !isAdmin && <VotingPowerPill />}
+                    </div>
                   </div>
 
-                  {canVote && d.status === "pending_vote" && !closed && (
+                  {hasVoterRole && d.status === "pending_vote" && !closed && (
                     <div className="mt-4 grid grid-cols-3 gap-2">
                       {(["yes", "abstain", "no"] as VoteChoice[]).map((c) => {
                         const active = my === c;
-                        const base = "brutal brutal-hover px-3 py-3 font-display text-sm transition-colors";
+                        const base = "brutal brutal-hover px-3 py-3 font-display text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed";
                         const cls =
                           c === "yes"
                             ? active ? "brutal-primary" : `${base} hover:bg-primary hover:text-primary-foreground`
@@ -270,7 +273,13 @@ export default function Governance() {
                             ? active ? "brutal bg-destructive text-destructive-foreground" : `${base} hover:bg-destructive hover:text-destructive-foreground`
                             : active ? "brutal bg-secondary" : base;
                         return (
-                          <button key={c} onClick={() => vote(d.id, c)} className={c === "yes" || c === "no" ? (active ? cls : cls) : cls}>
+                          <button
+                            key={c}
+                            onClick={() => vote(d.id, c)}
+                            disabled={!canVote}
+                            title={canVote ? "" : "Mint a membership and activate voting power to vote"}
+                            className={c === "yes" || c === "no" ? (active ? cls : cls) : cls}
+                          >
                             {VOTE_LABEL[c]}
                             {active && <span className="ml-1">✓</span>}
                           </button>
