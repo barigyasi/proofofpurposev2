@@ -4,6 +4,8 @@ import { useActiveAccount } from "thirdweb/react";
 import { toast } from "sonner";
 import { useEffectiveRoles } from "@/hooks/useEffectiveRoles";
 import { useDraftVotes, type DraftWithVotes, type VoteChoice } from "@/hooks/useDraftVotes";
+import { useVotingEligibility } from "@/hooks/useVotingEligibility";
+import { VotingPowerCard, VotingPowerPill } from "@/components/governance/VotingPowerCard";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Seo } from "@/components/Seo";
@@ -66,15 +68,26 @@ export default function Governance() {
   );
   const pastCount = allDrafts.length - drafts.length;
 
-  const canVote = useMemo(
+  const hasVoterRole = useMemo(
     () => roles.some((r) => r === "donor" || r === "catalyst" || r === "admin"),
     [roles],
   );
   const isAdmin = roles.includes("admin");
+  const eligibility = useVotingEligibility(account?.address);
+  // Admins can always vote; everyone else needs an active membership + delegation.
+  const canVote = isAdmin || (hasVoterRole && eligibility.eligible);
 
   async function vote(draftId: string, choice: VoteChoice) {
     if (!account?.address) {
       toast.error("Connect your wallet to vote — votes are tied to a wallet address for the on-chain DAO.");
+      return;
+    }
+    if (!isAdmin && !eligibility.eligible) {
+      if (eligibility.reason === "no-membership")
+        toast.error("Mint a membership first ($5+ on /donate).");
+      else if (eligibility.reason === "not-delegated")
+        toast.error("Activate your voting power first.");
+      else toast.error("You're not eligible to vote yet.");
       return;
     }
     try {
@@ -119,10 +132,15 @@ export default function Governance() {
           Catalysts propose bounties. Donors, Catalysts, and the steward each get one vote.
           Voting is open for 72h; bounties that pass move to the on-chain queue.
         </p>
-        {!canVote && (
+        {!hasVoterRole && (
           <p className="brutal mt-4 p-3 font-mono text-[10px]">
             // enter as a Donor or Catalyst to cast a vote
           </p>
+        )}
+        {hasVoterRole && !isAdmin && (
+          <div className="mt-4">
+            <VotingPowerCard />
+          </div>
         )}
         <Link
           to="/governance/past"
@@ -235,16 +253,19 @@ export default function Governance() {
                         </div>
                       )}
                     </div>
-                    <p className="mt-2 text-center font-mono text-[10px] text-muted-foreground">
-                      {total} {total === 1 ? "vote" : "votes"} cast
-                    </p>
+                    <div className="mt-2 flex items-center justify-between">
+                      <span className="font-mono text-[10px] text-muted-foreground">
+                        {total} {total === 1 ? "vote" : "votes"} cast
+                      </span>
+                      {hasVoterRole && !isAdmin && <VotingPowerPill />}
+                    </div>
                   </div>
 
-                  {canVote && d.status === "pending_vote" && !closed && (
+                  {hasVoterRole && d.status === "pending_vote" && !closed && (
                     <div className="mt-4 grid grid-cols-3 gap-2">
                       {(["yes", "abstain", "no"] as VoteChoice[]).map((c) => {
                         const active = my === c;
-                        const base = "brutal brutal-hover px-3 py-3 font-display text-sm transition-colors";
+                        const base = "brutal brutal-hover px-3 py-3 font-display text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed";
                         const cls =
                           c === "yes"
                             ? active ? "brutal-primary" : `${base} hover:bg-primary hover:text-primary-foreground`
@@ -252,7 +273,13 @@ export default function Governance() {
                             ? active ? "brutal bg-destructive text-destructive-foreground" : `${base} hover:bg-destructive hover:text-destructive-foreground`
                             : active ? "brutal bg-secondary" : base;
                         return (
-                          <button key={c} onClick={() => vote(d.id, c)} className={c === "yes" || c === "no" ? (active ? cls : cls) : cls}>
+                          <button
+                            key={c}
+                            onClick={() => vote(d.id, c)}
+                            disabled={!canVote}
+                            title={canVote ? "" : "Mint a membership and activate voting power to vote"}
+                            className={c === "yes" || c === "no" ? (active ? cls : cls) : cls}
+                          >
                             {VOTE_LABEL[c]}
                             {active && <span className="ml-1">✓</span>}
                           </button>

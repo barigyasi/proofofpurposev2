@@ -1182,6 +1182,8 @@ export type Database = {
       }
     }
     Functions: {
+      eligible_vote_weight: { Args: { _wallet: string }; Returns: number }
+      has_active_membership: { Args: { _wallet: string }; Returns: boolean }
       has_any_role: {
         Args: {
           _roles: Database["public"]["Enums"]["app_role"][]

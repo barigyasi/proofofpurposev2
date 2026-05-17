@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { membershipDataUri, monthLabel, currentMonthKey } from "@/lib/membershipArt";
 import { MembershipsStrip } from "@/components/membership/MembershipsStrip";
+import { VotingPowerCard } from "@/components/governance/VotingPowerCard";
 import { Seo } from "@/components/Seo";
 
 function toUsdc(amount: string): bigint {
@@ -167,6 +168,14 @@ export default function Donate() {
           → {CONTRACTS.DONATION_SPLIT}
         </p>
       </div>
+      {hash && account && (
+        <div className="mt-6 space-y-2">
+          <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+            // unlock your vote
+          </p>
+          <VotingPowerCard showGovernanceCta />
+        </div>
+      )}
       <MembershipsStrip wallet={account?.address} />
     </main>
   );
