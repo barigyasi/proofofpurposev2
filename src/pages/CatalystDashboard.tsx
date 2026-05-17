@@ -48,9 +48,18 @@ export default function CatalystDashboard() {
   const [media, setMedia] = useState<DraftMedia>(EMPTY_MEDIA);
   const [draftKey] = useState(() => crypto.randomUUID());
   const [busy, setBusy] = useState(false);
+  const [override, setOverride] = useState(false);
+  const { data: treasury } = useTreasuryHeadroom();
 
   const isApproved = roles.includes("catalyst");
   const isPending = !isApproved && appStatus === "pending";
+
+  const rewardNum = Number(reward) || 0;
+  const maxNum = Number(maxP) || 0;
+  const newCommitment = rewardNum * Math.max(1, maxNum);
+  const projectedHeadroom = treasury ? treasury.headroom - newCommitment : null;
+  const wouldOverdraw = projectedHeadroom !== null && projectedHeadroom < 0;
+  const belowRecommended = rewardNum > 0 && rewardNum < MIN_RECOMMENDED_REWARD;
 
   useEffect(() => {
     if (isLoading) return;
