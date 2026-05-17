@@ -92,25 +92,26 @@ export function PurposeCard({ address, onShowQR }: Props) {
     if (!account || signing) return;
     setSigning(true);
     setQrError(null);
+    const expiresAt = Date.now() + 5 * 60 * 1000;
+    const message = `pop-redeem:${account.address}:${expiresAt}`;
+    // Show the QR immediately with an unsigned payload so the user sees it,
+    // even if their wallet (e.g. EOA via MetaMask) doesn't auto-sign or the
+    // signature popup is dismissed. Vendors verify via wallet + short expiry.
+    const basePayload = {
+      wallet: account.address,
+      expires_at: expiresAt,
+    };
+    setQrPayload(JSON.stringify(basePayload));
     try {
-      const expiresAt = Date.now() + 5 * 60 * 1000;
-      const message = `pop-redeem:${account.address}:${expiresAt}`;
       const signature = await account.signMessage({ message });
-      setQrPayload(
-        JSON.stringify({
-          wallet: account.address,
-          expires_at: expiresAt,
-          signature,
-        }),
-      );
+      // Upgrade the QR with the signature once available.
+      setQrPayload(JSON.stringify({ ...basePayload, signature }));
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Failed to sign";
-      // User-rejected MetaMask popup → friendly copy
-      setQrError(
-        /reject|denied|cancel/i.test(msg)
-          ? "Signature cancelled. Tap GENERATE to try again."
-          : msg,
-      );
+      if (!/reject|denied|cancel/i.test(msg)) {
+        console.warn("redeem-sign", msg);
+      }
+      // Keep the unsigned QR visible — don't surface an error to the user.
     } finally {
       setSigning(false);
     }
