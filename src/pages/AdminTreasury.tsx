@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { getContract, readContract } from "thirdweb";
 import { useSessionRoles } from "@/hooks/useSessionRoles";
 import { thirdwebClient, baseChain } from "@/lib/thirdweb";
-import { CONTRACTS, USDC_DECIMALS } from "@/config/contracts";
+import { ACTIVE, USDC_DECIMALS } from "@/config/contracts";
 import { formatPurpose } from "@/hooks/usePurposeBalance";
 
 export default function AdminTreasury() {
