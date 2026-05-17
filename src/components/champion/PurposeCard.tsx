@@ -85,34 +85,43 @@ export function PurposeCard({ address, onShowQR }: Props) {
     })();
   }, [address]);
 
-  // generate QR payload when flipped
-  useEffect(() => {
-    if (!flipped || !account) return;
-    let cancelled = false;
-    setQrPayload(null);
+  const [signing, setSigning] = useState(false);
+
+  async function generateQr() {
+    if (!account || signing) return;
+    setSigning(true);
     setQrError(null);
-    (async () => {
-      try {
-        const expiresAt = Date.now() + 5 * 60 * 1000;
-        const message = `pop-redeem:${account.address}:${expiresAt}`;
-        const signature = await account.signMessage({ message });
-        if (cancelled) return;
-        setQrPayload(
-          JSON.stringify({
-            wallet: account.address,
-            expires_at: expiresAt,
-            signature,
-          }),
-        );
-      } catch (e) {
-        if (!cancelled)
-          setQrError(e instanceof Error ? e.message : "Failed to sign");
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [flipped, account]);
+    try {
+      const expiresAt = Date.now() + 5 * 60 * 1000;
+      const message = `pop-redeem:${account.address}:${expiresAt}`;
+      const signature = await account.signMessage({ message });
+      setQrPayload(
+        JSON.stringify({
+          wallet: account.address,
+          expires_at: expiresAt,
+          signature,
+        }),
+      );
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to sign";
+      // User-rejected MetaMask popup → friendly copy
+      setQrError(
+        /reject|denied|cancel/i.test(msg)
+          ? "Signature cancelled. Tap GENERATE to try again."
+          : msg,
+      );
+    } finally {
+      setSigning(false);
+    }
+  }
+
+  // Reset QR when flipped back to front so each redeem session is fresh
+  useEffect(() => {
+    if (!flipped) {
+      setQrPayload(null);
+      setQrError(null);
+    }
+  }, [flipped]);
 
   function onPointerMove(e: React.PointerEvent) {
     const el = cardRef.current;
