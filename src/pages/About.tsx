@@ -1,13 +1,16 @@
 import { Link } from "react-router-dom";
-import { CONTRACTS } from "@/config/contracts";
+import { CONTRACTS, CONTRACTS_V2 } from "@/config/contracts";
 import { Seo } from "@/components/Seo";
 
 const LINKS = [
+  ["PURPOSE Token (V2)", CONTRACTS_V2.PURPOSE_TOKEN],
+  ["Bounty Manager (V2)", CONTRACTS_V2.BOUNTY_MANAGER],
+  ["Vendor Redemption (V2)", CONTRACTS_V2.VENDOR_REDEMPTION],
+  ["Refund Pool", CONTRACTS_V2.REFUND_POOL],
+  ["Receipt NFT", CONTRACTS_V2.RECEIPT_NFT],
   ["Treasury", CONTRACTS.TREASURY],
   ["Donation Split", CONTRACTS.DONATION_SPLIT],
 ] as const;
-
-const COMING_SOON = ["PURPOSE Token", "Bounty Manager", "Vendor Redemption"] as const;
 
 export default function About() {
   return (
@@ -52,7 +55,9 @@ export default function About() {
           <li>Donors fund the treasury in USDC.</li>
           <li>Catalysts propose bounties; donors + catalysts + admin vote to approve.</li>
           <li>Champions complete bounties and earn $PURPOSE.</li>
-          <li>Vendors scan a champion's QR and redeem $PURPOSE for USDC at 1:1.</li>
+          <li>Vendors scan a champion's QR; the charge is escrowed (lock → capture), then settled 1:1 in USDC after a short auth window.</li>
+          <li>Within the refund window, vendors or admins can issue a refund — USDC pulls from the vendor or the Refund Pool, and $PURPOSE returns to the champion.</li>
+          <li>Every settled redemption mints a soulbound on-chain <span className="text-foreground">Receipt NFT</span> to the champion as a permanent record.</li>
         </ol>
         <h2 className="font-display text-2xl text-foreground">CONTRACTS · BASE 8453</h2>
         <ul className="space-y-1 font-mono text-xs">
@@ -60,12 +65,6 @@ export default function About() {
             <li key={addr}>
               <span className="text-muted-foreground">{label}:</span>{" "}
               <a className="text-primary underline" target="_blank" rel="noreferrer" href={`https://basescan.org/address/${addr}`}>{addr}</a>
-            </li>
-          ))}
-          {COMING_SOON.map((label) => (
-            <li key={label}>
-              <span className="text-muted-foreground">{label}:</span>{" "}
-              <span className="text-primary">v2 contract · coming soon</span>
             </li>
           ))}
         </ul>
