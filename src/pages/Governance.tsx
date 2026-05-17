@@ -59,7 +59,7 @@ function outcome(d: DraftWithVotes) {
 export default function Governance() {
   const { roles } = useEffectiveRoles();
   const account = useActiveAccount();
-  const { drafts: allDrafts, myVotes, loading, castVote } = useDraftVotes();
+  const { drafts: allDrafts, myVotes, loading, castVote, refresh } = useDraftVotes();
 
   // Active = pending_vote and voting window still open. Everything else lives on /governance/past.
   const drafts = useMemo(
