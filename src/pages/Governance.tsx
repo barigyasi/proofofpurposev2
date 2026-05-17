@@ -91,20 +91,37 @@ export default function Governance() {
       return;
     }
     try {
-      await castVote(draftId, choice, account.address);
+      await castVote(draftId, choice, account.address, account);
       toast.success(`Vote recorded: ${choice}`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
     }
   }
 
-  async function adminApprove(d: DraftWithVotes) {
-    const { error } = await supabase
-      .from("bounty_drafts")
-      .update({ status: "queued", executed_at: new Date().toISOString() })
-      .eq("id", d.id);
-    if (error) toast.error(error.message);
-    else toast.success("Approved — queued for on-chain creation");
+  async function adminPropose(d: DraftWithVotes) {
+    const t = toast.loading("Submitting on-chain proposal…");
+    try {
+      const { data, error } = await supabase.functions.invoke("governor-propose", {
+        body: { draft_id: d.id },
+      });
+      if (error) throw error;
+      toast.success(`Proposal ${data?.proposalId?.slice?.(0, 8) ?? "created"}…`, { id: t });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Propose failed", { id: t });
+    }
+  }
+
+  async function adminExecute(d: DraftWithVotes) {
+    const t = toast.loading("Executing on-chain…");
+    try {
+      const { data, error } = await supabase.functions.invoke("governor-execute", {
+        body: { draft_id: d.id },
+      });
+      if (error) throw error;
+      toast.success(`Executed — bounty #${data?.onChainBountyId} is live`, { id: t });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Execute failed", { id: t });
+    }
   }
 
   async function adminReject(d: DraftWithVotes) {
@@ -293,10 +310,33 @@ export default function Governance() {
                     </p>
                   )}
 
-                  {isAdmin && closed && d.status === "pending_vote" && (
+                  {d.dao_proposal_id && (
+                    <p className="mt-3 text-center font-mono text-[10px] text-muted-foreground">
+                      // on-chain proposal{" "}
+                      <a
+                        href={`https://basescan.org/address/0x137CDAE27838Ddb13572dDDf6bb13E982D968E97`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-primary underline"
+                      >
+                        #{String(d.dao_proposal_id).slice(0, 10)}…
+                      </a>
+                    </p>
+                  )}
+
+                  {isAdmin && d.status === "pending_vote" && !d.dao_proposal_id && (
                     <div className="mt-4 flex gap-2 border-t-2 border-foreground pt-4">
-                      <Button onClick={() => adminApprove(d)} className="brutal-primary brutal-hover flex-1 font-display">
-                        EXECUTE (queue on-chain)
+                      <Button onClick={() => adminPropose(d)} className="brutal-primary brutal-hover flex-1 font-display">
+                        POST ON-CHAIN PROPOSAL
+                      </Button>
+                      <Button variant="ghost" onClick={() => adminReject(d)}>Reject</Button>
+                    </div>
+                  )}
+
+                  {isAdmin && d.dao_proposal_id && !d.on_chain_bounty_id && closed && (
+                    <div className="mt-4 flex gap-2 border-t-2 border-foreground pt-4">
+                      <Button onClick={() => adminExecute(d)} className="brutal-primary brutal-hover flex-1 font-display">
+                        EXECUTE ON-CHAIN (mint bounty)
                       </Button>
                       <Button variant="ghost" onClick={() => adminReject(d)}>Reject</Button>
                     </div>

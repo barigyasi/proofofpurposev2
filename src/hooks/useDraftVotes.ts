@@ -1,5 +1,10 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getContract, prepareContractCall, sendTransaction, waitForReceipt } from "thirdweb";
+import type { Account } from "thirdweb/wallets";
+import { thirdwebClient, baseChain } from "@/lib/thirdweb";
+import { CONTRACTS_V2 } from "@/config/contracts";
+import { voteChoiceToSupport } from "@/lib/governor";
 
 export type VoteChoice = "yes" | "no" | "abstain";
 
@@ -16,6 +21,7 @@ export type DraftWithVotes = {
   no_count: number;
   abstain_count: number;
   on_chain_bounty_id: number | null;
+  dao_proposal_id: number | null;
   executed_at: string | null;
   created_at: string;
   image_urls: string[] | null;
@@ -39,7 +45,7 @@ export function useDraftVotes() {
     const [{ data: d }, { data: { user } }] = await Promise.all([
       supabase
         .from("bounty_drafts")
-        .select("id,name,description,reward_purpose,max_participants,status,vote_opens_at,vote_closes_at,yes_count,no_count,abstain_count,on_chain_bounty_id,on_chain_tx_hash,executed_at,created_at,image_urls,video_url,deck_url,deck_filename,location,completed_participants,purpose_minted_snapshot,outcome_notes,snapshot_at")
+        .select("id,name,description,reward_purpose,max_participants,status,vote_opens_at,vote_closes_at,yes_count,no_count,abstain_count,on_chain_bounty_id,on_chain_tx_hash,dao_proposal_id,executed_at,created_at,image_urls,video_url,deck_url,deck_filename,location,completed_participants,purpose_minted_snapshot,outcome_notes,snapshot_at")
         .order("created_at", { ascending: false }),
       supabase.auth.getUser(),
     ]);
@@ -66,9 +72,33 @@ export function useDraftVotes() {
     return () => { supabase.removeChannel(ch); };
   }, [refresh]);
 
-  async function castVote(draftId: string, choice: VoteChoice, walletAddress?: string | null) {
+  async function castVote(
+    draftId: string,
+    choice: VoteChoice,
+    walletAddress?: string | null,
+    account?: Account | null,
+  ) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Enter to vote");
+
+    // If the draft has an on-chain proposal, cast the vote on the Governor first.
+    // The Supabase row then mirrors it for UI snappiness.
+    const draft = drafts.find((d) => d.id === draftId);
+    if (draft?.dao_proposal_id && account) {
+      const governor = getContract({
+        client: thirdwebClient,
+        chain: baseChain,
+        address: CONTRACTS_V2.POP_GOVERNOR,
+      });
+      const tx = prepareContractCall({
+        contract: governor,
+        method: "function castVote(uint256 proposalId, uint8 support) returns (uint256)",
+        params: [BigInt(draft.dao_proposal_id), voteChoiceToSupport(choice)],
+      });
+      const { transactionHash } = await sendTransaction({ transaction: tx, account });
+      await waitForReceipt({ client: thirdwebClient, chain: baseChain, transactionHash });
+    }
+
     const existing = myVotes[draftId];
     if (existing) {
       const { error } = await supabase
