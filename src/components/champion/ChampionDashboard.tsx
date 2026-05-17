@@ -104,11 +104,16 @@ export function ChampionDashboard() {
         </p>
       </div>
 
+      {/* PURPOSE CARD — premium, at the top, no label */}
       <div className="mt-6">
+        <PurposeCard address={account.address} />
+      </div>
+
+      <div className="mt-8">
         <V2StatusBanner context="champion" />
       </div>
 
-      {/* BOUNTIES — moved to top */}
+      {/* BOUNTIES */}
       <div className="mt-8">
         <SectionDivider label="ACTIVE BOUNTIES" />
         {isLoading ? (
@@ -171,19 +176,6 @@ export function ChampionDashboard() {
           </div>
         )}
       </div>
-
-      {/* PURPOSE CARD — Cash App style */}
-      <div className="mt-12">
-        <SectionDivider label="YOUR PURPOSE CARD" />
-        <div className="pt-4">
-          <PurposeCard
-            address={account.address}
-            onShowQR={() => setQrOpen(true)}
-          />
-        </div>
-      </div>
-
-      <MembershipsStrip wallet={account?.address} />
 
       {account?.address && <ChampionReceiptsStrip wallet={account.address} />}
 
