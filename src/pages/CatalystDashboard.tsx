@@ -12,6 +12,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { DraftMediaUploader, type DraftMedia } from "@/components/bounties/DraftMediaUploader";
+import { TreasuryHeadroomCard } from "@/components/admin/TreasuryHeadroomCard";
+import { useTreasuryHeadroom } from "@/hooks/useTreasuryHeadroom";
+import { MIN_RECOMMENDED_REWARD } from "@/config/contracts";
 
 type Draft = {
   id: string;
