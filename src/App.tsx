@@ -54,6 +54,7 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <RoleViewProvider>
+              <CardThemeProvider>
               <Header />
               <Routes>
               <Route path="/" element={<Index />} />
