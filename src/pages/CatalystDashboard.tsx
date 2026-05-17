@@ -97,7 +97,7 @@ export default function CatalystDashboard() {
     if (!user) return;
     const { data } = await supabase
       .from("bounty_drafts")
-      .select("id,name,description,reward_purpose,max_participants,status,dao_proposal_id,on_chain_bounty_id,created_at,image_urls,video_url,deck_url,deck_filename")
+      .select("id,name,description,reward_purpose,max_participants,status,dao_proposal_id,on_chain_bounty_id,on_chain_tx_hash,vote_closes_at,created_at,image_urls,video_url,deck_url,deck_filename")
       .eq("proposer_id", user.id)
       .order("created_at", { ascending: false });
     setDrafts((data ?? []) as Draft[]);
