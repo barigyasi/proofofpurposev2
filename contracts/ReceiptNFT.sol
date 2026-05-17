@@ -120,9 +120,9 @@ contract ReceiptNFT is ERC721, AccessControl {
 
     /// @notice Admin sets the base URI used by `tokenURI`. Should end in `/`.
     ///         e.g. "https://<project>.functions.supabase.co/receipt-metadata/"
-    function setBaseURI(string calldata baseURI) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        _base = baseURI;
-        emit BaseURIUpdated(baseURI);
+    function setBaseURI(string calldata newBaseURI) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        _base = newBaseURI;
+        emit BaseURIUpdated(newBaseURI);
     }
 
     function baseURI() external view returns (string memory) {
