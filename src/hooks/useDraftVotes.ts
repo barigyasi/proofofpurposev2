@@ -1,10 +1,12 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { getContract, prepareContractCall, sendTransaction, waitForReceipt } from "thirdweb";
+import { getContract, prepareContractCall, readContract, sendTransaction, waitForReceipt } from "thirdweb";
 import type { Account } from "thirdweb/wallets";
 import { thirdwebClient, baseChain } from "@/lib/thirdweb";
 import { CONTRACTS_V2 } from "@/config/contracts";
 import { voteChoiceToSupport } from "@/lib/governor";
+
+const GOVERNOR_STATES = ["Pending", "Active", "Canceled", "Defeated", "Succeeded", "Queued", "Expired", "Executed"] as const;
 
 export type VoteChoice = "yes" | "no" | "abstain";
 
