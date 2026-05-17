@@ -1,43 +1,24 @@
-## Fix `Stack too deep` in `ReceiptNFT._renderSVG`
+## Plan
 
-### Cause
-One `abi.encodePacked(...)` call with ~30 arguments + 4 local color strings + the `Receipt memory r` struct fields blows past the EVM's 16-slot stack limit. Remix's default compile is without `viaIR`, so it fails at the first reference deep in the expression (`_shortAddr(r.champion)` on line 152).
+1. Refactor `ReceiptNFT.tokenURI()` so it no longer builds the full JSON payload in one large `abi.encodePacked(...)` call.
+   - Extract small helpers such as metadata header/body/attributes chunks.
+   - Precompute repeated formatted values once per call and pass only the minimum data each helper needs.
 
-### Fix: split the SVG builder into chunks
-Refactor `_renderSVG` so each helper returns a small `string` and the top-level function just concatenates 3-4 chunks. No behavior change, no ABI change, no redeploy gymnastics — pure compile-time fix that also works on stock solc without `viaIR`.
+2. Reduce stack pressure in any remaining borderline SVG helpers.
+   - If needed, split `_svgParties()` into separate champion/vendor blocks so Remix’s non-IR compiler path stays under the stack limit.
+   - Keep the existing SVG output and metadata schema unchanged.
 
-Proposed structure inside `ReceiptNFT.sol`:
+3. Verify compileability with the intended deploy settings.
+   - Target Solidity `0.8.24`, optimizer enabled, runs `200`, without requiring `viaIR`.
+   - Keep `viaIR` only as fallback guidance, not as the primary fix.
 
-```text
-_renderSVG(tokenId, r)
-  ├─ _svgHeader(tokenId)              // <svg>, frame, "PROOF OF PURPOSE", "RECEIPT #N", divider
-  ├─ _svgParties(r)                   // CHAMPION block + VENDOR block + divider
-  ├─ _svgAmount(r)                    // AMOUNT label, $X.YY, "N.NN PURPOSE redeemed", divider
-  └─ _svgFooter(r)                    // CHARGE, SETTLED, SOULBOUND badge, </svg>
-```
+4. Keep deployment behavior unchanged.
+   - No contract interface changes.
+   - No storage layout changes.
+   - If this contract is already deployed, a fresh deploy would still be required for the updated bytecode, followed by re-granting `MINTER_ROLE` to `VendorRedemptionV2` and any backend signer that mints retry receipts.
 
-Each helper:
-- Takes only what it needs (e.g. `_svgParties` takes `address`, `address`, `string memory`, `string memory`).
-- Declares the 3-4 color constants it uses locally, or we hoist them into `internal constant string` at contract scope to avoid repetition.
-- Uses its own `abi.encodePacked` with ≤ ~10 args, well under the stack limit.
+## Technical details
 
-### Cleanup along the way
-- Promote the four palette strings to `string constant` at contract scope so every helper reads them without re-declaring locals:
-  ```solidity
-  string constant SVG_BG     = "#0A1729";
-  string constant SVG_FG     = "#FFFFFF";
-  string constant SVG_MUTED  = "#94A3B8";
-  string constant SVG_ACCENT = "#F2C033";
-  ```
-  (Keeping the existing navy/gold palette — brand rebrand to brutalist black + acid yellow is a separate question; ping me if you want that swap in the same edit.)
-
-### Files touched
-- `contracts/ReceiptNFT.sol` — refactor `_renderSVG` into 4 internal pure helpers; add 4 string constants. No changes to storage, events, errors, `mintReceipt`, soulbound logic, or `tokenURI` shape.
-
-### Verification
-- Recompile in Remix with default settings (no `viaIR`) — should succeed.
-- `tokenURI(tokenId)` output is byte-identical to the pre-refactor version (same SVG bytes → same base64 → same JSON).
-- No redeploy needed yet since the contract isn't live on the new redemption manager wiring; if it is already deployed, this requires a fresh deploy + re-granting `MINTER_ROLE` to `VendorRedemptionV2 (0x9dAf…Defe6)`.
-
-### Optional alternative
-If you'd rather not refactor, enable `viaIR: true` + optimizer in Remix's "Advanced Configurations" and the current code compiles as-is. The refactor is preferred because it keeps the contract portable across toolchains (Foundry, Hardhat default configs, BaseScan verification with stock settings).
+- The current remaining risk is the large JSON assembly in `tokenURI()`; that can still trigger `Stack too deep` in Remix/default codegen even after the first SVG refactor.
+- The safest fix is structural: more, smaller pure helpers with fewer arguments and fewer inline temporary values.
+- This approach is more portable than relying on `viaIR`, and it avoids forcing a specific compiler pipeline for future deploys.
