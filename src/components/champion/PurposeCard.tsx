@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPurpose, usePurposeBalance } from "@/hooks/usePurposeBalance";
 import { toast } from "sonner";
+import popLogo from "@/assets/pop-logo.png";
 
 interface Props {
   address: string;
@@ -91,25 +92,26 @@ export function PurposeCard({ address, onShowQR }: Props) {
     if (!account || signing) return;
     setSigning(true);
     setQrError(null);
+    const expiresAt = Date.now() + 5 * 60 * 1000;
+    const message = `pop-redeem:${account.address}:${expiresAt}`;
+    // Show the QR immediately with an unsigned payload so the user sees it,
+    // even if their wallet (e.g. EOA via MetaMask) doesn't auto-sign or the
+    // signature popup is dismissed. Vendors verify via wallet + short expiry.
+    const basePayload = {
+      wallet: account.address,
+      expires_at: expiresAt,
+    };
+    setQrPayload(JSON.stringify(basePayload));
     try {
-      const expiresAt = Date.now() + 5 * 60 * 1000;
-      const message = `pop-redeem:${account.address}:${expiresAt}`;
       const signature = await account.signMessage({ message });
-      setQrPayload(
-        JSON.stringify({
-          wallet: account.address,
-          expires_at: expiresAt,
-          signature,
-        }),
-      );
+      // Upgrade the QR with the signature once available.
+      setQrPayload(JSON.stringify({ ...basePayload, signature }));
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Failed to sign";
-      // User-rejected MetaMask popup → friendly copy
-      setQrError(
-        /reject|denied|cancel/i.test(msg)
-          ? "Signature cancelled. Tap GENERATE to try again."
-          : msg,
-      );
+      if (!/reject|denied|cancel/i.test(msg)) {
+        console.warn("redeem-sign", msg);
+      }
+      // Keep the unsigned QR visible — don't surface an error to the user.
     } finally {
       setSigning(false);
     }
@@ -213,26 +215,13 @@ export function PurposeCard({ address, onShowQR }: Props) {
                     $PURPOSE
                   </p>
                 </div>
-                {/* chip */}
-                <div
-                  className="h-9 w-12 rounded-md"
-                  style={{
-                    background:
-                      variant === "signal"
-                        ? "linear-gradient(135deg, hsl(40 40% 60%), hsl(45 60% 45%))"
-                        : "linear-gradient(135deg, hsl(48 80% 65%), hsl(40 70% 40%))",
-                    boxShadow:
-                      "inset 0 0 0 1px hsl(0 0% 0% / 0.3), inset 0 -2px 4px hsl(0 0% 0% / 0.25)",
-                  }}
-                >
-                  <div className="m-1.5 grid h-6 w-9 grid-cols-3 grid-rows-2 gap-px opacity-50">
-                    {Array.from({ length: 6 }).map((_, i) => (
-                      <div
-                        key={i}
-                        className="rounded-[1px] bg-foreground/60"
-                      />
-                    ))}
-                  </div>
+                {/* POP logo */}
+                <div className="flex h-10 w-10 items-center justify-center">
+                  <img
+                    src={popLogo}
+                    alt="POP"
+                    className="h-10 w-10 object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.4)]"
+                  />
                 </div>
               </div>
 
