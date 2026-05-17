@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useActiveAccount } from "thirdweb/react";
 import {
   getContract,
@@ -28,6 +28,16 @@ export default function Donate() {
   const [amount, setAmount] = useState("");
   const [busy, setBusy] = useState(false);
   const [hash, setHash] = useState<string | null>(null);
+  const [activeEdition, setActiveEdition] = useState<{ name: string; description: string | null; image_url: string } | null>(null);
+
+  useEffect(() => {
+    supabase
+      .from("membership_editions")
+      .select("name, description, image_url")
+      .eq("active", true)
+      .maybeSingle()
+      .then(({ data }) => setActiveEdition(data));
+  }, []);
 
   async function donate() {
     if (!account) return toast.error("Connect wallet first");
@@ -112,19 +122,19 @@ export default function Donate() {
       )}
       <div className="brutal mt-6 flex items-center gap-4 p-4">
         <img
-          src={membershipDataUri(account?.address ?? "0x0000000000000000000000000000000000000000", currentMonthKey(), 96)}
-          alt="this month's membership"
-          className="h-24 w-24 shrink-0"
+          src={activeEdition?.image_url ?? membershipDataUri(account?.address ?? "0x0000000000000000000000000000000000000000", currentMonthKey(), 96)}
+          alt={activeEdition?.name ?? "this month's membership"}
+          className="h-24 w-24 shrink-0 object-cover"
         />
         <div>
           <p className="font-mono text-[10px] uppercase tracking-widest text-primary">
-            // {monthLabel(currentMonthKey())} membership
+            // {activeEdition?.name ?? `${monthLabel(currentMonthKey())} membership`}
           </p>
           <p className="mt-1 font-display text-lg leading-tight">
-            Donate $5 or more this month and this generative NFT auto-mints to you.
+            {activeEdition?.description ?? "Donate $5 or more this month and this NFT auto-mints to you."}
           </p>
           <p className="mt-1 font-mono text-[10px] text-muted-foreground">
-            Transferable. Secondary royalties fund the treasury. 1 vote per donor.
+            Soulbound. 1 active membership = 1 vote.
           </p>
         </div>
       </div>
