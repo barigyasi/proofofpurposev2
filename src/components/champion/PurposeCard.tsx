@@ -236,7 +236,7 @@ export function PurposeCard({ address, onShowQR }: Props) {
                     </div>
                   </div>
 
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-black/10 p-2 backdrop-blur-sm">
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-2xl border p-2 backdrop-blur-sm ${activeVariant.innerBorder} ${activeVariant.innerPanel}`}>
                     <img src={popLogo} alt="POP" className="h-full w-full object-contain" />
                   </div>
                 </div>
