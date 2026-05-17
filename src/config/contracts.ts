@@ -23,11 +23,11 @@ export const NATIVE_TOKEN_SENTINEL =
  * functions short-circuit (return 503) and the app continues to use V1.
  */
 export const CONTRACTS_V2 = {
-  PURPOSE_TOKEN: "" as `0x${string}` | "",
-  VENDOR_REDEMPTION: "" as `0x${string}` | "",
-  BOUNTY_MANAGER: "" as `0x${string}` | "",
-  REFUND_POOL: "" as `0x${string}` | "",
-  RECEIPT_NFT: "" as `0x${string}` | "",
+  PURPOSE_TOKEN: "0xd9a710A1ED0b73f487C4cF55580B71bBfc6B869f",
+  VENDOR_REDEMPTION: "0x54e60C53d3ec7F25fc4cc9e1426b181C455F7c25",
+  BOUNTY_MANAGER: "0x19cabb84B1A05D89f5F43D6f589b31dbAfd0F352",
+  REFUND_POOL: "0x8E1f67018ED9545a9A1eb5Fd596D51f04BB217d3",
+  RECEIPT_NFT: "0xeCC53349Df9a6739b8330547D57F0986d073EE52",
 } as const;
 
 export const V2_LIVE = Boolean(CONTRACTS_V2.VENDOR_REDEMPTION) && Boolean(CONTRACTS_V2.PURPOSE_TOKEN);
