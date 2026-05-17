@@ -5,7 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { PurposeCard } from "@/components/champion/PurposeCard";
-import { RedeemQRDialog } from "@/components/champion/RedeemQRDialog";
+
 import { CheckInQRDialog } from "@/components/champion/CheckInQRDialog";
 import { SectionDivider } from "@/components/champion/SectionDivider";
 import { BountyCard } from "@/components/bounties/BountyCard";
@@ -23,7 +23,7 @@ export function ChampionDashboard() {
   const account = useActiveAccount();
   const qc = useQueryClient();
   const { data: bounties, isLoading } = useBounties();
-  const [qrOpen, setQrOpen] = useState(false);
+  
   const [details, setDetails] = useState<Bounty | null>(null);
   const [signingUp, setSigningUp] = useState<string | null>(null);
   const [signups, setSignups] = useState<SignupRow[]>([]);
@@ -104,11 +104,16 @@ export function ChampionDashboard() {
         </p>
       </div>
 
+      {/* PURPOSE CARD — premium, at the top, no label */}
       <div className="mt-6">
+        <PurposeCard address={account.address} />
+      </div>
+
+      <div className="mt-8">
         <V2StatusBanner context="champion" />
       </div>
 
-      {/* BOUNTIES — moved to top */}
+      {/* BOUNTIES */}
       <div className="mt-8">
         <SectionDivider label="ACTIVE BOUNTIES" />
         {isLoading ? (
@@ -172,22 +177,9 @@ export function ChampionDashboard() {
         )}
       </div>
 
-      {/* PURPOSE CARD — Cash App style */}
-      <div className="mt-12">
-        <SectionDivider label="YOUR PURPOSE CARD" />
-        <div className="pt-4">
-          <PurposeCard
-            address={account.address}
-            onShowQR={() => setQrOpen(true)}
-          />
-        </div>
-      </div>
-
-      <MembershipsStrip wallet={account?.address} />
-
       {account?.address && <ChampionReceiptsStrip wallet={account.address} />}
 
-      <RedeemQRDialog open={qrOpen} onOpenChange={setQrOpen} />
+      
       {checkInBounty && account && (
         <CheckInQRDialog
           open={!!checkInBounty}
