@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useBountyAdmin } from "@/hooks/useBountyAdmin";
 import { useTreasuryHeadroom } from "@/hooks/useTreasuryHeadroom";
+import { MIN_RECOMMENDED_REWARD } from "@/config/contracts";
 import { uploadPublicImage } from "@/lib/storage";
 
 interface Props {
