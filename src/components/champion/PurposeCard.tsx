@@ -33,36 +33,54 @@ function variantStyles(variant: Variant) {
   switch (variant) {
     case "obsidian":
       return {
+        // LIGHT: soft pearl/graphite card with ink type. DARK: original near-black obsidian.
         shell:
-          "border-white/10 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_34%),radial-gradient(circle_at_bottom_right,hsl(var(--foreground)/0.08),transparent_38%),linear-gradient(145deg,hsl(0_0%_6%),hsl(0_0%_9%)_52%,hsl(0_0%_4%))] text-foreground",
-        accent: "text-primary",
-        sub: "text-foreground/60",
-        line: "border-white/10",
-        pill: "bg-white/6 text-foreground/72 border-white/10",
-        qrFrame: "border-white/10 bg-white/95",
-        halo: "bg-[radial-gradient(circle_at_18%_20%,hsl(var(--primary)/0.18),transparent_0_36%),radial-gradient(circle_at_82%_78%,hsl(var(--foreground)/0.08),transparent_0_36%)]",
+          "border-black/10 text-[hsl(0_0%_8%)] bg-[radial-gradient(circle_at_top_left,hsl(60_100%_50%/0.22),transparent_34%),radial-gradient(circle_at_bottom_right,hsl(0_0%_0%/0.08),transparent_38%),linear-gradient(145deg,hsl(0_0%_98%),hsl(0_0%_92%)_52%,hsl(0_0%_86%))] " +
+          "dark:border-white/10 dark:text-foreground dark:bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.16),transparent_34%),radial-gradient(circle_at_bottom_right,hsl(var(--foreground)/0.08),transparent_38%),linear-gradient(145deg,hsl(0_0%_6%),hsl(0_0%_9%)_52%,hsl(0_0%_4%))]",
+        accent: "text-[hsl(0_0%_8%)] dark:text-primary",
+        sub: "text-black/55 dark:text-foreground/60",
+        line: "border-black/10 dark:border-white/10",
+        pill: "bg-black/5 text-black/65 border-black/10 dark:bg-white/6 dark:text-foreground/72 dark:border-white/10",
+        innerPanel: "bg-white/55 dark:bg-black/10",
+        qrFrame: "border-black/10 bg-white dark:border-white/10 dark:bg-white/95",
+        halo:
+          "bg-[radial-gradient(circle_at_18%_20%,hsl(60_100%_50%/0.22),transparent_0_36%),radial-gradient(circle_at_82%_78%,hsl(0_0%_0%/0.06),transparent_0_36%)] " +
+          "dark:bg-[radial-gradient(circle_at_18%_20%,hsl(var(--primary)/0.18),transparent_0_36%),radial-gradient(circle_at_82%_78%,hsl(var(--foreground)/0.08),transparent_0_36%)]",
+        innerBorder: "border-black/5 dark:border-white/10",
       };
     case "aurora":
       return {
+        // LIGHT: pastel lavender→sky aurora. DARK: deep indigo/violet w/ neon halos.
         shell:
-          "border-white/10 bg-[radial-gradient(circle_at_15%_15%,hsl(286_72%_52%/0.34),transparent_32%),radial-gradient(circle_at_86%_78%,hsl(188_92%_50%/0.26),transparent_34%),linear-gradient(150deg,hsl(244_34%_10%),hsl(223_40%_11%)_50%,hsl(0_0%_5%))] text-foreground",
-        accent: "text-primary",
-        sub: "text-foreground/68",
-        line: "border-white/10",
-        pill: "bg-white/8 text-foreground/80 border-white/10",
-        qrFrame: "border-white/10 bg-white/95",
-        halo: "bg-[radial-gradient(circle_at_12%_18%,hsl(286_72%_52%/0.28),transparent_0_34%),radial-gradient(circle_at_88%_82%,hsl(188_92%_50%/0.2),transparent_0_36%)]",
+          "border-black/10 text-[hsl(244_40%_18%)] bg-[radial-gradient(circle_at_15%_15%,hsl(286_82%_72%/0.55),transparent_36%),radial-gradient(circle_at_86%_78%,hsl(188_92%_72%/0.5),transparent_38%),linear-gradient(150deg,hsl(250_100%_97%),hsl(220_100%_96%)_50%,hsl(290_100%_96%))] " +
+          "dark:border-white/10 dark:text-foreground dark:bg-[radial-gradient(circle_at_15%_15%,hsl(286_72%_52%/0.34),transparent_32%),radial-gradient(circle_at_86%_78%,hsl(188_92%_50%/0.26),transparent_34%),linear-gradient(150deg,hsl(244_34%_10%),hsl(223_40%_11%)_50%,hsl(0_0%_5%))]",
+        accent: "text-[hsl(286_72%_42%)] dark:text-primary",
+        sub: "text-[hsl(244_30%_30%)]/70 dark:text-foreground/68",
+        line: "border-black/10 dark:border-white/10",
+        pill: "bg-white/60 text-[hsl(244_30%_25%)] border-black/10 dark:bg-white/8 dark:text-foreground/80 dark:border-white/10",
+        innerPanel: "bg-white/55 dark:bg-black/10",
+        qrFrame: "border-black/10 bg-white dark:border-white/10 dark:bg-white/95",
+        halo:
+          "bg-[radial-gradient(circle_at_12%_18%,hsl(286_82%_72%/0.4),transparent_0_36%),radial-gradient(circle_at_88%_82%,hsl(188_92%_70%/0.32),transparent_0_38%)] " +
+          "dark:bg-[radial-gradient(circle_at_12%_18%,hsl(286_72%_52%/0.28),transparent_0_34%),radial-gradient(circle_at_88%_82%,hsl(188_92%_50%/0.2),transparent_0_36%)]",
+        innerBorder: "border-black/5 dark:border-white/10",
       };
     case "signal":
       return {
+        // SIGNAL is intentionally hi-vis in both modes; light variant slightly softer.
         shell:
-          "border-primary/60 bg-[radial-gradient(circle_at_top_left,hsl(var(--foreground)/0.07),transparent_32%),linear-gradient(150deg,hsl(60_100%_50%),hsl(55_100%_47%)_58%,hsl(49_100%_43%))] text-background",
-        accent: "text-background",
-        sub: "text-background/72",
-        line: "border-background/20",
-        pill: "bg-background/10 text-background/78 border-background/15",
-        qrFrame: "border-background/15 bg-white",
-        halo: "bg-[radial-gradient(circle_at_16%_20%,hsl(var(--foreground)/0.08),transparent_0_34%),radial-gradient(circle_at_84%_78%,hsl(var(--background)/0.18),transparent_0_36%)]",
+          "border-black/70 text-[hsl(0_0%_6%)] bg-[radial-gradient(circle_at_top_left,hsl(0_0%_0%/0.06),transparent_32%),linear-gradient(150deg,hsl(60_100%_60%),hsl(55_100%_55%)_58%,hsl(49_100%_50%))] " +
+          "dark:border-primary/60 dark:text-background dark:bg-[radial-gradient(circle_at_top_left,hsl(var(--foreground)/0.07),transparent_32%),linear-gradient(150deg,hsl(60_100%_50%),hsl(55_100%_47%)_58%,hsl(49_100%_43%))]",
+        accent: "text-[hsl(0_0%_6%)] dark:text-background",
+        sub: "text-black/70 dark:text-background/72",
+        line: "border-black/25 dark:border-background/20",
+        pill: "bg-black/10 text-black/75 border-black/20 dark:bg-background/10 dark:text-background/78 dark:border-background/15",
+        innerPanel: "bg-black/5 dark:bg-black/10",
+        qrFrame: "border-black/20 bg-white dark:border-background/15 dark:bg-white",
+        halo:
+          "bg-[radial-gradient(circle_at_16%_20%,hsl(0_0%_0%/0.08),transparent_0_34%),radial-gradient(circle_at_84%_78%,hsl(0_0%_100%/0.4),transparent_0_36%)] " +
+          "dark:bg-[radial-gradient(circle_at_16%_20%,hsl(var(--foreground)/0.08),transparent_0_34%),radial-gradient(circle_at_84%_78%,hsl(var(--background)/0.18),transparent_0_36%)]",
+        innerBorder: "border-black/10 dark:border-white/10",
       };
   }
 }
