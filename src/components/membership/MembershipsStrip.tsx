@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { membershipDataUri, monthLabel } from "@/lib/membershipArt";
+import { SelfDelegateButton } from "@/components/membership/SelfDelegateButton";
 
 type Mint = {
   id: string;
@@ -28,9 +29,12 @@ export function MembershipsStrip({ wallet }: { wallet?: string }) {
 
   return (
     <section className="mt-8">
-      <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-        // your monthly memberships
-      </p>
+      <div className="flex items-end justify-between gap-3">
+        <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+          // your monthly memberships
+        </p>
+        <SelfDelegateButton className="h-8 px-3 text-xs" />
+      </div>
       <div className="mt-3 flex gap-3 overflow-x-auto pb-2">
         {items.map((m) => (
           <div key={m.id} className="brutal min-w-[180px] p-3">
