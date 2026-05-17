@@ -1,10 +1,12 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { getContract, prepareContractCall, sendTransaction, waitForReceipt } from "thirdweb";
+import { getContract, prepareContractCall, readContract, sendTransaction, waitForReceipt } from "thirdweb";
 import type { Account } from "thirdweb/wallets";
 import { thirdwebClient, baseChain } from "@/lib/thirdweb";
 import { CONTRACTS_V2 } from "@/config/contracts";
 import { voteChoiceToSupport } from "@/lib/governor";
+
+const GOVERNOR_STATES = ["Pending", "Active", "Canceled", "Defeated", "Succeeded", "Queued", "Expired", "Executed"] as const;
 
 export type VoteChoice = "yes" | "no" | "abstain";
 
@@ -90,6 +92,28 @@ export function useDraftVotes() {
         chain: baseChain,
         address: CONTRACTS_V2.POP_GOVERNOR,
       });
+      // Pre-flight: check Governor proposal state so we can give a useful error
+      // instead of the raw "vote not currently active" revert.
+      const stateNum = await readContract({
+        contract: governor,
+        method: "function state(uint256) view returns (uint8)",
+        params: [BigInt(draft.dao_proposal_id)],
+      }) as number;
+      const label = GOVERNOR_STATES[stateNum] ?? `state ${stateNum}`;
+      if (stateNum !== 1) {
+        if (stateNum === 0) {
+          // Pending — voting delay not elapsed. Show when it opens.
+          const snapshot = await readContract({
+            contract: governor,
+            method: "function proposalSnapshot(uint256) view returns (uint256)",
+            params: [BigInt(draft.dao_proposal_id)],
+          }) as bigint;
+          throw new Error(
+            `Voting not yet open on-chain — proposal is Pending (voting begins at block ${snapshot.toString()}). Try again in a minute or two.`,
+          );
+        }
+        throw new Error(`On-chain proposal is ${label}, not Active — cannot cast vote.`);
+      }
       const tx = prepareContractCall({
         contract: governor,
         method: "function castVote(uint256 proposalId, uint8 support) returns (uint256)",
