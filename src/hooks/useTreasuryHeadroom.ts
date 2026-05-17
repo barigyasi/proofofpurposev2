@@ -19,7 +19,7 @@ async function fetch() {
   const usdc = getContract({ client: thirdwebClient, chain: baseChain, address: ACTIVE.USDC });
   const purpose = getContract({ client: thirdwebClient, chain: baseChain, address: ACTIVE.PURPOSE_TOKEN });
 
-  const [usdcWei, supplyWei, { data: rows }] = await Promise.all([
+  const [usdcWei, supplyWei, { data: rows }, { data: draftRows }] = await Promise.all([
     readContract({
       contract: usdc,
       method: "function balanceOf(address) view returns (uint256)",
@@ -34,15 +34,28 @@ async function fetch() {
       .from("bounties")
       .select("reward_amount,max_participants,min_participants,status")
       .in("status", ["open", "running"]),
+    // Drafts that are queued or in voting also reserve headroom, since they
+    // are still expected to mint PURPOSE if/when executed.
+    supabase
+      .from("bounty_drafts")
+      .select("reward_purpose,max_participants,status,on_chain_bounty_id")
+      .in("status", ["queued", "pending_vote"])
+      .is("on_chain_bounty_id", null),
   ]);
 
   const backing = Number(usdcWei) / 10 ** USDC_DECIMALS;
   const outstanding = Number(supplyWei) / 10 ** PURPOSE_DECIMALS;
-  const committed = (rows ?? []).reduce((sum, b) => {
+  const committedBounties = (rows ?? []).reduce((sum, b) => {
     const reward = Number(b.reward_amount) || 0;
     const cap = Math.max(1, Number(b.max_participants) || Number(b.min_participants) || 1);
     return sum + reward * cap;
   }, 0);
+  const committedDrafts = (draftRows ?? []).reduce((sum, d) => {
+    const reward = Number(d.reward_purpose) || 0;
+    const cap = Math.max(1, Number(d.max_participants) || 1);
+    return sum + reward * cap;
+  }, 0);
+  const committed = committedBounties + committedDrafts;
 
   return {
     backing,
