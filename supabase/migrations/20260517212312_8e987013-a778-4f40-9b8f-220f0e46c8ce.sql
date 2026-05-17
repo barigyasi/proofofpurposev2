@@ -1,0 +1,1 @@
+INSERT INTO public.governance_config (id, vote_token_address) VALUES (1, '0x437718C580C109610Bc5a74A439a7Fb6ad83835e') ON CONFLICT (id) DO UPDATE SET vote_token_address = EXCLUDED.vote_token_address;
