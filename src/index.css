@@ -70,6 +70,90 @@
     --sidebar-border: 0 0% 98%;
     --sidebar-ring: 60 100% 50%;
   }
+
+  /* === Card-driven global themes ===
+     Each Champion card variant retints the entire app:
+     OBSIDIAN = default brutalist near-black + acid yellow (no override)
+     AURORA   = indigo/violet base with magenta + cyan accents
+     SIGNAL   = inverted high-contrast (acid yellow base, black ink) */
+
+  .dark[data-card-theme="aurora"] {
+    --background: 244 36% 8%;
+    --foreground: 0 0% 98%;
+
+    --card: 244 30% 12%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 244 30% 12%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 286 78% 62%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 244 24% 16%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 244 20% 18%;
+    --muted-foreground: 244 15% 70%;
+
+    --accent: 188 92% 55%;
+    --accent-foreground: 0 0% 6%;
+
+    --destructive: 350 90% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 98%;
+    --input: 244 24% 16%;
+    --ring: 286 78% 62%;
+
+    --sidebar-background: 244 36% 8%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 286 78% 62%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 244 24% 16%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 0 0% 98%;
+    --sidebar-ring: 286 78% 62%;
+  }
+
+  .dark[data-card-theme="signal"] {
+    --background: 60 100% 50%;
+    --foreground: 0 0% 6%;
+
+    --card: 60 100% 55%;
+    --card-foreground: 0 0% 6%;
+
+    --popover: 60 100% 55%;
+    --popover-foreground: 0 0% 6%;
+
+    --primary: 0 0% 6%;
+    --primary-foreground: 60 100% 50%;
+
+    --secondary: 0 0% 6%;
+    --secondary-foreground: 60 100% 50%;
+
+    --muted: 60 60% 80%;
+    --muted-foreground: 0 0% 20%;
+
+    --accent: 0 0% 6%;
+    --accent-foreground: 60 100% 50%;
+
+    --destructive: 0 100% 40%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 6%;
+    --input: 60 60% 80%;
+    --ring: 0 0% 6%;
+
+    --sidebar-background: 60 100% 50%;
+    --sidebar-foreground: 0 0% 6%;
+    --sidebar-primary: 0 0% 6%;
+    --sidebar-primary-foreground: 60 100% 50%;
+    --sidebar-accent: 60 60% 80%;
+    --sidebar-accent-foreground: 0 0% 6%;
+    --sidebar-border: 0 0% 6%;
+    --sidebar-ring: 0 0% 6%;
+  }
 }
 
 @layer base {
