@@ -20,10 +20,10 @@ export default function AdminTreasury() {
   useEffect(() => {
     if (!roles.includes("admin")) return;
     (async () => {
-      const usdcC = getContract({ client: thirdwebClient, chain: baseChain, address: CONTRACTS.USDC_BASE });
-      const purposeC = getContract({ client: thirdwebClient, chain: baseChain, address: CONTRACTS.PURPOSE_TOKEN });
+      const usdcC = getContract({ client: thirdwebClient, chain: baseChain, address: ACTIVE.USDC });
+      const purposeC = getContract({ client: thirdwebClient, chain: baseChain, address: ACTIVE.PURPOSE_TOKEN });
       const [u, s] = await Promise.all([
-        readContract({ contract: usdcC, method: "function balanceOf(address) view returns (uint256)", params: [CONTRACTS.TREASURY as `0x${string}`] }) as Promise<bigint>,
+        readContract({ contract: usdcC, method: "function balanceOf(address) view returns (uint256)", params: [ACTIVE.TREASURY as `0x${string}`] }) as Promise<bigint>,
         readContract({ contract: purposeC, method: "function totalSupply() view returns (uint256)", params: [] }) as Promise<bigint>,
       ]);
       setUsdc(u);
@@ -46,14 +46,14 @@ export default function AdminTreasury() {
           <p className="mt-2 font-display text-4xl text-primary">${usdcStr}</p>
           <a className="mt-2 inline-block font-mono text-[10px] text-primary underline"
             target="_blank" rel="noreferrer"
-            href={`https://basescan.org/address/${CONTRACTS.TREASURY}`}>view ↗</a>
+            href={`https://basescan.org/address/${ACTIVE.TREASURY}`}>view ↗</a>
         </div>
         <div className="brutal p-6">
           <p className="font-mono text-[10px] uppercase text-muted-foreground">$PURPOSE supply</p>
           <p className="mt-2 font-display text-4xl text-primary">{supply ? formatPurpose(supply) : "…"}</p>
           <a className="mt-2 inline-block font-mono text-[10px] text-primary underline"
             target="_blank" rel="noreferrer"
-            href={`https://basescan.org/address/${CONTRACTS.PURPOSE_TOKEN}`}>view ↗</a>
+            href={`https://basescan.org/address/${ACTIVE.PURPOSE_TOKEN}`}>view ↗</a>
         </div>
       </div>
     </main>
