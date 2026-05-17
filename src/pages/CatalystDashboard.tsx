@@ -87,6 +87,9 @@ export default function CatalystDashboard() {
 
   async function submitDraft() {
     if (!name || !reward || !maxP) return toast.error("Fill required fields");
+    if (wouldOverdraw && !override) {
+      return toast.error("Treasury cannot cover this bounty — ask admin to fund it, or check the override box.");
+    }
     setBusy(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
