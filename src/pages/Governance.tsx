@@ -59,7 +59,7 @@ function outcome(d: DraftWithVotes) {
 export default function Governance() {
   const { roles } = useEffectiveRoles();
   const account = useActiveAccount();
-  const { drafts: allDrafts, myVotes, loading, castVote } = useDraftVotes();
+  const { drafts: allDrafts, myVotes, loading, castVote, refresh } = useDraftVotes();
 
   // Active = pending_vote and voting window still open. Everything else lives on /governance/past.
   const drafts = useMemo(
@@ -105,7 +105,9 @@ export default function Governance() {
         body: { draft_id: d.id },
       });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       toast.success(`Proposal ${data?.proposalId?.slice?.(0, 8) ?? "created"}…`, { id: t });
+      await refresh();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Propose failed", { id: t });
     }
@@ -118,7 +120,9 @@ export default function Governance() {
         body: { draft_id: d.id },
       });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       toast.success(`Executed — bounty #${data?.onChainBountyId} is live`, { id: t });
+      await refresh();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Execute failed", { id: t });
     }
@@ -130,7 +134,7 @@ export default function Governance() {
       .update({ status: "rejected", executed_at: new Date().toISOString() })
       .eq("id", d.id);
     if (error) toast.error(error.message);
-    else toast.success("Rejected");
+    else { toast.success("Rejected"); await refresh(); }
   }
 
   return (

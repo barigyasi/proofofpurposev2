@@ -25,12 +25,31 @@ type Draft = {
   status: string;
   dao_proposal_id: number | null;
   on_chain_bounty_id: number | null;
+  on_chain_tx_hash: string | null;
+  vote_closes_at: string;
   created_at: string;
   image_urls: string[] | null;
   video_url: string | null;
   deck_url: string | null;
   deck_filename: string | null;
 };
+
+function badge(d: Draft): { label: string; tone: "primary" | "muted" | "destructive" } {
+  if (d.on_chain_bounty_id !== null) return { label: "⛓ ON-CHAIN BOUNTY", tone: "primary" };
+  if (d.dao_proposal_id) {
+    const closed = new Date(d.vote_closes_at).getTime() <= Date.now();
+    return { label: closed ? "VOTE CLOSED · AWAITING EXECUTION" : "⛓ VOTE LIVE ON-CHAIN", tone: "primary" };
+  }
+  if (d.status === "pending_vote") {
+    const closed = new Date(d.vote_closes_at).getTime() <= Date.now();
+    return closed
+      ? { label: "VOTE CLOSED · AWAITING ADMIN", tone: "muted" }
+      : { label: "OFF-CHAIN TALLY · AWAITING ADMIN TO POST", tone: "muted" };
+  }
+  if (d.status === "rejected") return { label: "REJECTED", tone: "destructive" };
+  if (d.status === "queued") return { label: "QUEUED", tone: "muted" };
+  return { label: d.status.toUpperCase(), tone: "muted" };
+}
 
 const EMPTY_MEDIA: DraftMedia = { imageUrls: [], videoUrl: null, deckUrl: null, deckFilename: null };
 
@@ -78,12 +97,19 @@ export default function CatalystDashboard() {
     if (!user) return;
     const { data } = await supabase
       .from("bounty_drafts")
-      .select("id,name,description,reward_purpose,max_participants,status,dao_proposal_id,on_chain_bounty_id,created_at,image_urls,video_url,deck_url,deck_filename")
+      .select("id,name,description,reward_purpose,max_participants,status,dao_proposal_id,on_chain_bounty_id,on_chain_tx_hash,vote_closes_at,created_at,image_urls,video_url,deck_url,deck_filename")
       .eq("proposer_id", user.id)
       .order("created_at", { ascending: false });
     setDrafts((data ?? []) as Draft[]);
   }
   useEffect(() => { load(); }, [session]);
+  useEffect(() => {
+    const ch = supabase
+      .channel("catalyst-drafts")
+      .on("postgres_changes", { event: "*", schema: "public", table: "bounty_drafts" }, () => load())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, []);
 
   async function submitDraft() {
     if (!name || !reward || !maxP) return toast.error("Fill required fields");
@@ -241,18 +267,23 @@ export default function CatalystDashboard() {
       )}
 
       <div className="mt-10">
-        <h2 className="font-display text-2xl border-b-2 border-foreground pb-2">YOUR DRAFTS</h2>
+        <h2 className="font-display text-2xl border-b-2 border-foreground pb-2">MY PROPOSALS</h2>
         <div className="mt-4 space-y-3">
           {drafts.length === 0 ? (
-            <p className="font-mono text-xs text-muted-foreground">// no drafts yet</p>
+            <p className="font-mono text-xs text-muted-foreground">// no proposals yet</p>
           ) : (
             drafts.map((d) => {
               const imgs = d.image_urls ?? [];
+              const b = badge(d);
+              const toneCls =
+                b.tone === "primary" ? "text-primary"
+                : b.tone === "destructive" ? "text-destructive"
+                : "text-muted-foreground";
               return (
                 <div key={d.id} className="brutal p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="font-mono text-[10px] uppercase text-primary">{d.status}</p>
+                      <p className={`font-mono text-[10px] uppercase tracking-widest ${toneCls}`}>// {b.label}</p>
                       <h3 className="mt-1 font-display text-xl">{d.name}</h3>
                       <p className="mt-1 text-sm text-muted-foreground">{d.description}</p>
                       {(imgs.length > 0 || d.video_url || d.deck_url) && (
@@ -261,6 +292,16 @@ export default function CatalystDashboard() {
                           {d.video_url && <>🎞️ </>}
                           {d.deck_url && <>📊 </>}
                         </p>
+                      )}
+                      {d.on_chain_tx_hash && (
+                        <a
+                          href={`https://basescan.org/tx/${d.on_chain_tx_hash}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-2 inline-block font-mono text-[10px] text-primary underline"
+                        >
+                          view proposal tx ↗
+                        </a>
                       )}
                     </div>
                     <p className="font-display text-lg text-primary">{d.reward_purpose} ⨯ {d.max_participants}</p>
