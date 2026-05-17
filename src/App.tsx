@@ -38,6 +38,7 @@ import Receipt from "./pages/Receipt.tsx";
 import Impact from "./pages/Impact.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import { RoleViewProvider } from "@/context/RoleViewContext";
+import { CardThemeProvider } from "@/context/CardThemeContext";
 import { AdminGuard } from "@/components/auth/AdminGuard";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { Footer } from "@/components/layout/Footer";
