@@ -19,7 +19,7 @@ const NAV: NavItem[] = [
   { to: "/governance", label: "Governance", hideForChampion: true },
   { to: "/bulletin", label: "Bulletin" },
   { to: "/about", label: "About" },
-  { to: "/donate", label: "Donate" },
+  { to: "/donate", label: "Donate", hideForChampion: true },
 ];
 
 export function Header() {
