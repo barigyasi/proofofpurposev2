@@ -28,6 +28,16 @@ export default function Donate() {
   const [amount, setAmount] = useState("");
   const [busy, setBusy] = useState(false);
   const [hash, setHash] = useState<string | null>(null);
+  const [activeEdition, setActiveEdition] = useState<{ name: string; description: string | null; image_url: string } | null>(null);
+
+  useEffect(() => {
+    supabase
+      .from("membership_editions")
+      .select("name, description, image_url")
+      .eq("active", true)
+      .maybeSingle()
+      .then(({ data }) => setActiveEdition(data));
+  }, []);
 
   async function donate() {
     if (!account) return toast.error("Connect wallet first");
