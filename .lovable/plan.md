@@ -36,9 +36,9 @@ Do these in order — each is a one-shot tx from your admin wallet (`0xa5a4…f0
 1. **`RefundPool.grantRole(REDEMPTION_ROLE, 0x54e6…7c25)`** — lets VendorRedemptionV2 pull refunds.
 2. **`VendorRedemptionV2.setRefundPool(0x8E1f…17d3)`**
 3. **`VendorRedemptionV2.setReceiptNFT(0xeCC5…EE52)`**
-4. **`ReceiptNFT.grantRole(MINTER_ROLE, 0x54e6…7c25)`** (or whatever the minter-grant function is — confirm against `contracts/ReceiptNFT.sol`).
-5. **`PurposeTokenV2.grantRole(BURNER_ROLE, 0x54e6…7c25)`** — so settle() can burn PURPOSE.
-6. **`PurposeTokenV2.grantRole(MINTER_ROLE, 0x19ca…0a51)`** — so BountyManagerV2 can mint rewards. (Skip if you set this in the constructor.)
+4. **`ReceiptNFT.grantRole(MINTER_ROLE, 0x54e6…7c25)`** — VendorRedemptionV2 mints receipts on settle.
+5. **`PurposeTokenV2.setTransferAllowed(0x54e6…7c25, true)`** — whitelists VendorRedemptionV2 so `burnFrom` (which does a champion → VR transferFrom internally before burn) passes the restricted-transfer hook. No BURNER_ROLE needed — V2 uses ERC20Burnable + allowance.
+6. **`PurposeTokenV2.grantRole(MINTER_ROLE, 0x19ca…f352)`** — so BountyManagerV2 can mint rewards.
 7. **Treasury Safe → `USDC.approve(0x54e6…7c25, max)`** — so settle() can transferFrom treasury to vendor.
 8. **Fund RefundPool** with USDC (initial cushion, e.g. $500) — so cancel/refund tx never reverts on empty pool.
 
