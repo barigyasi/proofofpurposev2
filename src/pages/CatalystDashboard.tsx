@@ -12,6 +12,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { DraftMediaUploader, type DraftMedia } from "@/components/bounties/DraftMediaUploader";
+import { TreasuryHeadroomCard } from "@/components/admin/TreasuryHeadroomCard";
+import { useTreasuryHeadroom } from "@/hooks/useTreasuryHeadroom";
+import { MIN_RECOMMENDED_REWARD } from "@/config/contracts";
 
 type Draft = {
   id: string;
@@ -45,9 +48,18 @@ export default function CatalystDashboard() {
   const [media, setMedia] = useState<DraftMedia>(EMPTY_MEDIA);
   const [draftKey] = useState(() => crypto.randomUUID());
   const [busy, setBusy] = useState(false);
+  const [override, setOverride] = useState(false);
+  const { data: treasury } = useTreasuryHeadroom();
 
   const isApproved = roles.includes("catalyst");
   const isPending = !isApproved && appStatus === "pending";
+
+  const rewardNum = Number(reward) || 0;
+  const maxNum = Number(maxP) || 0;
+  const newCommitment = rewardNum * Math.max(1, maxNum);
+  const projectedHeadroom = treasury ? treasury.headroom - newCommitment : null;
+  const wouldOverdraw = projectedHeadroom !== null && projectedHeadroom < 0;
+  const belowRecommended = rewardNum > 0 && rewardNum < MIN_RECOMMENDED_REWARD;
 
   useEffect(() => {
     if (isLoading) return;
@@ -75,6 +87,9 @@ export default function CatalystDashboard() {
 
   async function submitDraft() {
     if (!name || !reward || !maxP) return toast.error("Fill required fields");
+    if (wouldOverdraw && !override) {
+      return toast.error("Treasury cannot cover this bounty — ask admin to fund it, or check the override box.");
+    }
     setBusy(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -128,6 +143,12 @@ export default function CatalystDashboard() {
         </p>
       )}
 
+      {!isPending && (
+        <div className="mt-6">
+          <TreasuryHeadroomCard />
+        </div>
+      )}
+
       {isPending ? (
         <div className="brutal mt-8 p-6">
           <p className="font-mono text-[10px] uppercase tracking-widest text-primary">// pending approval</p>
@@ -162,14 +183,57 @@ export default function CatalystDashboard() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Reward (PURPOSE) *</Label>
-                <Input inputMode="decimal" value={reward} onChange={(e) => setReward(e.target.value.replace(/[^0-9.]/g, ""))} />
+                <Input inputMode="decimal" value={reward} onChange={(e) => setReward(e.target.value.replace(/[^0-9.]/g, ""))} placeholder={`${MIN_RECOMMENDED_REWARD}+`} />
+                <p className={`mt-1 font-mono text-[10px] uppercase tracking-widest ${belowRecommended ? "text-destructive" : "text-muted-foreground"}`}>
+                  {belowRecommended
+                    ? `// below recommended — aim for ${MIN_RECOMMENDED_REWARD}+ per participant`
+                    : `// recommended: ${MIN_RECOMMENDED_REWARD}+ per participant`}
+                </p>
               </div>
               <div>
                 <Label>Max participants *</Label>
                 <Input type="number" min={1} value={maxP} onChange={(e) => setMaxP(e.target.value)} />
               </div>
             </div>
-            <Button onClick={submitDraft} disabled={busy} className="brutal-primary brutal-hover w-full font-display">
+
+            {treasury && (
+              <div
+                className={`border-2 p-3 font-mono text-[11px] ${
+                  wouldOverdraw
+                    ? "border-destructive bg-destructive/10 text-destructive"
+                    : "border-foreground bg-muted/30 text-muted-foreground"
+                }`}
+              >
+                <div className="flex flex-wrap justify-between gap-2">
+                  <span>// treasury headroom now</span>
+                  <span className="text-foreground">{treasury.headroom.toLocaleString()} PURPOSE</span>
+                </div>
+                {newCommitment > 0 && (
+                  <div className="flex flex-wrap justify-between gap-2">
+                    <span>// this bounty (reward × max)</span>
+                    <span className="text-foreground">{newCommitment.toLocaleString()} PURPOSE</span>
+                  </div>
+                )}
+                <div className="mt-1 flex flex-wrap justify-between gap-2 border-t border-current pt-1">
+                  <span>// headroom after</span>
+                  <span className={wouldOverdraw ? "text-destructive" : "text-primary"}>
+                    {projectedHeadroom !== null ? projectedHeadroom.toLocaleString() : "—"} PURPOSE
+                  </span>
+                </div>
+                {wouldOverdraw && (
+                  <label className="mt-2 flex cursor-pointer items-center gap-2 text-foreground">
+                    <input
+                      type="checkbox"
+                      checked={override}
+                      onChange={(e) => setOverride(e.target.checked)}
+                    />
+                    I understand the Treasury must be funded before this can execute on-chain.
+                  </label>
+                )}
+              </div>
+            )}
+
+            <Button onClick={submitDraft} disabled={busy || (wouldOverdraw && !override)} className="brutal-primary brutal-hover w-full font-display">
               {busy ? "SAVING…" : "SUBMIT FOR VOTE"}
             </Button>
           </div>
