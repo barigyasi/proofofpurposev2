@@ -155,8 +155,13 @@ export function CreateBountyDialog({ open, onOpenChange }: Props) {
                 inputMode="decimal"
                 value={reward}
                 onChange={(e) => setReward(e.target.value.replace(/[^0-9.]/g, ""))}
-                placeholder="100"
+                placeholder={`${MIN_RECOMMENDED_REWARD}+`}
               />
+              <p className={`mt-1 font-mono text-[10px] uppercase tracking-widest ${belowRecommended ? "text-destructive" : "text-muted-foreground"}`}>
+                {belowRecommended
+                  ? `// below recommended — aim for ${MIN_RECOMMENDED_REWARD}+ per participant`
+                  : `// recommended: ${MIN_RECOMMENDED_REWARD}+ per participant`}
+              </p>
             </div>
             <div>
               <Label>Max participants</Label>
