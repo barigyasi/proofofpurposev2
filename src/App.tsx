@@ -36,11 +36,16 @@ import PastProps from "./pages/PastProps.tsx";
 import Bulletin from "./pages/Bulletin.tsx";
 import Receipt from "./pages/Receipt.tsx";
 import Impact from "./pages/Impact.tsx";
+import Stories from "./pages/Stories.tsx";
+import StoryDetail from "./pages/StoryDetail.tsx";
+import StorySubmit from "./pages/StorySubmit.tsx";
+import AdminBlog from "./pages/AdminBlog.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import { RoleViewProvider } from "@/context/RoleViewContext";
 import { CardThemeProvider } from "@/context/CardThemeContext";
 import { AdminGuard } from "@/components/auth/AdminGuard";
 import { AuthGuard } from "@/components/auth/AuthGuard";
+import { RoleGate } from "@/components/auth/RoleGate";
 import { Footer } from "@/components/layout/Footer";
 
 const queryClient = new QueryClient();
@@ -85,6 +90,31 @@ const App = () => (
               <Route path="/admin/treasury" element={<AdminGuard><AdminTreasury /></AdminGuard>} />
               <Route path="/admin/audit" element={<AdminGuard><AdminAudit /></AdminGuard>} />
               <Route path="/admin/waitlist" element={<AdminGuard><AdminWaitlist /></AdminGuard>} />
+              <Route path="/admin/blog" element={<AdminGuard><AdminBlog /></AdminGuard>} />
+              <Route
+                path="/stories"
+                element={
+                  <AuthGuard>
+                    <RoleGate anyOf={["donor", "catalyst", "admin"]}><Stories /></RoleGate>
+                  </AuthGuard>
+                }
+              />
+              <Route
+                path="/stories/submit"
+                element={
+                  <AuthGuard>
+                    <RoleGate anyOf={["catalyst", "admin"]}><StorySubmit /></RoleGate>
+                  </AuthGuard>
+                }
+              />
+              <Route
+                path="/stories/:slug"
+                element={
+                  <AuthGuard>
+                    <RoleGate anyOf={["donor", "catalyst", "admin"]}><StoryDetail /></RoleGate>
+                  </AuthGuard>
+                }
+              />
               <Route path="/receipts/:tokenId" element={<Receipt />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
