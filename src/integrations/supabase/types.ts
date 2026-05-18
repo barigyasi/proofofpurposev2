@@ -14,6 +14,95 @@ export type Database = {
   }
   public: {
     Tables: {
+      blog_post_views: {
+        Row: {
+          id: string
+          post_id: string
+          viewed_at: string
+          viewer_id: string | null
+        }
+        Insert: {
+          id?: string
+          post_id: string
+          viewed_at?: string
+          viewer_id?: string | null
+        }
+        Update: {
+          id?: string
+          post_id?: string
+          viewed_at?: string
+          viewer_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_post_views_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "blog_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blog_posts: {
+        Row: {
+          author_id: string
+          body_md: string
+          category: Database["public"]["Enums"]["blog_category"]
+          cover_url: string | null
+          created_at: string
+          excerpt: string | null
+          id: string
+          is_featured: boolean
+          published_at: string | null
+          read_time_minutes: number | null
+          review_note: string | null
+          scheduled_for: string | null
+          slug: string
+          status: Database["public"]["Enums"]["blog_post_status"]
+          tags: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          body_md?: string
+          category?: Database["public"]["Enums"]["blog_category"]
+          cover_url?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          is_featured?: boolean
+          published_at?: string | null
+          read_time_minutes?: number | null
+          review_note?: string | null
+          scheduled_for?: string | null
+          slug: string
+          status?: Database["public"]["Enums"]["blog_post_status"]
+          tags?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          body_md?: string
+          category?: Database["public"]["Enums"]["blog_category"]
+          cover_url?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          is_featured?: boolean
+          published_at?: string | null
+          read_time_minutes?: number | null
+          review_note?: string | null
+          scheduled_for?: string | null
+          slug?: string
+          status?: Database["public"]["Enums"]["blog_post_status"]
+          tags?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bounties: {
         Row: {
           check_in_token: string | null
@@ -1253,6 +1342,19 @@ export type Database = {
         | "donor"
         | "support"
         | "catalyst"
+      blog_category:
+        | "champion_story"
+        | "bounty_recap"
+        | "update"
+        | "announcement"
+        | "feature"
+      blog_post_status:
+        | "draft"
+        | "pending"
+        | "approved"
+        | "rejected"
+        | "published"
+        | "archived"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1381,6 +1483,21 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "vendor", "champion", "donor", "support", "catalyst"],
+      blog_category: [
+        "champion_story",
+        "bounty_recap",
+        "update",
+        "announcement",
+        "feature",
+      ],
+      blog_post_status: [
+        "draft",
+        "pending",
+        "approved",
+        "rejected",
+        "published",
+        "archived",
+      ],
     },
   },
 } as const

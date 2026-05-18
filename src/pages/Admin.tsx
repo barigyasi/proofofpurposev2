@@ -15,6 +15,7 @@ const TILES = [
   { to: "/admin/donations", label: "DONATIONS", desc: "Live ledger of inflows" },
   { to: "/admin/treasury", label: "TREASURY", desc: "USDC + PURPOSE positions" },
   { to: "/governance", label: "GOVERNANCE", desc: "DAO proposals + votes" },
+  { to: "/admin/blog", label: "BLOG", desc: "Review, publish, feature stories" },
   { to: "/admin/audit", label: "AUDIT LOG", desc: "Every admin action, on-chain + off" },
   { to: "/admin/waitlist", label: "WAITLIST", desc: "Pre-launch signups" },
 ];

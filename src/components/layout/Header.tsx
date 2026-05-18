@@ -12,11 +12,12 @@ import { useSessionRoles } from "@/hooks/useSessionRoles";
 import { useRoleView, type ViewAs } from "@/context/RoleViewContext";
 import popMark from "@/assets/pop-mark.png";
 
-type NavItem = { to: string; label: string; hideForChampion?: boolean };
+type NavItem = { to: string; label: string; hideForChampion?: boolean; rolesAnyOf?: string[] };
 const NAV: NavItem[] = [
   { to: "/vendors", label: "Vendors" },
   { to: "/dashboard", label: "Dashboard" },
   { to: "/governance", label: "Governance", hideForChampion: true },
+  { to: "/stories", label: "Stories", rolesAnyOf: ["donor", "catalyst", "admin"] },
   { to: "/bulletin", label: "Bulletin" },
   { to: "/about", label: "About" },
   { to: "/donate", label: "Donate", hideForChampion: true },
@@ -40,7 +41,12 @@ export function Header() {
   const isChampionOnly = isAdmin
     ? viewAs === "champion"
     : roles.length > 0 && roles.every((r) => r === "champion");
-  const visibleNav = NAV.filter((n) => !(n.hideForChampion && isChampionOnly));
+  const effectiveRoles: string[] = isAdmin && viewAs !== "admin" ? [viewAs] : roles;
+  const visibleNav = NAV.filter((n) => {
+    if (n.hideForChampion && isChampionOnly) return false;
+    if (n.rolesAnyOf && !n.rolesAnyOf.some((r) => effectiveRoles.includes(r))) return false;
+    return true;
+  });
   void effectiveRole;
 
   function handleViewChange(v: ViewAs) {
