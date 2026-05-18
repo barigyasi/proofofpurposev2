@@ -58,7 +58,6 @@ export default function ApplyChampion() {
   }
 
   async function submit() {
-    if (!account) return toast.error("Enter first");
     const parsed = schema.safeParse(form);
     if (!parsed.success) {
       const first = Object.values(parsed.error.flatten().fieldErrors)[0]?.[0];
@@ -67,10 +66,26 @@ export default function ApplyChampion() {
     setBusy(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not signed in");
+      if (!user) {
+        toast.error("Enter first");
+        return;
+      }
+      let wallet = account?.address ?? null;
+      if (!wallet) {
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("wallet_address")
+          .eq("id", user.id)
+          .maybeSingle();
+        wallet = prof?.wallet_address ?? null;
+      }
+      if (!wallet) {
+        toast.error("No wallet on your account — reconnect and try again");
+        return;
+      }
       const { error } = await supabase.from("champion_applications").insert({
         user_id: user.id,
-        wallet_address: account.address,
+        wallet_address: wallet,
         champion_name: parsed.data.championName,
         champion_email: parsed.data.championEmail,
         date_of_birth: parsed.data.dateOfBirth,
@@ -83,7 +98,7 @@ export default function ApplyChampion() {
       });
       if (error) throw error;
       await supabase.from("pending_applicants").insert({
-        wallet_address: account.address,
+        wallet_address: wallet,
         requested_role: "champion" as never,
         name: parsed.data.championName,
         email: parsed.data.championEmail,
