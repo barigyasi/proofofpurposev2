@@ -203,83 +203,83 @@ export function PurposeCard({ address, onShowQR }: Props) {
             }}
           >
             <div
-              className={`absolute inset-0 overflow-hidden rounded-[28px] border p-5 shadow-[0_32px_80px_-32px_hsl(0_0%_0%/0.9)] sm:p-6 ${activeVariant.shell}`}
+              className={`absolute inset-0 overflow-hidden rounded-[22px] sm:rounded-[28px] border p-4 sm:p-6 shadow-[0_24px_60px_-28px_hsl(0_0%_0%/0.85)] sm:shadow-[0_32px_80px_-32px_hsl(0_0%_0%/0.9)] ${activeVariant.shell}`}
             >
-              <div className={`pointer-events-none absolute inset-0 ${activeVariant.halo}`} />
+              <div className={`pointer-events-none absolute inset-0 blur-2xl opacity-90 ${activeVariant.halo}`} />
               <div
                 className="pointer-events-none absolute inset-0 opacity-80 mix-blend-screen"
                 style={{
                   background: `radial-gradient(300px circle at ${tilt.glareX}% ${tilt.glareY}%, hsl(0 0% 100% / 0.22), transparent 60%)`,
                 }}
               />
-              <div className={`pointer-events-none absolute inset-[1px] rounded-[27px] border ${activeVariant.innerBorder}`} />
+              <div className={`pointer-events-none absolute inset-[1px] rounded-[21px] sm:rounded-[27px] border ${activeVariant.innerBorder}`} />
 
-              <div className="relative flex h-full flex-col justify-between">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="space-y-2">
-                    <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 font-mono text-[10px] uppercase tracking-[0.24em] ${activeVariant.pill}`}>
+              <div className="relative flex h-full flex-col justify-between gap-3 sm:gap-0">
+                <div className="flex items-start justify-between gap-3 sm:gap-4">
+                  <div className="min-w-0 space-y-1.5 sm:space-y-2">
+                    <div className={`inline-flex items-center gap-1.5 sm:gap-2 rounded-full border px-2.5 sm:px-3 py-0.5 sm:py-1 font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.22em] sm:tracking-[0.24em] ${activeVariant.pill}`}>
                       <Sparkles className="h-3 w-3" />
                       PURPOSE
                     </div>
                     <div>
-                      <p className={`font-mono text-[10px] uppercase tracking-[0.24em] ${activeVariant.sub}`}>
+                      <p className={`font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.22em] sm:tracking-[0.24em] ${activeVariant.sub}`}>
                         spend balance
                       </p>
                       {isLoading ? (
-                        <Skeleton className="mt-2 h-11 w-40 bg-white/10" />
+                        <Skeleton className="mt-1.5 sm:mt-2 h-9 sm:h-11 w-32 sm:w-40 bg-white/10" />
                       ) : (
-                        <p className={`mt-2 font-display text-[42px] leading-none ${activeVariant.accent}`}>
+                        <p className={`mt-1.5 sm:mt-2 font-display text-[32px] sm:text-[42px] leading-none ${activeVariant.accent}`}>
                           {formatPurpose(balance)}
-                          <span className="ml-2 text-base">$P</span>
+                          <span className="ml-1.5 sm:ml-2 text-sm sm:text-base">$P</span>
                         </p>
                       )}
                     </div>
                   </div>
 
-                  <div className={`flex h-12 w-12 items-center justify-center rounded-2xl border p-2 backdrop-blur-sm ${activeVariant.innerBorder} ${activeVariant.innerPanel}`}>
+                  <div className={`flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl sm:rounded-2xl border p-1.5 sm:p-2 backdrop-blur-md ${activeVariant.innerBorder} ${activeVariant.innerPanel}`}>
                     <img src={popLogo} alt="POP" className="h-full w-full object-contain" />
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <div className={`rounded-2xl border p-4 backdrop-blur-sm ${activeVariant.line} ${activeVariant.innerPanel}`}>
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className={`font-mono text-[10px] uppercase tracking-[0.24em] ${activeVariant.sub}`}>
+                <div className="space-y-2.5 sm:space-y-4">
+                  <div className={`rounded-xl sm:rounded-2xl border p-2.5 sm:p-4 backdrop-blur-md ${activeVariant.line} ${activeVariant.innerPanel}`}>
+                    <div className="flex items-center justify-between gap-2 sm:gap-3">
+                      <div className="min-w-0">
+                        <p className={`font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.22em] sm:tracking-[0.24em] ${activeVariant.sub}`}>
                           cardholder
                         </p>
-                        <p className="mt-2 break-words font-display text-lg leading-none">
+                        <p className="mt-1 sm:mt-2 truncate font-display text-sm sm:text-lg leading-none">
                           {cardholder}
                         </p>
                       </div>
-                      <div className="text-right">
-                        <p className={`font-mono text-[10px] uppercase tracking-[0.24em] ${activeVariant.sub}`}>
+                      <div className="min-w-0 text-right">
+                        <p className={`font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.22em] sm:tracking-[0.24em] ${activeVariant.sub}`}>
                           wallet
                         </p>
                         <button
                           onClick={() => setShowFull((s) => !s)}
-                          className="mt-2 inline-flex items-center gap-1.5 font-mono text-[11px] tracking-[0.14em]"
+                          className="mt-1 sm:mt-2 inline-flex max-w-full items-center gap-1 sm:gap-1.5 font-mono text-[10px] sm:text-[11px] tracking-[0.1em] sm:tracking-[0.14em]"
                           title={showFull ? "Hide address" : "Show address"}
                         >
-                          <span>{formatAddress(address, showFull)}</span>
-                          {showFull ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                          <span className="truncate">{formatAddress(address, showFull)}</span>
+                          {showFull ? <EyeOff className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" /> : <Eye className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" />}
                         </button>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-end justify-between gap-3">
+                  <div className="flex items-end justify-between gap-2 sm:gap-3">
                     <div>
-                      <p className={`font-mono text-[10px] uppercase tracking-[0.24em] ${activeVariant.sub}`}>
+                      <p className={`font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.22em] sm:tracking-[0.24em] ${activeVariant.sub}`}>
                         network
                       </p>
-                      <p className="mt-2 font-display text-base leading-none">POP • BASE</p>
+                      <p className="mt-1 sm:mt-2 font-display text-xs sm:text-base leading-none">POP • BASE</p>
                     </div>
                     <div className="text-right">
-                      <p className={`font-mono text-[10px] uppercase tracking-[0.24em] ${activeVariant.sub}`}>
+                      <p className={`font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.22em] sm:tracking-[0.24em] ${activeVariant.sub}`}>
                         ending
                       </p>
-                      <p className="mt-2 font-display text-base leading-none">••{last4}</p>
+                      <p className="mt-1 sm:mt-2 font-display text-xs sm:text-base leading-none">••{last4}</p>
                     </div>
                   </div>
                 </div>
