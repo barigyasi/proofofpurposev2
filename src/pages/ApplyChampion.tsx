@@ -98,7 +98,7 @@ export default function ApplyChampion() {
       });
       if (error) throw error;
       await supabase.from("pending_applicants").insert({
-        wallet_address: account.address,
+        wallet_address: wallet,
         requested_role: "champion" as never,
         name: parsed.data.championName,
         email: parsed.data.championEmail,
