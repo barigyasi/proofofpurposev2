@@ -315,13 +315,6 @@ export type Database = {
             referencedRelation: "catalyst_orgs"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "bounty_drafts_catalyst_id_fkey"
-            columns: ["catalyst_id"]
-            isOneToOne: false
-            referencedRelation: "catalyst_orgs_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       bounty_rewards: {
@@ -1216,39 +1209,6 @@ export type Database = {
       }
     }
     Views: {
-      catalyst_orgs_public: {
-        Row: {
-          approved_at: string | null
-          created_at: string | null
-          id: string | null
-          location: string | null
-          logo_url: string | null
-          mission: string | null
-          org_name: string | null
-          website: string | null
-        }
-        Insert: {
-          approved_at?: string | null
-          created_at?: string | null
-          id?: string | null
-          location?: string | null
-          logo_url?: string | null
-          mission?: string | null
-          org_name?: string | null
-          website?: string | null
-        }
-        Update: {
-          approved_at?: string | null
-          created_at?: string | null
-          id?: string | null
-          location?: string | null
-          logo_url?: string | null
-          mission?: string | null
-          org_name?: string | null
-          website?: string | null
-        }
-        Relationships: []
-      }
       public_profiles: {
         Row: {
           avatar_url: string | null
