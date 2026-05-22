@@ -205,7 +205,7 @@ export function PurposeCard({ address, onShowQR }: Props) {
             <div
               className={`absolute inset-0 overflow-hidden rounded-[22px] sm:rounded-[28px] border p-4 sm:p-6 shadow-[0_24px_60px_-28px_hsl(0_0%_0%/0.85)] sm:shadow-[0_32px_80px_-32px_hsl(0_0%_0%/0.9)] ${activeVariant.shell}`}
             >
-              <div className={`pointer-events-none absolute inset-0 blur-2xl opacity-90 ${activeVariant.halo}`} />
+              <div className={`pointer-events-none absolute inset-0 blur-3xl opacity-100 sm:blur-2xl sm:opacity-90 ${activeVariant.halo}`} />
               <div
                 className="pointer-events-none absolute inset-0 opacity-80 mix-blend-screen"
                 style={{
