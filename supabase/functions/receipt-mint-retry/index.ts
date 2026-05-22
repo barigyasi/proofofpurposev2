@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
     const championName = (champ?.display_name || champ?.username || "Champion").slice(0, 64);
     const vendorName = (vend?.business_name || "Vendor").slice(0, 64);
 
-    const account = privateKeyToAccount(pk as `0x${string}`);
+    const account = privateKeyToAccount((pk.startsWith("0x") ? pk : `0x${pk}`) as `0x${string}`);
     const walletClient = createWalletClient({ account, chain: base, transport: http(rpc) });
 
     const usdc6 = BigInt(Math.round(Number(c.usdc_payout ?? 0) * 1e6));
