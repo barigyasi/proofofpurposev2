@@ -63,7 +63,7 @@ Deno.serve(async (req) => {
     const isChampion = wallet === charge.champion_wallet.toLowerCase();
     if (!isAdmin && !isVendor && !isChampion) return json({ error: "Forbidden" }, 403);
 
-    const account = privateKeyToAccount(pk as `0x${string}`);
+    const account = privateKeyToAccount((pk.startsWith("0x") ? pk : `0x${pk}`) as `0x${string}`);
     const walletClient = createWalletClient({ account, chain: base, transport: http(rpc) });
     const cidBytes32 = chargeIdToBytes32(charge.id);
 

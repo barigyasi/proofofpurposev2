@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
     const { data: rows, error } = await query.limit(50);
     if (error) throw error;
 
-    const account = privateKeyToAccount(pk as `0x${string}`);
+    const account = privateKeyToAccount((pk.startsWith("0x") ? pk : `0x${pk}`) as `0x${string}`);
     const walletClient = createWalletClient({ account, chain: base, transport: http(rpc) });
     const useReceipt = /^0x[a-f0-9]{40}$/.test(RECEIPT_NFT);
 

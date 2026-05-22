@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
       .from("vendor_charges").select("*").eq("status", "settled").limit(50);
     if (error) throw error;
 
-    const account = privateKeyToAccount(pk as `0x${string}`);
+    const account = privateKeyToAccount((pk.startsWith("0x") ? pk : `0x${pk}`) as `0x${string}`);
     const walletClient = createWalletClient({ account, chain: base, transport: http(rpc) });
 
     const swept: string[] = [];

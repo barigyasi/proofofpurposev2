@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
       return json({ error: "Refund window expired" }, 400);
     }
 
-    const account = privateKeyToAccount(pk as `0x${string}`);
+    const account = privateKeyToAccount((pk.startsWith("0x") ? pk : `0x${pk}`) as `0x${string}`);
     const walletClient = createWalletClient({ account, chain: base, transport: http(rpc) });
     const cidBytes32 = chargeIdToBytes32(charge.id);
     const sourceEnum = source === "vendor" ? 0 : 1;

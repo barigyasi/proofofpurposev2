@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
       return json({ error: "Already signed up" }, 400);
     }
 
-    const account = privateKeyToAccount(pk as `0x${string}`);
+    const account = privateKeyToAccount((pk.startsWith("0x") ? pk : `0x${pk}`) as `0x${string}`);
     const walletClient = createWalletClient({
       account,
       chain: base,
