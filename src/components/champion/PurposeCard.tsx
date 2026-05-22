@@ -75,7 +75,7 @@ function variantStyles(variant: Variant) {
         sub: "text-black/70 dark:text-background/72",
         line: "border-black/25 dark:border-background/20",
         pill: "bg-black/10 text-black/75 border-black/20 dark:bg-background/10 dark:text-background/78 dark:border-background/15",
-        innerPanel: "bg-black/5 dark:bg-black/10",
+        innerPanel: "bg-black/[0.03] sm:bg-black/5 dark:bg-black/5 dark:sm:bg-black/10",
         qrFrame: "border-black/20 bg-white dark:border-background/15 dark:bg-white",
         halo:
           "bg-[radial-gradient(circle_at_16%_20%,hsl(0_0%_0%/0.08),transparent_0_34%),radial-gradient(circle_at_84%_78%,hsl(0_0%_100%/0.4),transparent_0_36%)] " +
