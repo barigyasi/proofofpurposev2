@@ -49,7 +49,14 @@ async function fetch() {
   }, 0);
   const committedDrafts = (draftRows ?? []).reduce((sum, d) => {
     const voteStillOpen = !!d.vote_closes_at && new Date(d.vote_closes_at).getTime() > Date.now();
-    const reservesHeadroom = Boolean(d.dao_proposal_id) || (d.status === "pending_vote" && voteStillOpen);
+    // Reserve headroom only while a draft is *actively* in flight:
+    //   - vote is still open, OR
+    //   - vote passed and it's queued / executing (awaiting on-chain creation)
+    // Drafts whose vote closed without execution (failed/defeated/expired) no longer reserve.
+    const reservesHeadroom =
+      (d.status === "pending_vote" && voteStillOpen) ||
+      d.status === "queued" ||
+      d.status === "executing";
     if (!reservesHeadroom) return sum;
 
     const reward = Number(d.reward_purpose) || 0;
