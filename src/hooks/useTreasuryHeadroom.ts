@@ -49,14 +49,10 @@ async function fetch() {
   }, 0);
   const committedDrafts = (draftRows ?? []).reduce((sum, d) => {
     const voteStillOpen = !!d.vote_closes_at && new Date(d.vote_closes_at).getTime() > Date.now();
-    // Reserve headroom only while a draft is *actively* in flight:
-    //   - vote is still open, OR
-    //   - vote passed and it's queued / executing (awaiting on-chain creation)
-    // Drafts whose vote closed without execution (failed/defeated/expired) no longer reserve.
-    const reservesHeadroom =
-      (d.status === "pending_vote" && voteStillOpen) ||
-      d.status === "queued" ||
-      d.status === "executing";
+    // Reserve headroom only while a draft's vote window is actively open.
+    // Anything else (queued without a live vote, defeated, expired) does not reserve —
+    // the admin must re-propose to put it back in flight, which restarts the window.
+    const reservesHeadroom = d.status === "pending_vote" && voteStillOpen;
     if (!reservesHeadroom) return sum;
 
     const reward = Number(d.reward_purpose) || 0;
