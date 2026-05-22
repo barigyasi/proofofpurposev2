@@ -41,7 +41,7 @@ function variantStyles(variant: Variant) {
         sub: "text-black/55 dark:text-foreground/60",
         line: "border-black/10 dark:border-white/10",
         pill: "bg-black/5 text-black/65 border-black/10 dark:bg-white/6 dark:text-foreground/72 dark:border-white/10",
-        innerPanel: "bg-white/55 dark:bg-black/10",
+        innerPanel: "bg-white/35 sm:bg-white/55 dark:bg-black/5 dark:sm:bg-black/10",
         qrFrame: "border-black/10 bg-white dark:border-white/10 dark:bg-white/95",
         halo:
           "bg-[radial-gradient(circle_at_18%_20%,hsl(60_100%_50%/0.22),transparent_0_36%),radial-gradient(circle_at_82%_78%,hsl(0_0%_0%/0.06),transparent_0_36%)] " +
@@ -58,7 +58,7 @@ function variantStyles(variant: Variant) {
         sub: "text-[hsl(244_30%_30%)]/70 dark:text-foreground/68",
         line: "border-black/10 dark:border-white/10",
         pill: "bg-white/60 text-[hsl(244_30%_25%)] border-black/10 dark:bg-white/8 dark:text-foreground/80 dark:border-white/10",
-        innerPanel: "bg-white/55 dark:bg-black/10",
+        innerPanel: "bg-white/35 sm:bg-white/55 dark:bg-black/5 dark:sm:bg-black/10",
         qrFrame: "border-black/10 bg-white dark:border-white/10 dark:bg-white/95",
         halo:
           "bg-[radial-gradient(circle_at_12%_18%,hsl(286_82%_72%/0.4),transparent_0_36%),radial-gradient(circle_at_88%_82%,hsl(188_92%_70%/0.32),transparent_0_38%)] " +
@@ -75,7 +75,7 @@ function variantStyles(variant: Variant) {
         sub: "text-black/70 dark:text-background/72",
         line: "border-black/25 dark:border-background/20",
         pill: "bg-black/10 text-black/75 border-black/20 dark:bg-background/10 dark:text-background/78 dark:border-background/15",
-        innerPanel: "bg-black/5 dark:bg-black/10",
+        innerPanel: "bg-black/[0.03] sm:bg-black/5 dark:bg-black/5 dark:sm:bg-black/10",
         qrFrame: "border-black/20 bg-white dark:border-background/15 dark:bg-white",
         halo:
           "bg-[radial-gradient(circle_at_16%_20%,hsl(0_0%_0%/0.08),transparent_0_34%),radial-gradient(circle_at_84%_78%,hsl(0_0%_100%/0.4),transparent_0_36%)] " +
@@ -205,7 +205,7 @@ export function PurposeCard({ address, onShowQR }: Props) {
             <div
               className={`absolute inset-0 overflow-hidden rounded-[22px] sm:rounded-[28px] border p-4 sm:p-6 shadow-[0_24px_60px_-28px_hsl(0_0%_0%/0.85)] sm:shadow-[0_32px_80px_-32px_hsl(0_0%_0%/0.9)] ${activeVariant.shell}`}
             >
-              <div className={`pointer-events-none absolute inset-0 blur-2xl opacity-90 ${activeVariant.halo}`} />
+              <div className={`pointer-events-none absolute inset-0 blur-3xl opacity-100 sm:blur-2xl sm:opacity-90 ${activeVariant.halo}`} />
               <div
                 className="pointer-events-none absolute inset-0 opacity-80 mix-blend-screen"
                 style={{
@@ -236,13 +236,13 @@ export function PurposeCard({ address, onShowQR }: Props) {
                     </div>
                   </div>
 
-                  <div className={`flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl sm:rounded-2xl border p-1.5 sm:p-2 backdrop-blur-md ${activeVariant.innerBorder} ${activeVariant.innerPanel}`}>
+                  <div className={`flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl sm:rounded-2xl border p-1.5 sm:p-2 backdrop-blur-xl sm:backdrop-blur-md ${activeVariant.innerBorder} ${activeVariant.innerPanel}`}>
                     <img src={popLogo} alt="POP" className="h-full w-full object-contain" />
                   </div>
                 </div>
 
                 <div className="space-y-2.5 sm:space-y-4">
-                  <div className={`rounded-xl sm:rounded-2xl border p-2.5 sm:p-4 backdrop-blur-md ${activeVariant.line} ${activeVariant.innerPanel}`}>
+                  <div className={`rounded-xl sm:rounded-2xl border p-2.5 sm:p-4 backdrop-blur-xl sm:backdrop-blur-md ${activeVariant.line} ${activeVariant.innerPanel}`}>
                     <div className="flex items-center justify-between gap-2 sm:gap-3">
                       <div className="min-w-0">
                         <p className={`font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.22em] sm:tracking-[0.24em] ${activeVariant.sub}`}>
