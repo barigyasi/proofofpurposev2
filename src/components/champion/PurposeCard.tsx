@@ -58,7 +58,7 @@ function variantStyles(variant: Variant) {
         sub: "text-[hsl(244_30%_30%)]/70 dark:text-foreground/68",
         line: "border-black/10 dark:border-white/10",
         pill: "bg-white/60 text-[hsl(244_30%_25%)] border-black/10 dark:bg-white/8 dark:text-foreground/80 dark:border-white/10",
-        innerPanel: "bg-white/55 dark:bg-black/10",
+        innerPanel: "bg-white/35 sm:bg-white/55 dark:bg-black/5 dark:sm:bg-black/10",
         qrFrame: "border-black/10 bg-white dark:border-white/10 dark:bg-white/95",
         halo:
           "bg-[radial-gradient(circle_at_12%_18%,hsl(286_82%_72%/0.4),transparent_0_36%),radial-gradient(circle_at_88%_82%,hsl(188_92%_70%/0.32),transparent_0_38%)] " +
