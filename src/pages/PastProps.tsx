@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useDraftVotes, type DraftWithVotes } from "@/hooks/useDraftVotes";
 import { useEffectiveRoles } from "@/hooks/useEffectiveRoles";
+import { useSyncDefeatedDrafts } from "@/hooks/useSyncDefeatedDrafts";
 import { Seo } from "@/components/Seo";
 
 type Metrics = {
@@ -14,10 +15,12 @@ type Metrics = {
   isSnapshot: boolean;
 };
 
-type DraftWithMetrics = DraftWithVotes & { metrics: Metrics; result: "passed" | "failed" | "on-chain" | "rejected" };
+type Outcome = "passed" | "failed" | "on-chain" | "rejected" | "defeated";
+type DraftWithMetrics = DraftWithVotes & { metrics: Metrics; result: Outcome };
 
-function classifyOutcome(d: DraftWithVotes): DraftWithMetrics["result"] | null {
+function classifyOutcome(d: DraftWithVotes): Outcome | null {
   if (d.status === "rejected") return "rejected";
+  if (d.status === "defeated") return "defeated";
   if (d.executed_at && d.on_chain_bounty_id) return "on-chain";
   if (d.executed_at) return "passed";
   if (new Date(d.vote_closes_at).getTime() > Date.now()) return null;
