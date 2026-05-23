@@ -150,7 +150,7 @@ export default function PastProps() {
       (acc, d) => {
         acc.props += 1;
         acc.passed += d.result === "passed" || d.result === "on-chain" ? 1 : 0;
-        acc.failed += d.result === "failed" || d.result === "rejected" ? 1 : 0;
+        acc.failed += d.result === "failed" || d.result === "rejected" || d.result === "defeated" ? 1 : 0;
         acc.wallets += d.metrics.walletsVoted;
         acc.signups += d.metrics.actualSignups;
         acc.minted += Number(d.metrics.rewardsMintedPurpose);
