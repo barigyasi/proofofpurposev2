@@ -125,6 +125,9 @@ export default function Governance() {
   // Admins can always vote; everyone else needs an active membership + delegation.
   const canVote = isAdmin || (hasVoterRole && eligibility.eligible);
 
+  // Admin-only: reconcile defeated/canceled/expired on-chain proposals into bounty_drafts.
+  useSyncDefeatedDrafts(allDrafts, isAdmin, refresh);
+
   async function vote(draftId: string, choice: VoteChoice) {
     if (!account?.address) {
       toast.error("Connect your wallet to vote — votes are tied to a wallet address for the on-chain DAO.");
