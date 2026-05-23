@@ -6,6 +6,7 @@ import { useEffectiveRoles } from "@/hooks/useEffectiveRoles";
 import { useDraftVotes, type DraftWithVotes, type VoteChoice } from "@/hooks/useDraftVotes";
 import { useVotingEligibility } from "@/hooks/useVotingEligibility";
 import { useGovernorProposalState } from "@/hooks/useGovernorProposalState";
+import { useSyncDefeatedDrafts } from "@/hooks/useSyncDefeatedDrafts";
 import { VotingPowerCard, VotingPowerPill } from "@/components/governance/VotingPowerCard";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
