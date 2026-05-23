@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useDraftVotes, type DraftWithVotes } from "@/hooks/useDraftVotes";
 import { useEffectiveRoles } from "@/hooks/useEffectiveRoles";
+import { useSyncDefeatedDrafts } from "@/hooks/useSyncDefeatedDrafts";
 import { Seo } from "@/components/Seo";
 
 type Metrics = {
@@ -14,10 +15,12 @@ type Metrics = {
   isSnapshot: boolean;
 };
 
-type DraftWithMetrics = DraftWithVotes & { metrics: Metrics; result: "passed" | "failed" | "on-chain" | "rejected" };
+type Outcome = "passed" | "failed" | "on-chain" | "rejected" | "defeated";
+type DraftWithMetrics = DraftWithVotes & { metrics: Metrics; result: Outcome };
 
-function classifyOutcome(d: DraftWithVotes): DraftWithMetrics["result"] | null {
+function classifyOutcome(d: DraftWithVotes): Outcome | null {
   if (d.status === "rejected") return "rejected";
+  if (d.status === "defeated") return "defeated";
   if (d.executed_at && d.on_chain_bounty_id) return "on-chain";
   if (d.executed_at) return "passed";
   if (new Date(d.vote_closes_at).getTime() > Date.now()) return null;
@@ -25,13 +28,44 @@ function classifyOutcome(d: DraftWithVotes): DraftWithMetrics["result"] | null {
 }
 
 export default function PastProps() {
-  const { drafts, loading } = useDraftVotes();
+  const { drafts, loading, refresh } = useDraftVotes();
   const { roles } = useEffectiveRoles();
   const isAdmin = roles.includes("admin");
   const [snapping, setSnapping] = useState<string | null>(null);
+  const [reproposing, setReproposing] = useState<string | null>(null);
   const [voterCounts, setVoterCounts] = useState<Record<string, number>>({});
   const [signupCounts, setSignupCounts] = useState<Record<string, number>>({});
   const [rewardsMinted, setRewardsMinted] = useState<Record<string, number>>({});
+
+  useSyncDefeatedDrafts(drafts, isAdmin, refresh);
+
+  async function reproposeDraft(d: DraftWithVotes) {
+    setReproposing(d.id);
+    try {
+      const full = await supabase
+        .from("bounty_drafts")
+        .select("name,description,reward_purpose,max_participants,deck_url,deck_filename,image_url,image_urls,video_url,location,expires_at,catalyst_id,proposer_id")
+        .eq("id", d.id)
+        .single();
+      if (full.error || !full.data) throw full.error ?? new Error("draft not found");
+      const now = new Date();
+      const closesAt = new Date(now.getTime() + 72 * 3600 * 1000);
+      const { error } = await supabase.from("bounty_drafts").insert({
+        ...full.data,
+        status: "pending_vote",
+        vote_opens_at: now.toISOString(),
+        vote_closes_at: closesAt.toISOString(),
+      });
+      if (error) throw error;
+      toast.success("Re-proposed — fresh 72h vote opened");
+      await refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Re-propose failed");
+    } finally {
+      setReproposing(null);
+    }
+  }
+
 
   // Pull metrics: distinct voter wallets per draft, signups + rewards per on-chain bounty
   useEffect(() => {
@@ -116,7 +150,7 @@ export default function PastProps() {
       (acc, d) => {
         acc.props += 1;
         acc.passed += d.result === "passed" || d.result === "on-chain" ? 1 : 0;
-        acc.failed += d.result === "failed" || d.result === "rejected" ? 1 : 0;
+        acc.failed += d.result === "failed" || d.result === "rejected" || d.result === "defeated" ? 1 : 0;
         acc.wallets += d.metrics.walletsVoted;
         acc.signups += d.metrics.actualSignups;
         acc.minted += Number(d.metrics.rewardsMintedPurpose);
@@ -271,19 +305,30 @@ export default function PastProps() {
                           : "// live counts"}
                       </p>
                       {isAdmin && (
-                        <button
-                          onClick={async () => {
-                            setSnapping(d.id);
-                            const { error } = await supabase.rpc("snapshot_bounty_draft_metrics", { _draft_id: d.id });
-                            setSnapping(null);
-                            if (error) toast.error(error.message);
-                            else toast.success("Snapshot captured");
-                          }}
-                          disabled={snapping === d.id}
-                          className="brutal brutal-hover px-2 py-1 font-mono text-[9px] uppercase tracking-widest disabled:opacity-50"
-                        >
-                          {snapping === d.id ? "snapping…" : d.metrics.isSnapshot ? "re-snapshot" : "snapshot"}
-                        </button>
+                        <div className="flex flex-wrap items-center gap-2">
+                          {(d.result === "failed" || d.result === "defeated" || d.result === "rejected") && (
+                            <button
+                              onClick={() => reproposeDraft(d)}
+                              disabled={reproposing === d.id}
+                              className="brutal brutal-hover bg-primary px-2 py-1 font-mono text-[9px] uppercase tracking-widest text-primary-foreground disabled:opacity-50"
+                            >
+                              {reproposing === d.id ? "cloning…" : "re-propose"}
+                            </button>
+                          )}
+                          <button
+                            onClick={async () => {
+                              setSnapping(d.id);
+                              const { error } = await supabase.rpc("snapshot_bounty_draft_metrics", { _draft_id: d.id });
+                              setSnapping(null);
+                              if (error) toast.error(error.message);
+                              else toast.success("Snapshot captured");
+                            }}
+                            disabled={snapping === d.id}
+                            className="brutal brutal-hover px-2 py-1 font-mono text-[9px] uppercase tracking-widest disabled:opacity-50"
+                          >
+                            {snapping === d.id ? "snapping…" : d.metrics.isSnapshot ? "re-snapshot" : "snapshot"}
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>

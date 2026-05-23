@@ -6,6 +6,7 @@ import { useEffectiveRoles } from "@/hooks/useEffectiveRoles";
 import { useDraftVotes, type DraftWithVotes, type VoteChoice } from "@/hooks/useDraftVotes";
 import { useVotingEligibility } from "@/hooks/useVotingEligibility";
 import { useGovernorProposalState } from "@/hooks/useGovernorProposalState";
+import { useSyncDefeatedDrafts } from "@/hooks/useSyncDefeatedDrafts";
 import { VotingPowerCard, VotingPowerPill } from "@/components/governance/VotingPowerCard";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -123,6 +124,9 @@ export default function Governance() {
   const eligibility = useVotingEligibility(account?.address);
   // Admins can always vote; everyone else needs an active membership + delegation.
   const canVote = isAdmin || (hasVoterRole && eligibility.eligible);
+
+  // Admin-only: reconcile defeated/canceled/expired on-chain proposals into bounty_drafts.
+  useSyncDefeatedDrafts(allDrafts, isAdmin, refresh);
 
   async function vote(draftId: string, choice: VoteChoice) {
     if (!account?.address) {
