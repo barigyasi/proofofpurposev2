@@ -305,19 +305,30 @@ export default function PastProps() {
                           : "// live counts"}
                       </p>
                       {isAdmin && (
-                        <button
-                          onClick={async () => {
-                            setSnapping(d.id);
-                            const { error } = await supabase.rpc("snapshot_bounty_draft_metrics", { _draft_id: d.id });
-                            setSnapping(null);
-                            if (error) toast.error(error.message);
-                            else toast.success("Snapshot captured");
-                          }}
-                          disabled={snapping === d.id}
-                          className="brutal brutal-hover px-2 py-1 font-mono text-[9px] uppercase tracking-widest disabled:opacity-50"
-                        >
-                          {snapping === d.id ? "snapping…" : d.metrics.isSnapshot ? "re-snapshot" : "snapshot"}
-                        </button>
+                        <div className="flex flex-wrap items-center gap-2">
+                          {(d.result === "failed" || d.result === "defeated" || d.result === "rejected") && (
+                            <button
+                              onClick={() => reproposeDraft(d)}
+                              disabled={reproposing === d.id}
+                              className="brutal brutal-hover bg-primary px-2 py-1 font-mono text-[9px] uppercase tracking-widest text-primary-foreground disabled:opacity-50"
+                            >
+                              {reproposing === d.id ? "cloning…" : "re-propose"}
+                            </button>
+                          )}
+                          <button
+                            onClick={async () => {
+                              setSnapping(d.id);
+                              const { error } = await supabase.rpc("snapshot_bounty_draft_metrics", { _draft_id: d.id });
+                              setSnapping(null);
+                              if (error) toast.error(error.message);
+                              else toast.success("Snapshot captured");
+                            }}
+                            disabled={snapping === d.id}
+                            className="brutal brutal-hover px-2 py-1 font-mono text-[9px] uppercase tracking-widest disabled:opacity-50"
+                          >
+                            {snapping === d.id ? "snapping…" : d.metrics.isSnapshot ? "re-snapshot" : "snapshot"}
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>
