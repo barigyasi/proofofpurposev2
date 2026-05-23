@@ -28,13 +28,44 @@ function classifyOutcome(d: DraftWithVotes): Outcome | null {
 }
 
 export default function PastProps() {
-  const { drafts, loading } = useDraftVotes();
+  const { drafts, loading, refresh } = useDraftVotes();
   const { roles } = useEffectiveRoles();
   const isAdmin = roles.includes("admin");
   const [snapping, setSnapping] = useState<string | null>(null);
+  const [reproposing, setReproposing] = useState<string | null>(null);
   const [voterCounts, setVoterCounts] = useState<Record<string, number>>({});
   const [signupCounts, setSignupCounts] = useState<Record<string, number>>({});
   const [rewardsMinted, setRewardsMinted] = useState<Record<string, number>>({});
+
+  useSyncDefeatedDrafts(drafts, isAdmin, refresh);
+
+  async function reproposeDraft(d: DraftWithVotes) {
+    setReproposing(d.id);
+    try {
+      const full = await supabase
+        .from("bounty_drafts")
+        .select("name,description,reward_purpose,max_participants,deck_url,deck_filename,image_url,image_urls,video_url,location,expires_at,catalyst_id,proposer_id")
+        .eq("id", d.id)
+        .single();
+      if (full.error || !full.data) throw full.error ?? new Error("draft not found");
+      const now = new Date();
+      const closesAt = new Date(now.getTime() + 72 * 3600 * 1000);
+      const { error } = await supabase.from("bounty_drafts").insert({
+        ...full.data,
+        status: "pending_vote",
+        vote_opens_at: now.toISOString(),
+        vote_closes_at: closesAt.toISOString(),
+      });
+      if (error) throw error;
+      toast.success("Re-proposed — fresh 72h vote opened");
+      await refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Re-propose failed");
+    } finally {
+      setReproposing(null);
+    }
+  }
+
 
   // Pull metrics: distinct voter wallets per draft, signups + rewards per on-chain bounty
   useEffect(() => {
