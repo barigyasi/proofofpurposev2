@@ -16,15 +16,24 @@ type Mint = {
 
 export function MembershipsStrip({ wallet }: { wallet?: string }) {
   const [items, setItems] = useState<Mint[]>([]);
+  const [activeEdition, setActiveEdition] = useState<{ name: string; image_url: string } | null>(null);
 
   useEffect(() => {
     if (!wallet) return;
     (async () => {
-      const { data: mints } = await supabase
-        .from("membership_mints")
-        .select("*")
-        .ilike("donor_wallet", wallet)
-        .order("month_key", { ascending: false });
+      const [{ data: mints }, { data: active }] = await Promise.all([
+        supabase
+          .from("membership_mints")
+          .select("*")
+          .ilike("donor_wallet", wallet)
+          .order("month_key", { ascending: false }),
+        supabase
+          .from("membership_editions")
+          .select("name, image_url")
+          .eq("active", true)
+          .maybeSingle(),
+      ]);
+      setActiveEdition(active ?? null);
       const rows = (mints ?? []) as Mint[];
       const editionIds = Array.from(
         new Set(rows.map((r) => r.edition_id).filter(Boolean) as string[]),
@@ -47,6 +56,7 @@ export function MembershipsStrip({ wallet }: { wallet?: string }) {
       );
     })();
   }, [wallet]);
+
 
   if (!wallet || items.length === 0) return null;
 
