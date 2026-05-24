@@ -70,8 +70,12 @@ export function MembershipsStrip({ wallet }: { wallet?: string }) {
       </div>
       <div className="mt-3 flex gap-3 overflow-x-auto pb-2">
         {items.map((m) => {
-          const img = m.edition?.image_url ?? membershipDataUri(m.donor_wallet, m.month_key, 180);
-          const title = m.edition?.name ?? monthLabel(m.month_key);
+          const img =
+            m.edition?.image_url ??
+            activeEdition?.image_url ??
+            membershipDataUri(m.donor_wallet, m.month_key, 180);
+          const title = m.edition?.name ?? activeEdition?.name ?? monthLabel(m.month_key);
+
           return (
             <div key={m.id} className="brutal min-w-[180px] p-3">
               <img
